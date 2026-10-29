@@ -66,6 +66,17 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
         {
             try
             {
+                if (App.Settings.Prop.ConfirmLaunches)
+                {
+                    var ok = Frontend.ShowMessageBox(
+                        "Launch Roblox now?",
+                        MessageBoxImage.Question,
+                        MessageBoxButton.YesNo);
+
+                    if (ok != MessageBoxResult.Yes)
+                        return;
+                }
+
                 LaunchHandler.LaunchRoblox(LaunchMode.Player);
             }
             catch (Exception ex)
