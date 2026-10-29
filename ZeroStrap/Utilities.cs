@@ -65,7 +65,7 @@ namespace ZeroStrap
             catch (Exception)
             {
                 // temporary diagnostic log for the issue described here:
-                // https://github.com/6402770-sys/ZeroStrap/issues/3193
+                // https://github.com/6402770-sys/idkvro/issues/3193
                 // the problem is that this happens only on upgrade, so my only hope of catching this is bug reports following the next release
 
                 App.Logger.WriteLine("Utilities::CompareVersions", "An exception occurred when comparing versions");

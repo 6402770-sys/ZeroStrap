@@ -13,7 +13,7 @@ namespace ZeroStrap.Utility
         {
             foreach (var drive in DriveInfo.GetDrives())
             {
-                // https://github.com/6402770-sys/ZeroStrap/issues/1648#issuecomment-2192571030
+                // https://github.com/6402770-sys/idkvro/issues/1648#issuecomment-2192571030
                 if (path.ToUpperInvariant().StartsWith(drive.Name))
                     return drive.AvailableFreeSpace;
             }

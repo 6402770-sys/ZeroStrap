@@ -19,7 +19,7 @@ Underlying integrations preserved from upstream: Discord Rich Presence, mod load
 
 ## Installing
 
-1. Download the [latest release](https://github.com/6402770-sys/ZeroStrap/releases/latest).
+1. Download the [latest release](https://github.com/6402770-sys/idkvro/releases/latest).
 2. Run the installer and complete the setup wizard.
 3. If prompted, install the [.NET 6 Desktop Runtime](https://aka.ms/dotnet-core-applaunch?missing_runtime=true&arch=x64&rid=win11-x64&apphost_version=6.0.36&gui=true).
 
@@ -28,7 +28,7 @@ Windows SmartScreen may warn on first run because the binary is unsigned. Click 
 ## Building from source
 
 ```
-git clone https://github.com/6402770-sys/ZeroStrap.git
+git clone https://github.com/6402770-sys/idkvro.git ZeroStrap
 cd ZeroStrap
 dotnet build ZeroStrap.sln -c Release
 ```

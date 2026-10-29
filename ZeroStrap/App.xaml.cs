@@ -19,10 +19,10 @@ namespace ZeroStrap
         public const string ProjectName = "ZeroStrap";
 #endif
         public const string ProjectOwner = "ZeroStrap";
-        public const string ProjectRepository = "6402770-sys/ZeroStrap";
+        public const string ProjectRepository = "6402770-sys/idkvro";
         public const string ProjectDownloadLink = "https://zerostraplabs.com";
         public const string ProjectHelpLink = "https://zerostraplabs.com/wiki/help/";
-        public const string ProjectSupportLink = "https://github.com/6402770-sys/ZeroStrap/issues/new";
+        public const string ProjectSupportLink = "https://github.com/6402770-sys/idkvro/issues/new";
 
         public const string RobloxPlayerAppName = "RobloxPlayerBeta";
         public const string RobloxStudioAppName = "RobloxStudioBeta";

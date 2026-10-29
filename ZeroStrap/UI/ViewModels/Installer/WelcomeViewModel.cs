@@ -5,7 +5,7 @@
         // formatting is done here instead of in xaml, it's just a bit easier
         public string MainText => String.Format(
             Strings.Installer_Welcome_MainText,
-            "[github.com/6402770-sys/ZeroStrap](https://github.com/6402770-sys/ZeroStrap)",
+            "[github.com/6402770-sys/idkvro](https://github.com/6402770-sys/idkvro)",
             "[zerostraplabs.com](https://zerostraplabs.com)"
         );
 
