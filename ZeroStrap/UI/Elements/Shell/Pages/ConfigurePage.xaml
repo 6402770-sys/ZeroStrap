@@ -6,7 +6,7 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:pages="clr-namespace:ZeroStrap.UI.Elements.Settings.Pages"
       mc:Ignorable="d"
-      d:DesignHeight="520" d:DesignWidth="860"
+      d:DesignHeight="620" d:DesignWidth="860"
       Background="{DynamicResource ApplicationBackgroundBrush}"
       Title="Configure">
 
@@ -17,12 +17,70 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0">
-            <TextBlock Text="CONFIGURE" Style="{StaticResource ZeroEyebrowStyle}" />
-            <TextBlock Text="Fast Flags, Mods, Integrations" Style="{StaticResource ZeroPageTitleStyle}" FontSize="28" />
-            <TextBlock Text="Everything that shapes how Roblox runs on this machine." Style="{StaticResource ZeroBodyStyle}" Margin="0,4,0,0" />
-        </StackPanel>
+        <!-- ============================== HEADER ============================== -->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="CONFIGURE" Style="{StaticResource ZeroEyebrowStyle}" />
+                <TextBlock Text="Fast Flags, Mods, Integrations" Style="{StaticResource ZeroPageTitleStyle}" FontSize="28" />
+                <TextBlock Text="Everything that shapes how Roblox runs on this machine." Style="{StaticResource ZeroBodyStyle}" Margin="0,4,0,0" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
+                <ui:Button x:Name="OpenFlagEditorButton" Content="Open Fast Flag Editor" Icon="Flag24"
+                           Style="{StaticResource ZeroButtonPrimary}" Click="OpenFlagEditor_Click" />
+            </StackPanel>
+        </Grid>
 
+        <!-- ============================== STATS STRIP ============================== -->
+        <Grid Grid.Row="1" Margin="0,20,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Style="{StaticResource ZeroCardStyle}" Margin="0,0,6,0">
+                <StackPanel>
+                    <TextBlock Text="FAST FLAGS" Style="{StaticResource ZeroEyebrowStyle}" />
+                    <TextBlock x:Name="StatFlagsCount" Text="0" FontSize="22" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,4,0,0" />
+                    <TextBlock Text="configured" Style="{StaticResource ZeroMetaTextStyle}" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="1" Style="{StaticResource ZeroCardStyle}" Margin="6,0">
+                <StackPanel>
+                    <TextBlock Text="PRESETS" Style="{StaticResource ZeroEyebrowStyle}" />
+                    <TextBlock x:Name="StatPresetsCount" Text="0" FontSize="22" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,4,0,0" />
+                    <TextBlock Text="active" Style="{StaticResource ZeroMetaTextStyle}" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="2" Style="{StaticResource ZeroCardStyle}" Margin="6,0">
+                <StackPanel>
+                    <TextBlock Text="INTEGRATIONS" Style="{StaticResource ZeroEyebrowStyle}" />
+                    <TextBlock x:Name="StatIntegrationsCount" Text="0" FontSize="22" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,4,0,0" />
+                    <TextBlock Text="custom" Style="{StaticResource ZeroMetaTextStyle}" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="3" Style="{StaticResource ZeroCardStyle}" Margin="6,0,0,0">
+                <StackPanel>
+                    <TextBlock Text="MODS" Style="{StaticResource ZeroEyebrowStyle}" />
+                    <TextBlock x:Name="StatModsCount" Text="0" FontSize="22" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,4,0,0" />
+                    <TextBlock Text="files" Style="{StaticResource ZeroMetaTextStyle}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ============================== TABS ============================== -->
         <TabControl x:Name="ConfigureTabs" Grid.Row="2" Style="{StaticResource ZeroTabControlStyle}" Margin="0,20,0,0">
             <TabItem Header="Fast Flags">
                 <Frame NavigationUIVisibility="Hidden" Loaded="FastFlagsHost_Loaded" />
