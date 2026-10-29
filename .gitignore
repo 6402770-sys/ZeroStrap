@@ -351,3 +351,7 @@ MigrationBackup/
 
 # Local test builds
 ZeroStrap/build-test-zero/
+
+# Release packaging artifacts
+release-pkg/
+*.zip

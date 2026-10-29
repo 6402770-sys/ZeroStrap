@@ -7,8 +7,14 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>True</UseWindowsForms>
     <ApplicationIcon>ZeroStrap.ico</ApplicationIcon>
-    <Version>2.11.4</Version>
-    <FileVersion>2.11.4</FileVersion>
+    <AssemblyName>ZeroStrap</AssemblyName>
+    <RootNamespace>ZeroStrap</RootNamespace>
+    <Product>ZeroStrap</Product>
+    <AssemblyTitle>ZeroStrap</AssemblyTitle>
+    <Company>ZeroStrap</Company>
+    <Version>3.0.0</Version>
+    <FileVersion>3.0.0</FileVersion>
+    <InformationalVersion>3.0.0-obsidian</InformationalVersion>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
