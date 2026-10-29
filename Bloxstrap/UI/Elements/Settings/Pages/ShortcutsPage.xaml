@@ -14,6 +14,7 @@
       Title="ShortcutsPage"
       Scrollable="True">
 
+
     <StackPanel Margin="0,0,14,14">
         <TextBlock Margin="0,0,0,16" Text="{x:Static resources:Strings.Menu_Shortcuts_Description}" FontSize="14" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
 
@@ -24,7 +25,7 @@
             <ui:ToggleSwitch IsChecked="{Binding ExtractIconsTask.NewState, Mode=TwoWay}" />
         </controls:OptionControl>
 
-        <TextBlock Text="{x:Static resources:Strings.Menu_Shortcuts_General_Title}" FontSize="20" FontWeight="Medium" />
+        <TextBlock Text="{x:Static resources:Strings.Menu_Shortcuts_General_Title}" Style="{StaticResource ZeroSectionTitleStyle}" />
         <TextBlock Text="{x:Static resources:Strings.Menu_Shortcuts_General_Description}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
 
         <Grid>
@@ -42,7 +43,7 @@
             </controls:OptionControl>
         </Grid>
 
-        <TextBlock Text="{x:Static resources:Strings.Menu_Shortcuts_Function_Title}" FontSize="20" FontWeight="Medium" Margin="0,16,0,0" />
+        <TextBlock Text="{x:Static resources:Strings.Menu_Shortcuts_Function_Title}" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{StaticResource ZeroSectionMargin}" />
         <TextBlock Text="{x:Static resources:Strings.Menu_Shortcuts_Function_Description}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
 
         <Grid>

@@ -1386,4 +1386,512 @@ Defaulting to {1}.</value>
   <data name="Menu.FastFlagEditor.AllowlistInformation" xml:space="preserve">
     <value>Due to the [Fast Flag allowlist update]({0}), most custom Fast Flags will have no effect on the Roblox player.</value>
   </data>
+  <data name="Menu.FastFlagEditor.Status.PlayerTooltip" xml:space="preserve">
+    <value>On Roblox's Player allowlist</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Status.ExperimentalTooltip" xml:space="preserve">
+    <value>Not on Roblox's Player allowlist: saved, but Roblox Player ignores it (Studio does not)</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Experimental.Tooltip" xml:space="preserve">
+    <value>Allow adding flags that are not on Roblox's Player allowlist</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Experimental.Toggle" xml:space="preserve">
+    <value>Experimental flags</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Tab.Flags" xml:space="preserve">
+    <value>Flags</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Tab.Catalog" xml:space="preserve">
+    <value>Catalog</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Notice.Start" xml:space="preserve">
+    <value>PLAYER flags are on</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Notice.Link" xml:space="preserve">
+    <value>Roblox's allowlist</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Notice.End" xml:space="preserve">
+    <value>. EXPERIMENTAL flags are saved, but Roblox Player ignores them (Studio does not). Edits apply after Save and the next Roblox launch. Use with caution.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Filter.Scope" xml:space="preserve">
+    <value>Where to search</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Filter.Configured" xml:space="preserve">
+    <value>Configured</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Filter.Everything" xml:space="preserve">
+    <value>Everything</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Filter.Type" xml:space="preserve">
+    <value>Value type</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Filter.AnyType" xml:space="preserve">
+    <value>Any type</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Filter.Status" xml:space="preserve">
+    <value>Player allowlist status</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Filter.AnyStatus" xml:space="preserve">
+    <value>Any status</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Filter.Player" xml:space="preserve">
+    <value>Player</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Filter.Experimental" xml:space="preserve">
+    <value>Experimental</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Column.Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Column.Type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Details.Title" xml:space="preserve">
+    <value>SELECTED FLAG</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Details.NothingSelected" xml:space="preserve">
+    <value>Nothing selected</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Details.Value" xml:space="preserve">
+    <value>VALUE</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Details.Set" xml:space="preserve">
+    <value>Set</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Details.Remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Status.SearchFailed" xml:space="preserve">
+    <value>Search failed: {0}</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Status.OneFlag" xml:space="preserve">
+    <value>1 flag</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Status.Flags" xml:space="preserve">
+    <value>{0:N0} flags</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Status.Truncated" xml:space="preserve">
+    <value> · showing the first {0:N0}, refine the search to narrow it down</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Status.NoCatalog" xml:space="preserve">
+    <value> · catalog not downloaded: only configured and Player-allowlisted flags are searchable (see the Catalog tab)</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Status.Catalog" xml:space="preserve">
+    <value> · catalog {0:N0} flags, updated {1:d}</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Empty.NoFlags" xml:space="preserve">
+    <value>No Fast Flags configured yet.
+Add one, or switch the scope to Catalog to browse known flags.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Empty.NoMatches" xml:space="preserve">
+    <value>Nothing matches "{0}" with these filters.
+Try fewer words, or search "Everything".</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Experimental.AddBlocked" xml:space="preserve">
+    <value>{0} is not on Roblox's Player allowlist, so Roblox Player will ignore it (Studio is not restricted).
+
+Enable experimental flags to add it anyway?</value>
+  </data>
+  <data name="Menu.FastFlagEditor.InvalidFlag" xml:space="preserve">
+    <value>Invalid flag.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Experimental.ImportBlocked" xml:space="preserve">
+    <value>{0} flag(s) are not on Roblox's Player allowlist (Roblox Player ignores them):
+{1}
+
+Enable experimental flags and import them too?</value>
+  </data>
+  <data name="Menu.FastFlagEditor.ImportSkippedInvalid" xml:space="preserve">
+    <value>Imported {0} flag(s). {1} were skipped because they are invalid:
+
+{2}</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Details.MultipleSelected" xml:space="preserve">
+    <value>{0} flags selected</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Details.TagSet" xml:space="preserve">
+    <value>SET</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Details.TagNotSet" xml:space="preserve">
+    <value>NOT SET</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Details.ExperimentalEffect" xml:space="preserve">
+    <value>Saved to ClientAppSettings.json, but Roblox Player ignores flags outside its allowlist. Roblox Studio may still use it. Saving it does not mean it works.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Details.PlayerEffect" xml:space="preserve">
+    <value>On Roblox's Player allowlist: Roblox Player reads it on its next launch.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Details.Add" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Experimental.Confirm" xml:space="preserve">
+    <value>Experimental flags lets you add any valid Fast Flag, including ones that are not on Roblox's Player allowlist.
+
+ZeroBootstrap will save them, but Roblox Player ignores them (Roblox Studio is not restricted). Misusing flags can make Roblox unstable.
+
+Enable experimental flags?</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.Notice" xml:space="preserve">
+    <value>Shortcuts edit the pending configuration while this window is focused (never while you type). They do not touch a running Roblox: press Save, and Roblox uses the values on its next launch.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.Enabled" xml:space="preserve">
+    <value>Shortcuts enabled</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.EnabledTooltip" xml:space="preserve">
+    <value>Turns every shortcut on or off</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.Column.On" xml:space="preserve">
+    <value>On</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.Column.Shortcut" xml:space="preserve">
+    <value>Shortcut</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.Column.Flag" xml:space="preserve">
+    <value>Flag</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.Column.Values" xml:space="preserve">
+    <value>Cycles through</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.Empty" xml:space="preserve">
+    <value>No shortcuts yet.
+Create one below: click the shortcut box and press the keys.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.NewTitle" xml:space="preserve">
+    <value>NEW SHORTCUT</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.GestureTooltip" xml:space="preserve">
+    <value>Click here and press the shortcut (F1-F24, or a key with Ctrl/Alt/Win)</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.PressKeys" xml:space="preserve">
+    <value>Press keys…</value>
+  </data>
+  <data name="Menu.FastFlagEditor.FlagName" xml:space="preserve">
+    <value>Flag name</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.ValuesPlaceholder" xml:space="preserve">
+    <value>Values, comma separated</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.ValuesTooltip" xml:space="preserve">
+    <value>Leave empty for bool flags to toggle True/False</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.IncludeUnset" xml:space="preserve">
+    <value>Include "not set" (Roblox default) in the cycle</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.Add" xml:space="preserve">
+    <value>Add shortcut</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.NotSetValue" xml:space="preserve">
+    <value>(not set)</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.Invalid" xml:space="preserve">
+    <value>Invalid</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.UsedTwice" xml:space="preserve">
+    <value>Shortcut used twice</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.EditTitle" xml:space="preserve">
+    <value>EDIT SHORTCUT</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.Save" xml:space="preserve">
+    <value>Save shortcut</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.NotAllowed" xml:space="preserve">
+    <value>{0} (not allowed)</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.ExperimentalBlocked" xml:space="preserve">
+    <value>{0} is not on Roblox's Player allowlist. Enable experimental flags to bind it.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.Clash" xml:space="preserve">
+    <value>{0} is already used for {1}. Only the first shortcut in the list would run.
+
+Save anyway?</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.Notice" xml:space="preserve">
+    <value>The catalog is a list of known Fast Flag names used for search. It is plain text that is validated before use; nothing in it is executed. Updating it never changes your flags, and it is separate from ZeroBootstrap's own updates.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.Title" xml:space="preserve">
+    <value>CATALOG</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.Source" xml:space="preserve">
+    <value>Source</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.Version" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.LastUpdated" xml:space="preserve">
+    <value>Last updated</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.LastCheck" xml:space="preserve">
+    <value>Last check</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.Check" xml:space="preserve">
+    <value>Check for catalog updates</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.Updates" xml:space="preserve">
+    <value>Updates</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.Auto" xml:space="preserve">
+    <value>Check automatically</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.AutoDescription" xml:space="preserve">
+    <value>When on, the catalog source is checked when you open the Fast Flag editor and the interval has passed. When off, it is only checked when you press the button above.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.Interval" xml:space="preserve">
+    <value>Check interval</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.IntervalDescription" xml:space="preserve">
+    <value>Automatic checks never run more often than every 6 hours.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.Interval.6Hours" xml:space="preserve">
+    <value>Every 6 hours</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.Interval.12Hours" xml:space="preserve">
+    <value>Every 12 hours</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.Interval.Day" xml:space="preserve">
+    <value>Every day</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.Interval.3Days" xml:space="preserve">
+    <value>Every 3 days</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.Interval.Week" xml:space="preserve">
+    <value>Every week</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.Unusable" xml:space="preserve">
+    <value>Local catalog unusable ({0}). Check for updates to replace it.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.NotDownloaded" xml:space="preserve">
+    <value>Not downloaded yet</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.Never" xml:space="preserve">
+    <value>Never</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.Checking" xml:space="preserve">
+    <value>Checking…</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Catalog.UnexpectedError" xml:space="preserve">
+    <value>Unexpected error: {0}</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.NewTooltip" xml:space="preserve">
+    <value>New empty preset</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.CaptureTooltip" xml:space="preserve">
+    <value>New preset from the flags configured now</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.Duplicate" xml:space="preserve">
+    <value>Duplicate</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.IncludeTooltip" xml:space="preserve">
+    <value>Include in the next apply</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.Empty" xml:space="preserve">
+    <value>No presets yet.
+Capture the current flags with the camera button, or import a preset file.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.ExportTooltip" xml:space="preserve">
+    <value>Exports the checked presets, or all presets if none is checked</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.Title" xml:space="preserve">
+    <value>PRESET</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.SelectPreset" xml:space="preserve">
+    <value>Select a preset</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.NoFlags" xml:space="preserve">
+    <value>This preset has no flags. Add one below.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.RemoveFlagsTooltip" xml:space="preserve">
+    <value>Remove the selected flags from this preset</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.Revert" xml:space="preserve">
+    <value>Revert last apply</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.Apply" xml:space="preserve">
+    <value>Review &amp; apply</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.SelectionNone" xml:space="preserve">
+    <value>Check one or more presets to apply them.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.SelectionOne" xml:space="preserve">
+    <value>1 preset selected: {0}</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.SelectionMany" xml:space="preserve">
+    <value>{0} presets selected. Values are merged; conflicts are shown before anything changes.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.LastApply" xml:space="preserve">
+    <value>Last apply: {0} · {1} flag(s) · {2:g}</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.NewTitle" xml:space="preserve">
+    <value>New preset</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.NewPrompt" xml:space="preserve">
+    <value>Name of the new, empty preset:</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.NothingToCapture" xml:space="preserve">
+    <value>No Fast Flags are configured right now, so there is nothing to capture.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.CapturePrompt" xml:space="preserve">
+    <value>Save the {0} flag(s) configured now as a preset:</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.CaptureDefaultName" xml:space="preserve">
+    <value>My flags</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.CopyName" xml:space="preserve">
+    <value>{0} copy</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.RenameTitle" xml:space="preserve">
+    <value>Rename preset</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.RenamePrompt" xml:space="preserve">
+    <value>New name:</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.DeleteConfirm" xml:space="preserve">
+    <value>Delete the preset "{0}"? This does not change any configured flag.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.ExperimentalBlocked" xml:space="preserve">
+    <value>{0} is not on Roblox's Player allowlist. Enable experimental flags (top right) to put it in a preset.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.Applied" xml:space="preserve">
+    <value>Applied {0} change(s). They are pending: press Save, then start Roblox to use them.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.RevertConfirm" xml:space="preserve">
+    <value>Restore the {0} flag(s) changed by "{1}" to their previous values?</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.RevertSkipped" xml:space="preserve">
+    <value>Reverted, except {0} flag(s) you changed again after applying (kept as they are):
+{1}</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.OpenFilter" xml:space="preserve">
+    <value>ZeroBootstrap presets|*.json|All files|*.*</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.FileTooLarge" xml:space="preserve">
+    <value>That file is too large to be a preset file.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.ImportFailed" xml:space="preserve">
+    <value>Nothing was imported:
+
+{0}</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.Imported" xml:space="preserve">
+    <value>Imported {0} preset(s).</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.ImportedExperimental" xml:space="preserve">
+    <value>
+
+{0} flag(s) in them are not on Roblox's Player allowlist; Roblox Player will ignore those.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.NothingToExport" xml:space="preserve">
+    <value>There are no presets to export.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Presets.SaveFilter" xml:space="preserve">
+    <value>ZeroBootstrap presets|*.json</value>
+  </data>
+  <data name="Dialog.PresetApply.Title" xml:space="preserve">
+    <value>Apply presets</value>
+  </data>
+  <data name="Dialog.PresetApply.Description" xml:space="preserve">
+    <value>Nothing is written until you press Apply. Afterwards the changes are pending like any other edit: press Save in Settings, then start Roblox. You can revert this apply from the Presets tab.</value>
+  </data>
+  <data name="Dialog.PresetApply.Conflicts" xml:space="preserve">
+    <value>CONFLICTS — CHOOSE A VALUE</value>
+  </data>
+  <data name="Dialog.PresetApply.Changes" xml:space="preserve">
+    <value>CHANGES</value>
+  </data>
+  <data name="Dialog.PresetApply.Apply" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="Dialog.PresetApply.HeaderOne" xml:space="preserve">
+    <value>Apply "{0}"</value>
+  </data>
+  <data name="Dialog.PresetApply.HeaderMany" xml:space="preserve">
+    <value>Apply {0} presets: {1}</value>
+  </data>
+  <data name="Dialog.PresetApply.KindAdd" xml:space="preserve">
+    <value>ADD</value>
+  </data>
+  <data name="Dialog.PresetApply.KindChange" xml:space="preserve">
+    <value>CHANGE</value>
+  </data>
+  <data name="Dialog.PresetApply.AllUnchanged" xml:space="preserve">
+    <value>Every flag already has the preset value ({0} unchanged).</value>
+  </data>
+  <data name="Dialog.PresetApply.NoFlags" xml:space="preserve">
+    <value>These presets contain no flags.</value>
+  </data>
+  <data name="Dialog.PresetApply.ResolveOne" xml:space="preserve">
+    <value>Resolve {0} conflict</value>
+  </data>
+  <data name="Dialog.PresetApply.ResolveMany" xml:space="preserve">
+    <value>Resolve {0} conflicts</value>
+  </data>
+  <data name="Dialog.PresetApply.ApplyOne" xml:space="preserve">
+    <value>Apply {0} change</value>
+  </data>
+  <data name="Dialog.PresetApply.ApplyMany" xml:space="preserve">
+    <value>Apply {0} changes</value>
+  </data>
+  <data name="FastFlags.CatalogUpdater.AlreadyRunning" xml:space="preserve">
+    <value>A catalog check is already running.</value>
+  </data>
+  <data name="FastFlags.CatalogUpdater.UpToDate" xml:space="preserve">
+    <value>The catalog is up to date.</value>
+  </data>
+  <data name="FastFlags.CatalogUpdater.HttpError" xml:space="preserve">
+    <value>The source answered {0} {1}. The previous catalog was kept.</value>
+  </data>
+  <data name="FastFlags.CatalogUpdater.TooLargeKept" xml:space="preserve">
+    <value>The download is larger than expected. The previous catalog was kept.</value>
+  </data>
+  <data name="FastFlags.CatalogUpdater.Cancelled" xml:space="preserve">
+    <value>Cancelled. Nothing was changed.</value>
+  </data>
+  <data name="FastFlags.CatalogUpdater.TimedOut" xml:space="preserve">
+    <value>Timed out after {0:0} s. The previous catalog was kept.</value>
+  </data>
+  <data name="FastFlags.CatalogUpdater.NetworkError" xml:space="preserve">
+    <value>Network error: {0} The previous catalog was kept.</value>
+  </data>
+  <data name="FastFlags.CatalogUpdater.Invalid" xml:space="preserve">
+    <value>{0} The previous catalog was kept.</value>
+  </data>
+  <data name="FastFlags.CatalogUpdater.Updated" xml:space="preserve">
+    <value>Catalog updated: {0:N0} flags.</value>
+  </data>
+  <data name="FastFlags.CatalogUpdater.TooLarge" xml:space="preserve">
+    <value>The download is larger than expected.</value>
+  </data>
+  <data name="FastFlags.CatalogUpdater.MetadataNotSaved" xml:space="preserve">
+    <value> (Could not save catalog metadata: {0})</value>
+  </data>
+  <data name="FastFlags.Binding.Applied" xml:space="preserve">
+    <value>{0} → {1}. Pending: press Save; Roblox uses it on its next launch.</value>
+  </data>
+  <data name="FastFlags.Binding.NotSet" xml:space="preserve">
+    <value>not set</value>
+  </data>
+  <data name="FastFlags.PresetFile.InvalidJson" xml:space="preserve">
+    <value>Invalid JSON: {0}</value>
+  </data>
+  <data name="FastFlags.PresetFile.WrongFormat" xml:space="preserve">
+    <value>Not a preset file (expected "format": "{0}").</value>
+  </data>
+  <data name="FastFlags.PresetFile.UnsupportedVersion" xml:space="preserve">
+    <value>Unsupported version {0} (expected {1}).</value>
+  </data>
+  <data name="FastFlags.PresetFile.NoPresets" xml:space="preserve">
+    <value>The file contains no presets.</value>
+  </data>
+  <data name="FastFlags.PresetFile.TooMany" xml:space="preserve">
+    <value>Too many presets ({0}, maximum {1}).</value>
+  </data>
+  <data name="FastFlags.PresetFile.NoName" xml:space="preserve">
+    <value>Preset {0} has no name.</value>
+  </data>
+  <data name="FastFlags.PresetFile.UnsupportedValue" xml:space="preserve">
+    <value>{0}: {1} has an unsupported value type.</value>
+  </data>
+  <data name="Menu.FastFlagEditor.Shortcuts.SnackbarTitle" xml:space="preserve">
+    <value>Fast Flag shortcut</value>
+  </data>
 </root>

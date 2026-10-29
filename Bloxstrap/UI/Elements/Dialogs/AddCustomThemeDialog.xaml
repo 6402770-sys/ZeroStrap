@@ -16,11 +16,12 @@
                                      IsDesignTimeCreatable=True}"
     Background="{ui:ThemeResource ApplicationBackgroundBrush}"
     ExtendsContentIntoTitleBar="True"
+    WindowBackdropType="None"
     ResizeMode="NoResize"
     SizeToContent="Height"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
-    <Grid>
+    <Grid Style="{StaticResource ZeroWindowRootStyle}">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -29,19 +30,24 @@
             </Grid.RowDefinitions>
 
             <ui:TitleBar
-                Title="{x:Static resources:Strings.CustomTheme_Add_Title}"
+                Title=""
+                Icon="{x:Null}"
                 Grid.Row="0"
                 Grid.ColumnSpan="2"
                 Padding="8"
                 CanMaximize="False"
                 KeyboardNavigation.TabNavigation="None"
                 ShowMaximize="False"
-                ShowMinimize="False" />
+                ShowMinimize="False">
+                <ui:TitleBar.Header>
+                    <ContentPresenter Content="{x:Static resources:Strings.CustomTheme_Add_Title}" ContentTemplate="{StaticResource ZeroTitleBarCaption}" VerticalAlignment="Center" />
+                </ui:TitleBar.Header>
+            </ui:TitleBar>
 
             <TabControl
                 x:Name="Tabs"
                 Grid.Row="1"
-                Margin="16"
+                Margin="20,12,20,20"
                 SelectedIndex="{Binding Path=SelectedTab, Mode=TwoWay}">
                 <TabItem Header="{x:Static resources:Strings.Common_CreateNew}">
                     <Grid Grid.Row="1" Margin="16">
@@ -142,20 +148,19 @@
 
             <Border
                 Grid.Row="2"
-                Margin="0,10,0,0"
-                Padding="15"
-                Background="{ui:ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+                Style="{StaticResource ZeroDialogFooterStyle}">
                 <StackPanel
                     HorizontalAlignment="Right"
                     FlowDirection="LeftToRight"
                     Orientation="Horizontal">
-                    <Button
+                    <ui:Button
                         MinWidth="100"
+                        Appearance="Primary"
                         Click="OnOkButtonClicked"
                         Content="{x:Static resources:Strings.Common_OK}" />
                     <Button
                         MinWidth="100"
-                        Margin="12,0,0,0"
+                        Margin="8,0,0,0"
                         Content="{x:Static resources:Strings.Common_Cancel}"
                         IsCancel="True" />
                 </StackPanel>

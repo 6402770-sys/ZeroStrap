@@ -11,20 +11,25 @@
         xmlns:local="clr-namespace:Bloxstrap.UI.Elements.Installer"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance dmodels:MainWindowViewModel, IsDesignTimeCreatable=True}"
-        Title="{x:Static resources:Strings.Installer_Title}"
+        Title="ZeroBootstrap Installer"
         Height="540" Width="840" MinWidth="840"
         Background="{ui:ThemeResource ApplicationBackgroundBrush}"
         ExtendsContentIntoTitleBar="True"
-        WindowBackdropType="Mica"
+        WindowBackdropType="None"
         WindowStartupLocation="CenterScreen">
-    <Grid>
+    <Grid Style="{StaticResource ZeroWindowRootStyle}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Padding="8" x:Name="RootTitleBar" Grid.Row="0" ForceShutdown="False" MinimizeToTray="False" UseSnapLayout="True" Title="{x:Static resources:Strings.Installer_Title}" Icon="pack://application:,,,/Bloxstrap.ico" />
+        <ui:TitleBar Padding="8" x:Name="RootTitleBar" Grid.Row="0" ForceShutdown="False" MinimizeToTray="False" UseSnapLayout="True" Title="" Icon="{x:Null}">
+            <!--  ZeroBootstrap: brand lockup, defined once in ZeroBrand.xaml  -->
+            <ui:TitleBar.Header>
+                <ContentPresenter Content="ZeroBootstrap" ContentTemplate="{StaticResource ZeroTitleBarLockup}" VerticalAlignment="Center" />
+            </ui:TitleBar.Header>
+        </ui:TitleBar>
 
         <Grid x:Name="RootGrid" Grid.Row="1" Margin="12,12,0,0" Visibility="Visible">
             <Grid.RowDefinitions>
@@ -36,11 +41,12 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <ui:NavigationFluent x:Name="RootNavigation" Grid.Row="1" Grid.Column="0" Margin="0,0,12,0" Frame="{Binding ElementName=RootFrame}" SelectedPageIndex="0" IsEnabled="False">
+            <!--  Step rail. Disabled on purpose: steps are driven by Back/Next so per-page validation can't be skipped.  -->
+            <ui:NavigationFluent x:Name="RootNavigation" Style="{StaticResource ZeroNavigationFluentStyle}" Grid.Row="1" Grid.Column="0" Margin="0,0,12,0" Frame="{Binding ElementName=RootFrame}" SelectedPageIndex="0" IsEnabled="False">
                 <ui:NavigationFluent.Items>
-                    <ui:NavigationItem Content="{x:Static resources:Strings.Installer_Welcome_Title}" PageType="{x:Type pages:WelcomePage}" Icon="ArrowCircleRight48" />
-                    <ui:NavigationItem Content="{x:Static resources:Strings.Installer_Install_Title}" PageType="{x:Type pages:InstallPage}" Icon="ArrowCircleRight48" />
-                    <ui:NavigationItem Content="{x:Static resources:Strings.Installer_Completion_Title}" PageType="{x:Type pages:CompletionPage}" Icon="ArrowCircleRight48" />
+                    <ui:NavigationItem Content="{x:Static resources:Strings.Installer_Welcome_Title}" PageType="{x:Type pages:WelcomePage}" Icon="Home24" />
+                    <ui:NavigationItem Content="{x:Static resources:Strings.Installer_Install_Title}" PageType="{x:Type pages:InstallPage}" Icon="ArrowDownload24" />
+                    <ui:NavigationItem Content="{x:Static resources:Strings.Installer_Completion_Title}" PageType="{x:Type pages:CompletionPage}" Icon="CheckmarkCircle24" />
                 </ui:NavigationFluent.Items>
             </ui:NavigationFluent>
 
@@ -71,7 +77,7 @@
                 <ui:Button Content="{x:Static resources:Strings.Common_Navigation_Back}" Width="{Binding ButtonWidth, Mode=OneTime}" Command="{Binding BackPageCommand, Mode=OneWay}" IsEnabled="{Binding BackButtonEnabled, Mode=OneWay}" />
             </StatusBarItem>
             <StatusBarItem Grid.Column="2" Padding="4,0,4,0">
-                <ui:Button Name="NextButton" Content="{Binding NextButtonText, Mode=OneWay}" Width="{Binding ButtonWidth, Mode=OneTime}" Command="{Binding NextPageCommand, Mode=OneWay}" IsEnabled="{Binding NextButtonEnabled, Mode=OneWay}" />
+                <ui:Button Name="NextButton" Appearance="Primary" Content="{Binding NextButtonText, Mode=OneWay}" Width="{Binding ButtonWidth, Mode=OneTime}" Command="{Binding NextPageCommand, Mode=OneWay}" IsEnabled="{Binding NextButtonEnabled, Mode=OneWay}" />
             </StatusBarItem>
             <StatusBarItem Grid.Column="3" Padding="12,0,0,0">
                 <ui:Button Content="{x:Static resources:Strings.Common_Close}" Width="{Binding ButtonWidth, Mode=OneTime}" Command="{Binding CloseWindowCommand, Mode=OneWay}" />

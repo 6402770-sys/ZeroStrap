@@ -14,7 +14,7 @@
       Title="AboutPage"
       Scrollable="True">
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Text="{x:Static resources:Strings.About_Supporters_Title}" FontWeight="Medium" FontSize="24" />
+        <TextBlock Text="{x:Static resources:Strings.About_Supporters_Title}" Style="{StaticResource ZeroPageTitleStyle}" />
         <controls:MarkdownTextBlock MarkdownText="{x:Static resources:Strings.About_Supporters_Description}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
 
         <Grid Margin="0,8,0,0">
@@ -70,7 +70,7 @@
                 </Style>
             </StackPanel.Style>
 
-            <TextBlock Text="{x:Static resources:Strings.About_Supporters_Monthly}" FontWeight="Medium" FontSize="20" Margin="0,16,0,0" />
+            <TextBlock Text="{x:Static resources:Strings.About_Supporters_Monthly}" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{StaticResource ZeroSectionMargin}" />
             <ListView ItemsSource="{Binding SupporterData.Monthly.Supporters, Mode=OneWay}" Margin="0,8,0,0" ScrollViewer.CanContentScroll="False" IsEnabled="False">
                 <ListView.ItemTemplate>
                     <DataTemplate>
@@ -99,7 +99,7 @@
                 </ListView.ItemsPanel>
             </ListView>
 
-            <TextBlock Text="{x:Static resources:Strings.About_Supporters_OneOff}" FontWeight="Medium" FontSize="20" Margin="0,16,0,0" />
+            <TextBlock Text="{x:Static resources:Strings.About_Supporters_OneOff}" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{StaticResource ZeroSectionMargin}" />
             <ListView ItemsSource="{Binding SupporterData.OneOff.Supporters, Mode=OneWay}" Margin="0,8,0,0" ScrollViewer.CanContentScroll="False" IsEnabled="False">
                 <ListView.ItemTemplate>
                     <DataTemplate>

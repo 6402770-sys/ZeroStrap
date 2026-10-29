@@ -27,6 +27,18 @@ namespace Bloxstrap.UI.ViewModels.Settings
             set => App.Settings.Prop.UseFastFlagManager = value;
         }
 
+        public bool UseMemoryFlagInjection
+        {
+            get => App.Settings.Prop.UseMemoryFlagInjection;
+            set => App.Settings.Prop.UseMemoryFlagInjection = value;
+        }
+
+        public bool EnableMemoryFlagWatchdog
+        {
+            get => App.Settings.Prop.EnableMemoryFlagWatchdog;
+            set => App.Settings.Prop.EnableMemoryFlagWatchdog = value;
+        }
+
         public IReadOnlyDictionary<MSAAMode, string?> MSAALevels => FastFlagManager.MSAAModes;
 
         public MSAAMode SelectedMSAALevel

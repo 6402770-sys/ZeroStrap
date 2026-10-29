@@ -203,6 +203,37 @@ namespace Bloxstrap
 
             App.AssertWindowsOSVersion();
 
+            // Memory FFlag inject needs the running Roblox build to match the
+            // offset dump byte-for-byte. If memory inject is on and the user
+            // hasn't explicitly pinned a version via launch args, probe
+            // Imtheo's current build target and pin the launch to it. The
+            // normal pipeline below installs that specific build the same
+            // way it would install the latest production build.
+            if (_launchMode == LaunchMode.Player
+                && App.Settings.Prop.UseMemoryFlagInjection
+                && !App.LaunchSettings.VersionFlag.Active)
+            {
+                try
+                {
+                    SetStatus(Strings.Bootstrapper_Status_Connecting);
+                    string? imtheoGuid = await Bloxstrap.FastFlags.Memory.OffsetBuildProbe.ProbeAsync(_cancelTokenSource.Token);
+                    if (!string.IsNullOrWhiteSpace(imtheoGuid))
+                    {
+                        App.Logger.WriteLine(LOG_IDENT, $"Memory inject: pinning launch to Imtheo-matched build {imtheoGuid}");
+                        App.LaunchSettings.VersionFlag.Active = true;
+                        App.LaunchSettings.VersionFlag.Data = imtheoGuid;
+                    }
+                    else
+                    {
+                        App.Logger.WriteLine(LOG_IDENT, "Memory inject: Imtheo build probe returned nothing — launching production build; memory writes may be blocked by the version guard");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Memory inject build probe failed: {ex.Message}");
+                }
+            }
+
             // if we dont know our launch type, find out now!
             if (_launchMode == LaunchMode.Unknown)
             {
@@ -624,6 +655,29 @@ namespace Bloxstrap
 
             App.Logger.WriteLine(LOG_IDENT, $"Started Roblox (PID {_appPid}), waiting for log file");
 
+            // Live FFlag memory injection (ported from Roblox FFlag Manager).
+            // ClientAppSettings.json already covers boot-time flags; this
+            // handles the ones Roblox resets at runtime and the ones its
+            // config loader filters out.
+            if (App.Settings.Prop.UseMemoryFlagInjection
+                && _launchMode == LaunchMode.Player
+                && App.FastFlags.Prop.Count > 0)
+            {
+                try
+                {
+                    var flagMap = App.FastFlags.Prop.ToDictionary(
+                        kv => kv.Key,
+                        kv => kv.Value?.ToString() ?? "");
+                    var injector = new Bloxstrap.FastFlags.Memory.MemoryFlagInjector(_appPid, flagMap, _latestVersionGuid);
+                    injector.StartBackground(App.Settings.Prop.EnableMemoryFlagWatchdog);
+                    App.Logger.WriteLine(LOG_IDENT, $"Started memory FFlag injector for pid {_appPid} ({flagMap.Count} flags, watchdog={App.Settings.Prop.EnableMemoryFlagWatchdog}, build={_latestVersionGuid})");
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Memory FFlag injector failed to start: {ex.Message}");
+                }
+            }
+
             logCreatedEvent.WaitOne(TimeSpan.FromSeconds(15));
 
             if (String.IsNullOrEmpty(logFileName))
@@ -673,15 +727,35 @@ namespace Bloxstrap
                     autoclosePids.Add(pid);
             }
 
-            if (App.Settings.Prop.EnableActivityTracking || App.LaunchSettings.TestModeFlag.Active || autoclosePids.Any())
+            // Hoist the memory-watchdog flag map here so the Watcher trigger
+            // below can both (a) see it in its spawn condition and (b) stuff
+            // it into WatcherData. The injector running inside Watcher.exe
+            // is what makes the watchdog survive Bloxstrap's own exit.
+            Dictionary<string, string>? memoryWatchdogFlags = null;
+            if (App.Settings.Prop.UseMemoryFlagInjection
+                && App.Settings.Prop.EnableMemoryFlagWatchdog
+                && _launchMode == LaunchMode.Player
+                && App.FastFlags.Prop.Count > 0)
+            {
+                memoryWatchdogFlags = App.FastFlags.Prop.ToDictionary(
+                    kv => kv.Key,
+                    kv => kv.Value?.ToString() ?? "");
+            }
+
+            if (App.Settings.Prop.EnableActivityTracking
+                || App.LaunchSettings.TestModeFlag.Active
+                || autoclosePids.Any()
+                || memoryWatchdogFlags is not null)
             {
                 using var ipl = new InterProcessLock("Watcher", TimeSpan.FromSeconds(5));
 
-                var watcherData = new WatcherData 
-                { 
-                    ProcessId = _appPid, 
-                    LogFile = logFileName, 
-                    AutoclosePids = autoclosePids
+                var watcherData = new WatcherData
+                {
+                    ProcessId = _appPid,
+                    LogFile = logFileName,
+                    AutoclosePids = autoclosePids,
+                    MemoryFlags = memoryWatchdogFlags,
+                    MemoryFlagBuildVersion = memoryWatchdogFlags is not null ? _latestVersionGuid : null
                 };
 
                 string watcherDataArg = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(watcherData)));

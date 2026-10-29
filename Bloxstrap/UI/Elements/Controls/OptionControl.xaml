@@ -10,7 +10,17 @@
              mc:Ignorable="d" 
              x:Name="Control"
              d:DesignHeight="450" d:DesignWidth="800">
-    <ui:Card Margin="0,8,0,0">
+    <!--  ZeroBootstrap: hover outline fades in over the card; theme brushes are never mutated.  -->
+    <Grid Margin="0,8,0,0" Background="Transparent">
+        <Grid.Triggers>
+            <EventTrigger RoutedEvent="MouseEnter">
+                <BeginStoryboard Storyboard="{StaticResource ZeroHoverIn}" />
+            </EventTrigger>
+            <EventTrigger RoutedEvent="MouseLeave">
+                <BeginStoryboard Storyboard="{StaticResource ZeroHoverOut}" />
+            </EventTrigger>
+        </Grid.Triggers>
+    <ui:Card>
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -23,7 +33,7 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" FontSize="14" Text="{Binding Header, ElementName=Control}" />
+                    <TextBlock Grid.Column="0" FontSize="14" FontWeight="Medium" Text="{Binding Header, ElementName=Control}" />
                     <TextBlock Grid.Column="1" Margin="4,0,0,0">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
@@ -74,4 +84,6 @@
             <ContentControl Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0" Content="{Binding InnerContent, ElementName=Control}" />
         </Grid>
     </ui:Card>
+        <Border x:Name="HoverOutline" Style="{StaticResource ZeroHoverOutlineStyle}" />
+    </Grid>
 </UserControl>

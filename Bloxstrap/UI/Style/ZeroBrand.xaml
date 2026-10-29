@@ -1,0 +1,438 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+
+    <!--
+        ZERO / BLACKOUT design system.
+
+        Everything here is theme-aware: colours come from the WPF-UI theme keys (overridden with
+        the BLACKOUT palette in Dark.xaml), so Light theme keeps working. Assets are vector-only.
+
+        Brand rule: one diagonal. The Z mark's diagonal sets the angle (~48deg) of every chamfer
+        in the mark and the wordmark, always cutting the top-left and bottom-right corners.
+    -->
+
+    <!-- ============================== BRAND GEOMETRY ============================== -->
+
+    <!--  Z mark, 100x100, bar = 20. Single non-overlapping polygon (F1 = nonzero).  -->
+    <Geometry x:Key="ZeroLogoGeometry">F1 M23,0 H100 V20 L32,80 H100 L77,100 H0 V80 L68,20 H0 Z</Geometry>
+
+    <!--  Compact mark for 14-20px: heavier bars and a wider diagonal so it survives downscaling.  -->
+    <Geometry x:Key="ZeroLogoCompactGeometry">F1 M30,0 H100 V24 L36,76 H100 L70,100 H0 V76 L64,24 H0 Z</Geometry>
+
+    <!--
+        ZERO wordmark, 372x100, stroke = 16. Drawn, not typed: the letters share the mark's
+        chamfer so the lockup reads as one system. F0 (even-odd) cuts the R and O counters.
+    -->
+    <Geometry x:Key="ZeroWordmarkGeometry">F0 M12,0 H76 V16 L25,84 H76 L64,100 H0 V84 L51,16 H0 Z M110,0 H174 V16 H114 V42 H166 V58 H114 V84 H174 V100 H98 V12 Z M196,0 H256 L272,16 V44 L262,54 L274,100 H257 L246,62 H212 V100 H196 Z M212,16 H250 L256,22 V40 L250,46 H212 Z M308,0 H372 V88 L360,100 H296 V12 Z M312,16 V84 H356 V16 Z</Geometry>
+
+    <!-- ============================== SCALE TOKENS ============================== -->
+
+    <!--  Slightly softer than Fluent's 4px; applied app-wide through WPF-UI's own key.  -->
+    <CornerRadius x:Key="ControlCornerRadius">6</CornerRadius>
+    <CornerRadius x:Key="ZeroRadiusSurface">10</CornerRadius>
+    <CornerRadius x:Key="ZeroRadiusTile">14</CornerRadius>
+
+    <Thickness x:Key="ZeroSectionMargin">0,28,0,0</Thickness>
+
+    <sys:Double x:Key="ZeroFontSizeDisplay">28</sys:Double>
+    <sys:Double x:Key="ZeroFontSizeTitle">22</sys:Double>
+    <sys:Double x:Key="ZeroFontSizeSection">17</sys:Double>
+    <sys:Double x:Key="ZeroFontSizeBody">14</sys:Double>
+    <sys:Double x:Key="ZeroFontSizeCaption">12</sys:Double>
+    <sys:Double x:Key="ZeroFontSizeEyebrow">11</sys:Double>
+
+    <!-- ============================== BRAND ELEMENTS ============================== -->
+
+    <Style x:Key="ZeroMarkStyle" TargetType="{x:Type Path}">
+        <Setter Property="Data" Value="{StaticResource ZeroLogoCompactGeometry}" />
+        <Setter Property="Fill" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Stretch" Value="Uniform" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="ZeroWordmarkPathStyle" TargetType="{x:Type Path}">
+        <Setter Property="Data" Value="{StaticResource ZeroWordmarkGeometry}" />
+        <Setter Property="Fill" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Stretch" Value="Uniform" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!--  "BOOTSTRAP" descriptor. WPF has no letter-spacing, so tracking is set with hair spaces in the text.  -->
+    <Style x:Key="ZeroDescriptorStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="AutomationProperties.Name" Value="Bootstrap" />
+    </Style>
+
+    <!--  Title bar lockup: mark | ZERO  BOOTSTRAP  -->
+    <DataTemplate x:Key="ZeroTitleBarLockup">
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0,0,0"
+                    AutomationProperties.Name="ZeroBootstrap">
+            <Path Style="{StaticResource ZeroMarkStyle}" Width="15" Height="15" />
+            <Rectangle Width="1" Height="12" Margin="10,0" Fill="{DynamicResource DividerStrokeColorDefaultBrush}" />
+            <Path Style="{StaticResource ZeroWordmarkPathStyle}" Height="10" />
+            <TextBlock Style="{StaticResource ZeroDescriptorStyle}" Margin="8,1,0,0"
+                       Text="B&#x200A;O&#x200A;O&#x200A;T&#x200A;S&#x200A;T&#x200A;R&#x200A;A&#x200A;P" />
+        </StackPanel>
+    </DataTemplate>
+
+    <!--
+        Same lockup on an opaque plate, for title bars whose Title text is set from code
+        (FluentMessageBox). The plate covers that text so only the brand shows. Drag still works:
+        the TitleBar handles MouseLeftButtonDown on its main grid, which this bubbles to.
+    -->
+    <DataTemplate x:Key="ZeroTitleBarLockupMasked">
+        <Border Background="{DynamicResource ApplicationBackgroundBrush}" HorizontalAlignment="Stretch">
+            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource ZeroTitleBarLockup}" VerticalAlignment="Center" />
+        </Border>
+    </DataTemplate>
+
+    <!--  Secondary windows: mark | dialog title. Content is the title string.  -->
+    <DataTemplate x:Key="ZeroTitleBarCaption">
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0,0,0">
+            <Path Style="{StaticResource ZeroMarkStyle}" Width="15" Height="15" />
+            <Rectangle Width="1" Height="12" Margin="10,0" Fill="{DynamicResource DividerStrokeColorDefaultBrush}" />
+            <TextBlock Text="{Binding}" FontSize="12" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+        </StackPanel>
+    </DataTemplate>
+
+    <!-- ============================== DIALOGS ============================== -->
+
+    <!--  Action bar at the bottom of a dialog: a step darker than the body, one hairline on top.  -->
+    <Style x:Key="ZeroDialogFooterStyle" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource SolidBackgroundFillColorSecondaryBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DividerStrokeColorDefaultBrush}" />
+        <Setter Property="BorderThickness" Value="0,1,0,0" />
+        <Setter Property="Padding" Value="16,14" />
+    </Style>
+
+    <!--  Logs and stack traces.  -->
+    <FontFamily x:Key="ZeroMonoFont">Cascadia Mono, Consolas, Courier New</FontFamily>
+
+    <!-- ============================== TYPOGRAPHY ============================== -->
+
+    <Style x:Key="ZeroPageTitleStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="{StaticResource ZeroFontSizeTitle}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <!--  Section heading inside a page. Pages keep their own top margin where it was set inline.  -->
+    <Style x:Key="ZeroSectionTitleStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="{StaticResource ZeroFontSizeSection}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <!--  Group inside a section: clearly below the section title, above option rows.  -->
+    <Style x:Key="ZeroSubsectionTitleStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="{StaticResource ZeroFontSizeBody}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="ZeroBodyStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="{StaticResource ZeroFontSizeBody}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="LineHeight" Value="20" />
+    </Style>
+
+    <Style x:Key="ZeroCaptionStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="{StaticResource ZeroFontSizeCaption}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <!--  Small uppercase label above a group. Write the text in caps.  -->
+    <Style x:Key="ZeroEyebrowStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="{StaticResource ZeroFontSizeEyebrow}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+        <Setter Property="Margin" Value="0,0,0,6" />
+    </Style>
+
+    <!--  Back-compat keys from the first ZERO pass  -->
+    <Style x:Key="ZeroSectionHeadingStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource ZeroPageTitleStyle}" />
+    <Style x:Key="ZeroMicroLabelStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource ZeroEyebrowStyle}" />
+
+    <!-- ============================== SURFACES ============================== -->
+
+    <Style x:Key="ZeroCardStyle" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource ZeroRadiusSurface}" />
+        <Setter Property="Padding" Value="16" />
+    </Style>
+
+    <!--  Hero surface: the only place with a gradient, kept strictly monochrome.  -->
+    <Style x:Key="ZeroHeroStyle" TargetType="{x:Type Border}" BasedOn="{StaticResource ZeroCardStyle}">
+        <Setter Property="Padding" Value="28" />
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Offset="0" Color="#14FFFFFF" />
+                    <GradientStop Offset="0.55" Color="#05FFFFFF" />
+                    <GradientStop Offset="1" Color="#00FFFFFF" />
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  Square tile that hosts the mark (About, installer).  -->
+    <Style x:Key="ZeroMarkTileStyle" TargetType="{x:Type Border}">
+        <Setter Property="Width" Value="72" />
+        <Setter Property="Height" Value="72" />
+        <Setter Property="CornerRadius" Value="{StaticResource ZeroRadiusTile}" />
+        <Setter Property="Background" Value="{DynamicResource SolidBackgroundFillColorBaseBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="18" />
+    </Style>
+
+    <!--  Pill used for version / status metadata.  -->
+    <Style x:Key="ZeroChipStyle" TargetType="{x:Type Border}">
+        <Setter Property="CornerRadius" Value="11" />
+        <Setter Property="Padding" Value="9,2,9,3" />
+        <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- ============================== FAST FLAG WORKSPACE ============================== -->
+
+    <!--  Status tag: "PLAYER" (on Roblox's allowlist) is solid; "EXPERIMENTAL" is outline-only and dimmer.  -->
+    <Style x:Key="ZeroTagStyle" TargetType="{x:Type Border}">
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="6,1,6,2" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="Background" Value="{DynamicResource ControlFillColorTertiaryBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+    </Style>
+
+    <Style x:Key="ZeroTagOutlineStyle" TargetType="{x:Type Border}" BasedOn="{StaticResource ZeroTagStyle}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorSecondaryBrush}" />
+    </Style>
+
+    <Style x:Key="ZeroTagTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    </Style>
+
+    <!--  Quiet notice: a thin rule on the left instead of a coloured banner.  -->
+    <Style x:Key="ZeroNoticeStyle" TargetType="{x:Type Border}">
+        <Setter Property="BorderThickness" Value="2,0,0,0" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+        <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+        <Setter Property="CornerRadius" Value="0,6,6,0" />
+        <Setter Property="Padding" Value="12,8" />
+    </Style>
+
+    <!--  Side panel / sub-surface inside a page.  -->
+    <Style x:Key="ZeroPanelStyle" TargetType="{x:Type Border}" BasedOn="{StaticResource ZeroCardStyle}">
+        <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+        <Setter Property="Padding" Value="14" />
+    </Style>
+
+    <!--  Underline tabs: a single row of text tabs, the selected one marked by a 2px rule.  -->
+    <Style x:Key="ZeroTabItemStyle" TargetType="{x:Type TabItem}">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TabItem}">
+                    <Grid Background="Transparent" Margin="0,0,20,0">
+                        <ContentPresenter ContentSource="Header" Margin="0,4,0,8" RecognizesAccessKey="True" TextElement.Foreground="{TemplateBinding Foreground}" />
+                        <Border x:Name="Indicator" Height="2" VerticalAlignment="Bottom" CornerRadius="1" Background="{DynamicResource TextFillColorPrimaryBrush}" Opacity="0" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                            <Setter TargetName="Indicator" Property="Opacity" Value="1" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True" />
+                                <Condition Property="IsSelected" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                            <Setter TargetName="Indicator" Property="Opacity" Value="0.25" />
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ZeroTabControlStyle" TargetType="{x:Type TabControl}">
+        <Setter Property="ItemContainerStyle" Value="{StaticResource ZeroTabItemStyle}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TabControl}">
+                    <Grid KeyboardNavigation.TabNavigation="Local">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
+                            <TabPanel IsItemsHost="True" KeyboardNavigation.TabIndex="1" />
+                        </Border>
+                        <ContentPresenter Grid.Row="1" x:Name="PART_SelectedContentHost" ContentSource="SelectedContent" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  Data grid cells: vertically centred content and the monochrome selection used by the flag editor.  -->
+    <Style x:Key="ZeroDataGridCellStyle" TargetType="{x:Type DataGridCell}">
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type DataGridCell}">
+                    <Border Background="{TemplateBinding Background}" Padding="6,0,6,0">
+                        <ContentPresenter VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Foreground">
+                    <Setter.Value>
+                        <SolidColorBrush Color="{DynamicResource TextOnAccentFillColorPrimary}" />
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Background">
+                    <Setter.Value>
+                        <SolidColorBrush Color="{DynamicResource SystemAccentColorSecondary}" />
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  Centered message for empty lists.  -->
+    <Style x:Key="ZeroEmptyStateStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource ZeroCaptionStyle}">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="MaxWidth" Value="360" />
+        <Setter Property="IsHitTestVisible" Value="False" />
+    </Style>
+
+    <!-- ============================== MOTION ============================== -->
+    <!--
+        Durations: 120-180ms for interactions, 240ms for view changes. All animations are
+        one-shot (no forever storyboards) and only run when Windows "Animation effects" is on
+        (SystemParameters.ClientAreaAnimation). Without them the UI is fully static and usable.
+    -->
+
+    <CubicEase x:Key="ZeroEaseOut" EasingMode="EaseOut" />
+    <QuinticEase x:Key="ZeroEaseOutStrong" EasingMode="EaseOut" />
+
+    <!--  Root grid of every window: soft fade on first show.  -->
+    <Style x:Key="ZeroWindowRootStyle" TargetType="{x:Type Grid}">
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Source={x:Static SystemParameters.ClientAreaAnimation}}" Value="True">
+                <DataTrigger.EnterActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1"
+                                             Duration="0:0:0.24" EasingFunction="{StaticResource ZeroEaseOut}" />
+                        </Storyboard>
+                    </BeginStoryboard>
+                </DataTrigger.EnterActions>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  Page transitions are WPF-UI's own (RenderTransform + opacity). We only shorten them and honour reduced motion.  -->
+    <Style x:Key="ZeroNavigationFluentStyle" TargetType="{x:Type ui:NavigationFluent}" BasedOn="{StaticResource {x:Type ui:NavigationFluent}}">
+        <Setter Property="TransitionDuration" Value="240" />
+        <Setter Property="TransitionType" Value="FadeInWithSlide" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Source={x:Static SystemParameters.ClientAreaAnimation}}" Value="False">
+                <Setter Property="TransitionType" Value="None" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="ZeroNavigationStoreStyle" TargetType="{x:Type ui:NavigationStore}" BasedOn="{StaticResource {x:Type ui:NavigationStore}}">
+        <Setter Property="TransitionDuration" Value="240" />
+        <Setter Property="TransitionType" Value="FadeInWithSlide" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Source={x:Static SystemParameters.ClientAreaAnimation}}" Value="False">
+                <Setter Property="TransitionType" Value="None" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  Brand reveal for the mark tile: short scale-settle + fade, used once per view.  -->
+    <Style x:Key="ZeroRevealStyle" TargetType="{x:Type FrameworkElement}">
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        <Setter Property="RenderTransform">
+            <Setter.Value>
+                <ScaleTransform ScaleX="1" ScaleY="1" />
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Source={x:Static SystemParameters.ClientAreaAnimation}}" Value="True">
+                <DataTrigger.EnterActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.28"
+                                             EasingFunction="{StaticResource ZeroEaseOut}" />
+                            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.ScaleX" From="0.92" To="1" Duration="0:0:0.32"
+                                             EasingFunction="{StaticResource ZeroEaseOutStrong}" />
+                            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.ScaleY" From="0.92" To="1" Duration="0:0:0.32"
+                                             EasingFunction="{StaticResource ZeroEaseOutStrong}" />
+                        </Storyboard>
+                    </BeginStoryboard>
+                </DataTrigger.EnterActions>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--
+        Hover outline for interactive cards: an overlay border whose opacity is animated, so the
+        theme brushes underneath are never mutated. Place it on top of the card, same CornerRadius.
+    -->
+    <Style x:Key="ZeroHoverOutlineStyle" TargetType="{x:Type Border}">
+        <Setter Property="IsHitTestVisible" Value="False" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+        <Setter Property="Opacity" Value="0" />
+    </Style>
+
+    <Storyboard x:Key="ZeroHoverIn">
+        <DoubleAnimation Storyboard.TargetName="HoverOutline" Storyboard.TargetProperty="Opacity" To="0.16"
+                         Duration="0:0:0.14" EasingFunction="{StaticResource ZeroEaseOut}" />
+    </Storyboard>
+    <Storyboard x:Key="ZeroHoverOut">
+        <DoubleAnimation Storyboard.TargetName="HoverOutline" Storyboard.TargetProperty="Opacity" To="0"
+                         Duration="0:0:0.18" EasingFunction="{StaticResource ZeroEaseOut}" />
+    </Storyboard>
+
+</ResourceDictionary>

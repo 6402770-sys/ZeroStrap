@@ -15,6 +15,7 @@
       KeyDown="UiPage_KeyDown"
       Scrollable="True">
 
+
     <ui:UiPage.Resources>
         <Storyboard x:Key="EggStoryboard">
             <DoubleAnimation Storyboard.TargetName="Image1" Storyboard.TargetProperty="Opacity" From="1.0" To="0.0" Duration="0:0:3" />
@@ -24,29 +25,39 @@
 
     <StackPanel Margin="0,0,14,14">
 
-        <Grid Margin="0,0,0,24" HorizontalAlignment="Center">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+        <!--  ZeroBootstrap: identity hero. Mark tile | drawn wordmark, descriptor, version chip, tagline.  -->
+        <Border Style="{StaticResource ZeroHeroStyle}" Margin="0,0,0,28">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-            <Image x:Name="Image1" Grid.Column="0" Width="72" Height="72" VerticalAlignment="Center" Source="pack://application:,,,/Bloxstrap.ico" RenderOptions.BitmapScalingMode="HighQuality" />
-            <Image x:Name="Image2" Grid.Column="0" Width="72" Height="72" VerticalAlignment="Center" Source="pack://application:,,,/Resources/BootstrapperStyles/ByfronDialog/Matt.png" RenderOptions.BitmapScalingMode="HighQuality" Opacity="0" />
-            
-            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="Bloxstrap" Margin="0,0,4,0" FontSize="24" FontWeight="Medium" />
-                    <TextBlock Grid.Column="1" Text="{Binding Version, Mode=OneTime}" Margin="4,0,0,2" VerticalAlignment="Bottom" FontSize="16" FontWeight="Medium" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                <!--  Image1 / Image2 are the targets of EggStoryboard (see AboutPage.xaml.cs); keep the names.  -->
+                <Grid Grid.Column="0" Width="88" Height="88" VerticalAlignment="Center" Style="{StaticResource ZeroRevealStyle}">
+                    <Border x:Name="Image1" Style="{StaticResource ZeroMarkTileStyle}" Width="88" Height="88" Padding="22">
+                        <Path Style="{StaticResource ZeroMarkStyle}" Data="{StaticResource ZeroLogoGeometry}" />
+                    </Border>
+                    <Image x:Name="Image2" Width="88" Height="88" Source="pack://application:,,,/Resources/BootstrapperStyles/ByfronDialog/Matt.png" RenderOptions.BitmapScalingMode="HighQuality" Opacity="0" />
                 </Grid>
-                <TextBlock Text="{x:Static resources:Strings.Menu_About_Description}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-            </StackPanel>
-        </Grid>
 
-        <WrapPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                <StackPanel Grid.Column="1" Margin="24,0,0,0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" AutomationProperties.Name="ZeroBootstrap">
+                        <Path Style="{StaticResource ZeroWordmarkPathStyle}" Height="24" />
+                        <TextBlock Style="{StaticResource ZeroDescriptorStyle}" FontSize="12" Margin="12,3,0,0"
+                                   Text="B&#x200A;O&#x200A;O&#x200A;T&#x200A;S&#x200A;T&#x200A;R&#x200A;A&#x200A;P" />
+                    </StackPanel>
+                    <TextBlock Margin="0,12,0,0" Style="{StaticResource ZeroBodyStyle}" Text="{x:Static resources:Strings.Menu_About_Description}" />
+                    <Border Style="{StaticResource ZeroChipStyle}" Margin="0,14,0,0" HorizontalAlignment="Left">
+                        <TextBlock Text="{Binding Version, Mode=OneTime}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!--  These links belong to the upstream project ZeroBootstrap is forked from; labelled as such.  -->
+        <TextBlock Style="{StaticResource ZeroEyebrowStyle}" Text="UPSTREAM PROJECT · BLOXSTRAP" />
+        <WrapPanel HorizontalAlignment="Left" Orientation="Horizontal">
             <ui:Anchor Margin="0,0,8,8" Content="{x:Static resources:Strings.Menu_About_GithubRepository}" Icon="Code24" NavigateUri="https://github.com/bloxstraplabs/bloxstrap" />
             <ui:Anchor Margin="0,0,8,8" Content="{x:Static resources:Strings.Menu_About_HelpInformation}" Icon="BookQuestionMark24" NavigateUri="https://bloxstraplabs.com/wiki/" />
             <ui:Anchor Margin="0,0,8,8" Content="{x:Static resources:Strings.Menu_About_ReportIssue}" Icon="BookExclamationMark24" NavigateUri="https://github.com/bloxstraplabs/bloxstrap/issues" />
@@ -54,7 +65,7 @@
         </WrapPanel>
 
         <StackPanel Visibility="{Binding BuildInformationVisibility, Mode=OneTime}">
-            <TextBlock Text="Build Information" FontWeight="Medium" FontSize="20" Margin="0,16,0,0" />
+            <TextBlock Text="Build Information" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{StaticResource ZeroSectionMargin}" />
 
             <Grid Column="0" Margin="0,8,0,0">
                 <Grid.RowDefinitions>
@@ -86,7 +97,7 @@
             </Grid>
         </StackPanel>
 
-        <TextBlock Text="{x:Static resources:Strings.Menu_About_Contributors}" FontWeight="Medium" FontSize="20" Margin="0,16,0,0" />
+        <TextBlock Text="{x:Static resources:Strings.Menu_About_Contributors}" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{StaticResource ZeroSectionMargin}" />
         <TextBlock Text="{x:Static resources:Strings.Menu_About_Contributors_Description}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
         <Grid Margin="0,8,0,0">
             <Grid.ColumnDefinitions>

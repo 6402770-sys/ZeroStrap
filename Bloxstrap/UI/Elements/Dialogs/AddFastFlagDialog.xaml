@@ -16,21 +16,26 @@
         ResizeMode="NoResize"
         Background="{ui:ThemeResource ApplicationBackgroundBrush}"
         ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="None"
         WindowStartupLocation="CenterScreen">
     <ui:UiWindow.Resources>
         <converters:RangeConverter x:Key="ValidationConverter" From="0" />
     </ui:UiWindow.Resources>
     
-    <Grid>
+    <Grid Style="{StaticResource ZeroWindowRootStyle}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Grid.ColumnSpan="2" Padding="8" Title="{x:Static resources:Strings.Dialog_AddFastFlag_Title}" ShowMinimize="False" ShowMaximize="False" CanMaximize="False" KeyboardNavigation.TabNavigation="None" />
+        <ui:TitleBar Grid.Row="0" Grid.ColumnSpan="2" Padding="8" Title="" Icon="{x:Null}" ShowMinimize="False" ShowMaximize="False" CanMaximize="False" KeyboardNavigation.TabNavigation="None">
+            <ui:TitleBar.Header>
+                <ContentPresenter Content="{x:Static resources:Strings.Dialog_AddFastFlag_Title}" ContentTemplate="{StaticResource ZeroTitleBarCaption}" VerticalAlignment="Center" />
+            </ui:TitleBar.Header>
+        </ui:TitleBar>
 
-        <TabControl x:Name="Tabs" Grid.Row="1" Margin="16">
+        <TabControl x:Name="Tabs" Grid.Row="1" Margin="20,12,20,20">
             <TabItem Header="{x:Static resources:Strings.Common_AddSingle}">
                 <Grid Grid.Row="1" Margin="16">
                     <Grid.RowDefinitions>
@@ -55,8 +60,8 @@
                         <RowDefinition Height="*" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <TextBox Grid.Row="0" x:Name="JsonTextBox" Margin="5" AcceptsTab="True" AcceptsReturn="True" MinHeight="80" MaxHeight="480" />
-                    <TextBlock Grid.Row="0" IsHitTestVisible="False" Margin="18,14,0,0" Foreground="DarkGray" Text="{}{&#10;    &quot;FFlagDebugDisplayFPS&quot;: &quot;True&quot;&#10;}">
+                    <TextBox Grid.Row="0" x:Name="JsonTextBox" Margin="5" FontFamily="{StaticResource ZeroMonoFont}" AcceptsTab="True" AcceptsReturn="True" MinHeight="80" MaxHeight="480" />
+                    <TextBlock Grid.Row="0" IsHitTestVisible="False" Margin="18,14,0,0" Foreground="{DynamicResource TextPlaceholderColorBrush}" FontFamily="{StaticResource ZeroMonoFont}" Text="{}{&#10;    &quot;FFlagDebugDisplayFPS&quot;: &quot;True&quot;&#10;}">
                         <TextBlock.Style>
                             <Style TargetType="{x:Type TextBlock}">
                                 <Setter Property="Visibility" Value="Collapsed"/>
@@ -73,11 +78,11 @@
             </TabItem>
         </TabControl>
 
-        <Border Grid.Row="2" Margin="0,10,0,0" Padding="15" Background="{ui:ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+        <Border Grid.Row="2" Style="{StaticResource ZeroDialogFooterStyle}">
             <StackPanel Orientation="Horizontal" FlowDirection="LeftToRight" HorizontalAlignment="Right">
-                <Button MinWidth="100" Content="{x:Static resources:Strings.Common_OK}" Click="OKButton_Click">
-                    <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                <ui:Button MinWidth="100" Appearance="Primary" Content="{x:Static resources:Strings.Common_OK}" Click="OKButton_Click">
+                    <ui:Button.Style>
+                        <Style TargetType="{x:Type ui:Button}" BasedOn="{StaticResource {x:Type ui:Button}}">
                             <Style.Triggers>
                                 <MultiDataTrigger>
                                     <MultiDataTrigger.Conditions>
@@ -96,9 +101,9 @@
                             </Style.Triggers>
                             <Setter Property="IsEnabled" Value="False" />
                         </Style>
-                    </Button.Style>
-                </Button>
-                <Button MinWidth="100" Margin="12,0,0,0" Content="{x:Static resources:Strings.Common_Cancel}" IsCancel="True" />
+                    </ui:Button.Style>
+                </ui:Button>
+                <Button MinWidth="100" Margin="8,0,0,0" Content="{x:Static resources:Strings.Common_Cancel}" IsCancel="True" />
             </StackPanel>
         </Border>
     </Grid>

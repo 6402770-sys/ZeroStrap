@@ -32,6 +32,13 @@ namespace Bloxstrap.UI.Elements.Settings
             if (showAlreadyRunningWarning)
                 ShowAlreadyRunningSnackbar();
 
+            // Fast Flag shortcuts are scoped to this window and detach themselves when it closes
+            FastFlags.FlagBindingHost.Attach(this, message =>
+            {
+                FlagBindingSnackbar.Message = message;
+                FlagBindingSnackbar.Show();
+            });
+
             LoadState();
         }
 

@@ -108,6 +108,25 @@ namespace Bloxstrap
 
             ActivityWatcher?.Start();
 
+            // Memory FFlag watchdog — survives Bloxstrap's exit because this
+            // runs inside Watcher.exe, which stays alive for the whole Roblox
+            // session. The injector thread exits on its own when Roblox goes.
+            if (_watcherData.MemoryFlags is { Count: > 0 })
+            {
+                try
+                {
+                    var injector = new Bloxstrap.FastFlags.Memory.MemoryFlagInjector(
+                        _watcherData.ProcessId, _watcherData.MemoryFlags, _watcherData.MemoryFlagBuildVersion);
+                    injector.StartBackground(watchdog: true);
+                    App.Logger.WriteLine("Watcher::Run",
+                        $"Started memory FFlag watchdog for pid {_watcherData.ProcessId} ({_watcherData.MemoryFlags.Count} flags)");
+                }
+                catch (Exception ex)
+                {
+                    App.Logger.WriteLine("Watcher::Run", $"Memory FFlag watchdog failed to start: {ex.Message}");
+                }
+            }
+
             while (Utilities.GetProcessesSafe().Any(x => x.Id == _watcherData.ProcessId))
                 await Task.Delay(1000);
 

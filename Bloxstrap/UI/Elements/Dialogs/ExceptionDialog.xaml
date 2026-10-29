@@ -11,42 +11,47 @@
         xmlns:resources="clr-namespace:Bloxstrap.Resources"
         mc:Ignorable="d"
         Title="{x:Static resources:Strings.Dialog_Exception_Title}"
-        Width="540"
+        Width="560"
         MinHeight="0"
         SizeToContent="Height"
         Background="{ui:ThemeResource ApplicationBackgroundBrush}"
         ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="None"
         WindowStartupLocation="CenterScreen">
-    <Grid>
+    <Grid Style="{StaticResource ZeroWindowRootStyle}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Grid.ColumnSpan="2" Padding="8" x:Name="RootTitleBar" ShowMinimize="False" ShowMaximize="False" CanMaximize="False" KeyboardNavigation.TabNavigation="None" Title="{x:Static resources:Strings.Dialog_Exception_Title}" />
+        <ui:TitleBar Grid.Row="0" Grid.ColumnSpan="2" Padding="8" x:Name="RootTitleBar" ShowMinimize="False" ShowMaximize="False" CanMaximize="False" KeyboardNavigation.TabNavigation="None" Title="" Icon="{x:Null}">
+            <ui:TitleBar.Header>
+                <ContentPresenter Content="{x:Static resources:Strings.Dialog_Exception_Title}" ContentTemplate="{StaticResource ZeroTitleBarCaption}" VerticalAlignment="Center" />
+            </ui:TitleBar.Header>
+        </ui:TitleBar>
 
-        <Grid Grid.Row="1" Margin="16">
+        <Grid Grid.Row="1" Margin="20,16,20,20">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <Image Grid.Column="0" Width="32" Height="32" Margin="0,0,15,0" VerticalAlignment="Top" RenderOptions.BitmapScalingMode="HighQuality" Source="pack://application:,,,/Resources/MessageBox/Error.png" />
+            <Image Grid.Column="0" Width="32" Height="32" Margin="0,0,16,0" VerticalAlignment="Top" RenderOptions.BitmapScalingMode="HighQuality" Source="pack://application:,,,/Resources/MessageBox/Error.png" />
             <StackPanel Grid.Column="1">
-                <TextBlock Text="{x:Static resources:Strings.Dialog_Exception_Info_1}" FontSize="18" Foreground="{DynamicResource TextFillColorPrimaryBrush}" TextWrapping="Wrap" />
-                <RichTextBox x:Name="ErrorRichTextBox" Padding="8" Margin="0,16,0,0" Block.LineHeight="2" FontFamily="Courier New" IsReadOnly="True" />
-                <controls:MarkdownTextBlock x:Name="HelpMessageMDTextBlock" Margin="0,16,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                <TextBlock Text="{x:Static resources:Strings.Dialog_Exception_Info_1}" Style="{StaticResource ZeroSectionTitleStyle}" />
+                <RichTextBox x:Name="ErrorRichTextBox" Padding="10" Margin="0,16,0,0" Block.LineHeight="2" FontSize="12" FontFamily="{StaticResource ZeroMonoFont}" IsReadOnly="True" />
+                <controls:MarkdownTextBlock x:Name="HelpMessageMDTextBlock" Margin="0,16,0,0" TextWrapping="Wrap" FontSize="14" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
             </StackPanel>
         </Grid>
 
-        <Border Grid.Row="2" Padding="15" Background="{ui:ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+        <Border Grid.Row="2" Style="{StaticResource ZeroDialogFooterStyle}">
             <Grid>
-                <TextBlock x:Name="VersionText" VerticalAlignment="Center" HorizontalAlignment="Left" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Version 2.8.0" />
-                
+                <TextBlock x:Name="VersionText" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="Version 2.8.0" />
+
                 <StackPanel Orientation="Horizontal" FlowDirection="LeftToRight" HorizontalAlignment="Right">
                     <Button x:Name="ReportExceptionButton" Content="{x:Static resources:Strings.Dialog_Exception_Report}" />
-                    <Button x:Name="LocateLogFileButton" Content="{x:Static resources:Strings.Common_OpenLogFile}" Margin="12,0,0,0" />
-                    <Button x:Name="CloseButton" MinWidth="100" Content="{x:Static resources:Strings.Common_Close}" Margin="12,0,0,0" />
+                    <Button x:Name="LocateLogFileButton" Content="{x:Static resources:Strings.Common_OpenLogFile}" Margin="8,0,0,0" />
+                    <Button x:Name="CloseButton" MinWidth="100" Content="{x:Static resources:Strings.Common_Close}" Margin="8,0,0,0" />
                 </StackPanel>
             </Grid>
         </Border>

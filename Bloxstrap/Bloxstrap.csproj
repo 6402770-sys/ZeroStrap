@@ -50,6 +50,7 @@
     <EmbeddedResource Include="Resources\Mods\Sounds\OldWalk.mp3" />
     <EmbeddedResource Include="Resources\Mods\Sounds\Empty.mp3" />
     <EmbeddedResource Include="Resources\Mods\OldAvatarBackground.rbxl" />
+    <EmbeddedResource Include="Resources\FastFlags\FFlags_baseline.hpp" />
   </ItemGroup>
 
   <ItemGroup>
@@ -69,6 +70,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\wpfui\src\Wpf.Ui\Wpf.Ui.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ZeroBootstrap: unit tests for the Fast Flag workspace (Bloxstrap.Tests) -->
+    <InternalsVisibleTo Include="Bloxstrap.Tests" />
   </ItemGroup>
 
   <ItemGroup>

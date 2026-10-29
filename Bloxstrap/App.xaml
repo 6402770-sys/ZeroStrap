@@ -13,6 +13,8 @@
                 <ui:ControlsDictionary />
                 <ResourceDictionary x:Name="CustomTheme" Source="UI/Style/Dark.xaml" /> <!-- NOTE: WpfUiWindow::ApplyTheme relies on this order. If you plan to change the order, please update the index in the function. -->
                 <ResourceDictionary x:Name="Default" Source="UI/Style/Default.xaml" />
+                <!-- ZeroBootstrap: brand system (logo, cards, animations) -->
+                <ResourceDictionary Source="UI/Style/ZeroBrand.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <FontFamily x:Key="Rubik">pack://application:,,,/Resources/Fonts/#Rubik Light</FontFamily>
@@ -25,10 +27,10 @@
                                 <SolidColorBrush Color="{DynamicResource SystemAccentColorTertiary}" />
                             </Setter.Value>
                         </Setter>
-                        <Setter Property="TextDecorations" Value="Underline" />
                     </Trigger>
                 </Style.Triggers>
-                <Setter Property="TextDecorations" Value="None" />
+                <!-- ZeroBootstrap: links are monochrome, so the underline is what marks them as links -->
+                <Setter Property="TextDecorations" Value="Underline" />
                 <Setter Property="Foreground">
                     <Setter.Value>
                         <SolidColorBrush Color="{DynamicResource SystemAccentColorSecondary}" />

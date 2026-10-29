@@ -12,10 +12,9 @@
       Title="InstallPage"
       Scrollable="True"
       Loaded="UiPage_Loaded">
-
     <StackPanel Margin="0,0,14,14">
-        <TextBlock FontSize="20" FontWeight="SemiBold" Text="{x:Static resources:Strings.Installer_Install_Location_Title}" TextWrapping="Wrap" />
-        <TextBlock FontSize="14" Text="{x:Static resources:Strings.Installer_Install_Location_Text}" TextWrapping="Wrap" />
+        <TextBlock Style="{StaticResource ZeroPageTitleStyle}" Text="{x:Static resources:Strings.Installer_Install_Location_Title}" />
+        <TextBlock Margin="0,4,0,0" Style="{StaticResource ZeroBodyStyle}" Text="{x:Static resources:Strings.Installer_Install_Location_Text}" />
 
         <ui:Card Margin="0,8,0,0" Padding="12">
             <Grid>
@@ -47,8 +46,8 @@
             </TextBlock.Style>
         </TextBlock>
 
-        <TextBlock FontSize="20" FontWeight="SemiBold" Text="{x:Static resources:Strings.Common_Shortcuts}" TextWrapping="Wrap" Margin="0,16,0,0" />
-        <TextBlock FontSize="14" Text="{x:Static resources:Strings.Installer_Install_Shortcuts_Description}" TextWrapping="Wrap" />
+        <TextBlock Style="{StaticResource ZeroSectionTitleStyle}" Text="{x:Static resources:Strings.Common_Shortcuts}" Margin="{StaticResource ZeroSectionMargin}" />
+        <TextBlock Margin="0,4,0,0" Style="{StaticResource ZeroBodyStyle}" Text="{x:Static resources:Strings.Installer_Install_Shortcuts_Description}" />
 
         <Grid>
             <Grid.ColumnDefinitions>
@@ -67,7 +66,7 @@
             </controls:OptionControl>
         </Grid>
 
-        <TextBlock FontSize="20" FontWeight="SemiBold" Text="{x:Static resources:Strings.Common_Analytics}" TextWrapping="Wrap" Margin="0,16,0,0" />
+        <TextBlock Style="{StaticResource ZeroSectionTitleStyle}" Text="{x:Static resources:Strings.Common_Analytics}" Margin="{StaticResource ZeroSectionMargin}" />
         <controls:MarkdownTextBlock FontSize="14" MarkdownText="{Binding Source={x:Static resources:Strings.Menu_Bloxstrap_Analytics_Description}, Converter={StaticResource StringFormatConverter}, ConverterParameter='https://bloxstraplabs.com/wiki/info/privacy-policy/'}" TextWrapping="Wrap" />
 
         <controls:OptionControl 

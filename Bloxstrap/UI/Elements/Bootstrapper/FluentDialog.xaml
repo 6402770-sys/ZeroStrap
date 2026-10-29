@@ -8,6 +8,7 @@
     xmlns:resources="clr-namespace:Bloxstrap.Resources"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:vms="clr-namespace:Bloxstrap.UI.ViewModels.Bootstrapper"
+    xmlns:appearance="clr-namespace:Wpf.Ui.Appearance;assembly=Wpf.Ui"
     Width="500"
     Height="280"
     MinHeight="0"
@@ -27,16 +28,39 @@
     </Window.TaskbarItemInfo>
 
     <!--  Background is for Aero theme only  -->
-    <Grid Background="{Binding Path=BackgroundColourBrush, Mode=OneTime}">
+    <Grid Background="{Binding Path=BackgroundColourBrush, Mode=OneTime}" Style="{StaticResource ZeroWindowRootStyle}">
+        <!--
+            ZeroBootstrap: the plain Fluent style asks for Mica, which tints the window with the
+            wallpaper. Cover it with the BLACKOUT base so the dialog matches the rest of the app;
+            the Aero style (translucent by design) is left as is.
+        -->
+        <Border Background="{DynamicResource ApplicationBackgroundBrush}">
+            <Border.Style>
+                <Style TargetType="{x:Type Border}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Path=WindowBackdropType, Mode=OneTime}" Value="{x:Static appearance:BackgroundType.Mica}">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+        </Border>
+
         <!--  Allow for drag  -->
         <ui:TitleBar
+            Padding="8"
             VerticalAlignment="Top"
             CanMaximize="False"
             ShowClose="False"
             ShowMaximize="False"
-            ShowMinimize="False" />
+            ShowMinimize="False">
+            <ui:TitleBar.Header>
+                <ContentPresenter Content="ZeroBootstrap" ContentTemplate="{StaticResource ZeroTitleBarLockup}" VerticalAlignment="Center" Margin="4,8,0,0" Opacity="0.7" />
+            </ui:TitleBar.Header>
+        </ui:TitleBar>
 
-        <Grid Margin="32,16">
+        <Grid Margin="40,24,40,24">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
@@ -46,26 +70,29 @@
 
             <Image
                 Grid.Row="0"
-                Width="80"
-                Height="80"
-                Margin="0,30,0,0"
+                Width="72"
+                Height="72"
+                Margin="0,24,0,0"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Top"
                 RenderOptions.BitmapScalingMode="HighQuality"
-                Source="{Binding Icon, Mode=OneWay}" />
+                Source="{Binding Icon, Mode=OneWay}"
+                Style="{StaticResource ZeroRevealStyle}" />
 
             <TextBlock
                 Grid.Row="1"
-                Margin="0,0,0,8"
+                Margin="0,0,0,12"
                 HorizontalAlignment="Center"
-                FontSize="18"
+                FontSize="16"
+                FontWeight="SemiBold"
                 Foreground="{DynamicResource TextFillColorPrimaryBrush}"
                 Text="{Binding Message, Mode=OneWay}"
+                TextAlignment="Center"
                 TextWrapping="Wrap" />
 
             <ProgressBar
                 Grid.Row="2"
-                Margin="0,0,0,16"
+                Margin="0,0,0,18"
                 IsIndeterminate="{Binding ProgressIndeterminate, Mode=OneWay}"
                 Maximum="{Binding ProgressMaximum, Mode=OneWay}"
                 Value="{Binding ProgressValue, Mode=OneWay}" />

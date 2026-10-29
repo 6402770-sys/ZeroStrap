@@ -1,13 +1,14 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Collections.ObjectModel;
+using System.Windows.Input;
+using System.Windows.Threading;
 
 using Wpf.Ui.Mvvm.Contracts;
 
+using Bloxstrap.FastFlags;
 using Bloxstrap.UI.Elements.Dialogs;
-using Newtonsoft.Json.Linq;
-using System.Xml.Linq;
+using Bloxstrap.UI.ViewModels.Settings;
 
 namespace Bloxstrap.UI.Elements.Settings.Pages
 {
@@ -19,71 +20,183 @@ namespace Bloxstrap.UI.Elements.Settings.Pages
         // believe me when i say there is absolutely zero point to using mvvm for this
         // using a datagrid is a codebehind thing only and thats it theres literally no way around it
 
-        private readonly ObservableCollection<FastFlag> _fastFlagList = new();
-        private readonly List<string> _validPrefixes = new()
-        {
-            "FFlag", "DFFlag", "SFFlag", "FInt", "DFInt", "FString", "DFString", "FLog", "DFLog"
-        };
+        private readonly FastFlagWorkspace _workspace = FastFlagWorkspace.Instance;
 
-        // values must match the entire string to avoid cases where half the string
-        // matches but the filter would still be invalid
-        private readonly Regex _boolFilterPattern = new("^(?:true|false)(;[\\d]{1,})+$", RegexOptions.IgnoreCase);
-        private readonly Regex _intFilterPattern = new("^([\\d]{1,})?(;[\\d]{1,})+$", RegexOptions.IgnoreCase);
-        private readonly Regex _stringFilterPattern = new("^[^;]*(;[\\d]{1,})+$", RegexOptions.IgnoreCase);
+        private readonly DispatcherTimer _searchDebounce = new() { Interval = TimeSpan.FromMilliseconds(120) };
+
+        private CancellationTokenSource? _searchCts;
+
+        private FlagSearchIndex? _index;
+
+        private bool _indexDirty = true;
 
         private bool _showPresets = false;
+
         private string _searchFilter = "";
+
+        private bool _subscribed = false;
 
         public FastFlagEditorPage()
         {
             InitializeComponent();
+
+            _searchDebounce.Tick += (_, _) =>
+            {
+                _searchDebounce.Stop();
+                RunSearch();
+            };
         }
+
+        #region Search
+
+        private void MarkIndexDirty() => _indexDirty = true;
 
         private void ReloadList()
         {
-            var selectedEntry = DataGrid.SelectedItem as FastFlag;
+            MarkIndexDirty();
+            RunSearch();
+        }
 
-            _fastFlagList.Clear();
+        private FlagScope SelectedScope => ScopeFilter.SelectedIndex switch
+        {
+            1 => FlagScope.Catalog,
+            2 => FlagScope.All,
+            _ => FlagScope.Configured
+        };
 
-            var presetFlags = FastFlagManager.PresetFlags.Values;
-
-            foreach (var pair in App.FastFlags.Prop.OrderBy(x => x.Key))
+        private FlagQuery BuildQuery() => new()
+        {
+            Text = _searchFilter,
+            Scope = SelectedScope,
+            Type = TypeFilter.SelectedIndex switch
             {
-                if (!_showPresets && presetFlags.Contains(pair.Key))
-                    continue;
+                1 => FlagValueType.Bool,
+                2 => FlagValueType.Int,
+                3 => FlagValueType.String,
+                4 => FlagValueType.Log,
+                _ => null
+            },
+            Effect = EffectFilter.SelectedIndex switch
+            {
+                1 => FlagEffect.Allowlisted,
+                2 => FlagEffect.Experimental,
+                _ => null
+            },
+            // "show preset flags" only declutters the configured list; catalog searches always find them
+            Excluded = _showPresets || SelectedScope != FlagScope.Configured ? null : FastFlagManager.PresetFlags.Values.ToHashSet(StringComparer.Ordinal),
+            Limit = 1000
+        };
 
-                if (!pair.Key.ToLower().Contains(_searchFilter.ToLower()))
-                    continue;
+        /// <summary>
+        /// Queries off the UI thread. Each call cancels the previous one, so typing never queues work.
+        /// The flag snapshot is taken here, on the UI thread, because FastFlagManager is not thread-safe.
+        /// </summary>
+        private async void RunSearch()
+        {
+            if (!IsLoaded)
+                return;
 
-                var entry = new FastFlag
+            _searchCts?.Cancel();
+            var cts = _searchCts = new CancellationTokenSource();
+
+            var query = BuildQuery();
+            var catalog = _workspace.Catalog;
+            var index = _index;
+            IReadOnlyDictionary<string, string>? snapshot = _indexDirty || index is null ? _workspace.Store.Snapshot() : null;
+
+            string? selectedName = (DataGrid.SelectedItem as FastFlagRow)?.Name;
+
+            // only show the spinner when a search is actually slow, and never after it has finished
+            bool done = false;
+
+            _ = Task.Delay(150, cts.Token).ContinueWith(t =>
+            {
+                if (t.IsCanceled)
+                    return;
+
+                Dispatcher.BeginInvoke(() =>
                 {
-                    // Enabled = true,
-                    Name = pair.Key,
-                    Value = pair.Value.ToString()!
-                };
+                    if (!done && _searchCts == cts)
+                        SearchProgress.Visibility = Visibility.Visible;
+                });
+            }, TaskScheduler.Default);
 
-                /* if (entry.Name.StartsWith("Disable"))
+            try
+            {
+                var (newIndex, result, rows) = await Task.Run(() =>
                 {
-                    entry.Enabled = false;
-                    entry.Name = entry.Name[7..];
-                } */
+                    var idx = snapshot is null ? index! : new FlagSearchIndex(catalog, snapshot);
+                    var res = idx.Query(query, cts.Token);
+                    return (idx, res, res.Items.Select(x => new FastFlagRow(x)).ToList());
+                }, cts.Token);
 
-                _fastFlagList.Add(entry);
+                if (cts.IsCancellationRequested)
+                    return;
+
+                _index = newIndex;
+
+                if (snapshot is not null)
+                    _indexDirty = false;
+
+                DataGrid.ItemsSource = rows;
+
+                if (selectedName is not null)
+                {
+                    var row = rows.FirstOrDefault(x => x.Name == selectedName);
+
+                    if (row is not null)
+                    {
+                        DataGrid.SelectedItem = row;
+                        DataGrid.ScrollIntoView(row);
+                    }
+                }
+
+                UpdateStatus(query, result);
+                UpdateDetails();
+            }
+            catch (OperationCanceledException)
+            {
+                // superseded by a newer search
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteException("FastFlagEditorPage::RunSearch", ex);
+                StatusText.Text = String.Format(Strings.Menu_FastFlagEditor_Status_SearchFailed, ex.Message);
+            }
+            finally
+            {
+                done = true;
+
+                if (_searchCts == cts)
+                    SearchProgress.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void UpdateStatus(FlagQuery query, FlagQueryResult result)
+        {
+            string text = result.TotalMatches == 1 ? Strings.Menu_FastFlagEditor_Status_OneFlag : String.Format(Strings.Menu_FastFlagEditor_Status_Flags, result.TotalMatches);
+
+            if (result.TotalMatches > result.Items.Count)
+                text += String.Format(Strings.Menu_FastFlagEditor_Status_Truncated, result.Items.Count);
+
+            if (_workspace.Catalog.Entries.Count == 0)
+                text += Strings.Menu_FastFlagEditor_Status_NoCatalog;
+            else if (_workspace.CatalogMetadata?.FetchedAtUtc is DateTime fetched)
+                text += String.Format(Strings.Menu_FastFlagEditor_Status_Catalog, _workspace.Catalog.Entries.Count, fetched.ToLocalTime());
+
+            StatusText.Text = text;
+
+            if (result.TotalMatches > 0)
+            {
+                EmptyStateText.Visibility = Visibility.Collapsed;
+                return;
             }
 
-            if (DataGrid.ItemsSource is null)
-                DataGrid.ItemsSource = _fastFlagList;
+            EmptyStateText.Text = query.Scope == FlagScope.Configured && String.IsNullOrWhiteSpace(query.Text)
+                ? Strings.Menu_FastFlagEditor_Empty_NoFlags
+                : String.Format(Strings.Menu_FastFlagEditor_Empty_NoMatches, query.Text.Trim());
 
-            if (selectedEntry is null)
-                return;
-
-            var newSelectedEntry = _fastFlagList.Where(x => x.Name == selectedEntry.Name).FirstOrDefault();
-
-            if (newSelectedEntry is null)
-                return;
-            
-            DataGrid.SelectedItem = newSelectedEntry;
-            DataGrid.ScrollIntoView(newSelectedEntry);
+            EmptyStateText.Visibility = Visibility.Visible;
         }
 
         private void ClearSearch(bool refresh = true)
@@ -93,6 +206,64 @@ namespace Bloxstrap.UI.Elements.Settings.Pages
 
             if (refresh)
                 ReloadList();
+        }
+
+        private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (sender is not TextBox textbox)
+                return;
+
+            _searchFilter = textbox.Text;
+
+            _searchDebounce.Stop();
+            _searchDebounce.Start();
+        }
+
+        private void Filter_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // fired once per ComboBox during InitializeComponent; RunSearch ignores calls before Loaded
+            RunSearch();
+        }
+
+        #endregion
+
+        #region Editing
+
+        private FlagEditService Editor => _workspace.CreateEditor();
+
+        private void FlagsChangedHere()
+        {
+            _workspace.NotifyFlagsChanged();
+        }
+
+        /// <summary>Explains a failed edit. Returns true if the user enabled experimental mode to retry.</summary>
+        private bool ExplainFailure(FlagEditResult result, string name)
+        {
+            switch (result.Status)
+            {
+                case FlagEditStatus.BlockedExperimental:
+                    var answer = Frontend.ShowMessageBox(
+                        String.Format(Strings.Menu_FastFlagEditor_Experimental_AddBlocked, name),
+                        MessageBoxImage.Question,
+                        MessageBoxButton.YesNo);
+
+                    if (answer != MessageBoxResult.Yes)
+                        return false;
+
+                    SetExperimentalMode(true);
+                    return true;
+
+                case FlagEditStatus.Duplicate:
+                    Frontend.ShowMessageBox(Strings.Menu_FastFlagEditor_AlreadyExists, MessageBoxImage.Information);
+                    return false;
+
+                case FlagEditStatus.Invalid:
+                    Frontend.ShowMessageBox(result.Message ?? Strings.Menu_FastFlagEditor_InvalidFlag, MessageBoxImage.Error);
+                    return false;
+
+                default:
+                    return false;
+            }
         }
 
         private void ShowAddDialog()
@@ -111,57 +282,52 @@ namespace Bloxstrap.UI.Elements.Settings.Pages
 
         private void AddSingle(string name, string value)
         {
-            FastFlag? entry;
+            var result = Editor.Add(name, value);
 
-            if (App.FastFlags.GetValue(name) is null)
+            if (result.Status == FlagEditStatus.BlockedExperimental && ExplainFailure(result, name))
+                result = Editor.Add(name, value);
+
+            if (result.Status == FlagEditStatus.Duplicate)
             {
-                if (!ValidateFlagEntry(name, value))
+                ExplainFailure(result, name);
+                FocusFlag(name, preferConfigured: true);
+                return;
+            }
+
+            if (!result.Succeeded)
+            {
+                if (result.Status == FlagEditStatus.Invalid)
                 {
+                    ExplainFailure(result, name);
                     ShowAddDialog();
-                    return;
                 }
 
-                entry = new FastFlag
-                {
-                    // Enabled = true,
-                    Name = name,
-                    Value = value
-                };
-
-                if (!name.Contains(_searchFilter))
-                    ClearSearch();
-
-                _fastFlagList.Add(entry);
-
-                App.FastFlags.SetValue(entry.Name, entry.Value);
+                return;
             }
-            else
+
+            FlagsChangedHere();
+            FocusFlag(name, preferConfigured: true);
+        }
+
+        /// <summary>Makes sure a flag is visible in the list and selects it.</summary>
+        private void FocusFlag(string name, bool preferConfigured)
+        {
+            if (!_showPresets && FastFlagManager.PresetFlags.Values.Contains(name))
             {
-                Frontend.ShowMessageBox(Strings.Menu_FastFlagEditor_AlreadyExists, MessageBoxImage.Information);
-
-                bool refresh = false;
-
-                if (!_showPresets && FastFlagManager.PresetFlags.Values.Contains(name))
-                {
-                    TogglePresetsButton.IsChecked = true;
-                    _showPresets = true;
-                    refresh = true;
-                }
-
-                if (!name.Contains(_searchFilter))
-                {
-                    ClearSearch(false);
-                    refresh = true;
-                }
-
-                if (refresh)
-                    ReloadList();
-
-                entry = _fastFlagList.Where(x => x.Name == name).FirstOrDefault();
+                TogglePresetsButton.IsChecked = true;
+                _showPresets = true;
             }
 
-            DataGrid.SelectedItem = entry;
-            DataGrid.ScrollIntoView(entry);
+            if (preferConfigured && ScopeFilter.SelectedIndex == 1)
+                ScopeFilter.SelectedIndex = 0;
+
+            TypeFilter.SelectedIndex = 0;
+            EffectFilter.SelectedIndex = 0;
+
+            SearchTextBox.Text = name;
+            _searchFilter = name;
+            _searchDebounce.Stop();
+            ReloadList();
         }
 
         private void ImportJSON(string json)
@@ -199,7 +365,7 @@ namespace Bloxstrap.UI.Elements.Settings.Pages
             }
             catch (Exception ex)
             {
-                Frontend.ShowMessageBox(                    
+                Frontend.ShowMessageBox(
                     String.Format(Strings.Menu_FastFlagEditor_InvalidJSON, ex.Message),
                     MessageBoxImage.Error
                 );
@@ -212,7 +378,7 @@ namespace Bloxstrap.UI.Elements.Settings.Pages
             if (list.Count > 16)
             {
                 var result = Frontend.ShowMessageBox(
-                    Strings.Menu_FastFlagEditor_LargeConfig, 
+                    Strings.Menu_FastFlagEditor_LargeConfig,
                     MessageBoxImage.Warning,
                     MessageBoxButton.YesNo
                 );
@@ -221,12 +387,13 @@ namespace Bloxstrap.UI.Elements.Settings.Pages
                     return;
             }
 
-            var conflictingFlags = App.FastFlags.Prop.Where(x => list.ContainsKey(x.Key)).Select(x => x.Key);
+            var store = _workspace.Store;
+            var conflictingFlags = list.Keys.Where(x => store.Get(x) is not null).ToList();
             bool overwriteConflicting = false;
 
             if (conflictingFlags.Any())
             {
-                int count = conflictingFlags.Count();
+                int count = conflictingFlags.Count;
 
                 string message = String.Format(
                     Strings.Menu_FastFlagEditor_ConflictingImport,
@@ -242,119 +409,327 @@ namespace Bloxstrap.UI.Elements.Settings.Pages
                 overwriteConflicting = result == MessageBoxResult.Yes;
             }
 
+            // validate everything first, then write: a bad entry is reported instead of half-applied silently
+            var invalid = new List<string>();
+            var blocked = new List<string>();
+            var accepted = new List<KeyValuePair<string, string>>();
+
             foreach (var pair in list)
             {
-                if (App.FastFlags.Prop.ContainsKey(pair.Key) && !overwriteConflicting)
+                if (store.Get(pair.Key) is not null && !overwriteConflicting)
                     continue;
 
-                if (pair.Value is null)
-                    continue;
-
-                var val = pair.Value.ToString();
+                string? val = pair.Value?.ToString();
 
                 if (val is null)
                     continue;
 
-                if (!ValidateFlagEntry(pair.Key, val))
+                var validation = FastFlagRules.Validate(pair.Key, val);
+
+                if (!validation.IsValid)
+                {
+                    invalid.Add(validation.Error ?? pair.Key);
                     continue;
+                }
 
-                App.FastFlags.SetValue(pair.Key, pair.Value);
+                if (!_workspace.ExperimentalMode && store.Get(pair.Key) is null && RobloxFlagAllowlist.GetEffect(pair.Key) == FlagEffect.Experimental)
+                {
+                    blocked.Add(pair.Key);
+                    continue;
+                }
+
+                accepted.Add(new(pair.Key, val));
             }
 
-            ClearSearch();
-        }
+            if (blocked.Count > 0)
+            {
+                var answer = Frontend.ShowMessageBox(
+                    String.Format(Strings.Menu_FastFlagEditor_Experimental_ImportBlocked, blocked.Count, $"{String.Join(", ", blocked.Take(10))}{(blocked.Count > 10 ? "..." : "")}"),
+                    MessageBoxImage.Question,
+                    MessageBoxButton.YesNo);
 
-        private bool ValidateFlagEntry(string name, string value)
-        {
-            string lowerValue = value.ToLowerInvariant();
-            string errorMessage = "";
-
-            if (!_validPrefixes.Any(name.StartsWith))
-                errorMessage = Strings.Menu_FastFlagEditor_InvalidPrefix;
-            else if (!name.All(x => char.IsLetterOrDigit(x) || x == '_'))
-                errorMessage = Strings.Menu_FastFlagEditor_InvalidCharacter;
-            
-            if (name.EndsWith("_PlaceFilter") || name.EndsWith("_DataCenterFilter"))
-                errorMessage = !ValidateFilter(name, value) ? Strings.Menu_FastFlagEditor_InvalidPlaceFilter : ""; 
-            else if ((name.StartsWith("FInt") || name.StartsWith("DFInt")) && !Int32.TryParse(value, out _))
-                errorMessage = Strings.Menu_FastFlagEditor_InvalidNumberValue;
-            else if ((name.StartsWith("FFlag") || name.StartsWith("DFFlag")) && lowerValue != "true" && lowerValue != "false")
-                errorMessage = Strings.Menu_FastFlagEditor_InvalidBoolValue;
-            
-            if (!String.IsNullOrEmpty(errorMessage))
-            { 
-                Frontend.ShowMessageBox(String.Format(errorMessage, name), MessageBoxImage.Error);
-                return false;
+                if (answer == MessageBoxResult.Yes)
+                {
+                    SetExperimentalMode(true);
+                    accepted.AddRange(blocked.Select(x => new KeyValuePair<string, string>(x, list[x].ToString()!)));
+                    blocked.Clear();
+                }
             }
 
-            return true;
-        }
+            foreach (var pair in accepted)
+                store.Set(pair.Key, pair.Value);
 
-        private bool ValidateFilter(string name, string value)
-        {
-            if(name.StartsWith("FFlag") || name.StartsWith("DFFlag"))
-                return _boolFilterPattern.IsMatch(value);
-            if (name.StartsWith("FInt") || name.StartsWith("DFInt"))
-                return _intFilterPattern.IsMatch(value);
-            if (name.StartsWith("FString") || name.StartsWith("DFString") || name.StartsWith("FLog") || name.StartsWith("DFLog"))
-                return _stringFilterPattern.IsMatch(value);
-            
-            return false;
-        }
+            if (invalid.Count > 0)
+            {
+                Frontend.ShowMessageBox(
+                    String.Format(Strings.Menu_FastFlagEditor_ImportSkippedInvalid, accepted.Count, invalid.Count, $"{String.Join("\n", invalid.Take(10))}{(invalid.Count > 10 ? "\n..." : "")}"),
+                    MessageBoxImage.Warning);
+            }
 
-        // refresh list on page load to synchronize with preset page
-        private void Page_Loaded(object sender, RoutedEventArgs e) => ReloadList();
+            ClearSearch(false);
+            FlagsChangedHere();
+        }
 
         private void DataGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
         {
-            if (e.Row.DataContext is not FastFlag entry)
+            if (e.EditAction != DataGridEditAction.Commit)
+                return;
+
+            if (e.Row.DataContext is not FastFlagRow entry)
                 return;
 
             if (e.EditingElement is not TextBox textbox)
                 return;
 
-            switch (e.Column.Header)
+            FlagEditResult result;
+
+            if (e.Column == NameColumn)
             {
-                case "Name":
-                    string oldName = entry.Name;
-                    string newName = textbox.Text;
+                string oldName = entry.Name;
+                string newName = textbox.Text.Trim();
 
-                    if (newName == oldName)
-                        return;
+                if (newName == oldName)
+                    return;
 
-                    if (App.FastFlags.GetValue(newName) is not null)
-                    {
-                        Frontend.ShowMessageBox(Strings.Menu_FastFlagEditor_AlreadyExists, MessageBoxImage.Information);
-                        e.Cancel = true;
-                        textbox.Text = oldName;
-                        return;
-                    }
+                if (!entry.IsConfigured)
+                {
+                    // catalog rows are reference data; renaming one makes no sense
+                    e.Cancel = true;
+                    textbox.Text = oldName;
+                    return;
+                }
 
-                    App.FastFlags.SetValue(oldName, null);
-                    App.FastFlags.SetValue(newName, entry.Value);
+                result = Editor.Rename(oldName, newName);
 
-                    if (!newName.Contains(_searchFilter))
-                        ClearSearch();
+                if (result.Status == FlagEditStatus.BlockedExperimental && ExplainFailure(result, newName))
+                    result = Editor.Rename(oldName, newName);
+                else if (!result.Succeeded)
+                    ExplainFailure(result, newName);
 
-                    entry.Name = newName;
+                if (!result.Succeeded)
+                {
+                    e.Cancel = true;
+                    textbox.Text = oldName;
+                    return;
+                }
 
-                    break;
-
-                case "Value":
-                    string oldValue = entry.Value;
-                    string newValue = textbox.Text;
-
-                    if (!ValidateFlagEntry(entry.Name, newValue))
-                    {
-                        e.Cancel = true;
-                        textbox.Text = oldValue;
-                        return;
-                    }
-
-                    App.FastFlags.SetValue(entry.Name, newValue);
-
-                    break;
+                entry.Name = newName;
             }
+            else if (e.Column == ValueColumn)
+            {
+                string oldValue = entry.Value;
+                string newValue = textbox.Text;
+
+                if (newValue == oldValue)
+                    return;
+
+                if (entry.IsConfigured)
+                {
+                    result = Editor.SetValue(entry.Name, newValue);
+                }
+                else
+                {
+                    // typing a value on a catalog row adds the flag
+                    result = Editor.Add(entry.Name, newValue);
+
+                    if (result.Status == FlagEditStatus.BlockedExperimental && ExplainFailure(result, entry.Name))
+                        result = Editor.Add(entry.Name, newValue);
+                    else if (!result.Succeeded && result.Status != FlagEditStatus.BlockedExperimental)
+                        ExplainFailure(result, entry.Name);
+                }
+
+                if (result.Status == FlagEditStatus.Invalid && entry.IsConfigured)
+                    ExplainFailure(result, entry.Name);
+
+                if (!result.Succeeded)
+                {
+                    e.Cancel = true;
+                    textbox.Text = oldValue;
+                    return;
+                }
+
+                entry.Value = newValue;
+            }
+            else
+            {
+                return;
+            }
+
+            // the grid is still inside its edit transaction; refresh once it has finished
+            Dispatcher.BeginInvoke(FlagsChangedHere, DispatcherPriority.Background);
+        }
+
+        #endregion
+
+        #region Details panel
+
+        private void DataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdateDetails();
+
+        private void UpdateDetails()
+        {
+            DetailError.Visibility = Visibility.Collapsed;
+            DetailTags.Children.Clear();
+
+            if (DataGrid.SelectedItems.Count != 1 || DataGrid.SelectedItem is not FastFlagRow row)
+            {
+                DetailName.Text = DataGrid.SelectedItems.Count > 1 ? String.Format(Strings.Menu_FastFlagEditor_Details_MultipleSelected, DataGrid.SelectedItems.Count) : Strings.Menu_FastFlagEditor_Details_NothingSelected;
+                DetailEffect.Text = "";
+                DetailValue.Text = "";
+                DetailValue.IsEnabled = DetailSetButton.IsEnabled = DetailRemoveButton.IsEnabled = false;
+                return;
+            }
+
+            DetailName.Text = row.Name;
+
+            AddTag(row.EffectLabel, outline: row.IsExperimental);
+            AddTag(row.TypeLabel.ToUpperInvariant(), outline: true);
+            AddTag(row.IsConfigured ? Strings.Menu_FastFlagEditor_Details_TagSet : Strings.Menu_FastFlagEditor_Details_TagNotSet, outline: !row.IsConfigured);
+
+            if (row.InCatalog && row.Layer is not null)
+                AddTag(row.Layer.ToUpperInvariant(), outline: true);
+
+            DetailEffect.Text = row.IsExperimental
+                ? Strings.Menu_FastFlagEditor_Details_ExperimentalEffect
+                : Strings.Menu_FastFlagEditor_Details_PlayerEffect;
+
+            DetailValue.Text = row.Value;
+            DetailValue.IsEnabled = DetailSetButton.IsEnabled = true;
+            DetailRemoveButton.IsEnabled = row.IsConfigured;
+            DetailSetButton.Content = row.IsConfigured ? Strings.Menu_FastFlagEditor_Details_Set : Strings.Menu_FastFlagEditor_Details_Add;
+        }
+
+        private void AddTag(string text, bool outline)
+        {
+            var tag = new Border
+            {
+                Style = (Style)FindResource(outline ? "ZeroTagOutlineStyle" : "ZeroTagStyle"),
+                Margin = new Thickness(0, 0, 6, 6),
+                Child = new TextBlock { Text = text, Style = (Style)FindResource("ZeroTagTextStyle") }
+            };
+
+            if (outline)
+                ((TextBlock)tag.Child).SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorSecondaryBrush");
+
+            DetailTags.Children.Add(tag);
+        }
+
+        private void ApplyDetailValue()
+        {
+            if (DataGrid.SelectedItem is not FastFlagRow row)
+                return;
+
+            string value = DetailValue.Text;
+            var result = row.IsConfigured ? Editor.SetValue(row.Name, value) : Editor.Add(row.Name, value);
+
+            if (result.Status == FlagEditStatus.BlockedExperimental && ExplainFailure(result, row.Name))
+                result = Editor.Add(row.Name, value);
+
+            if (!result.Succeeded)
+            {
+                if (result.Message is not null)
+                {
+                    DetailError.Text = result.Message;
+                    DetailError.Visibility = Visibility.Visible;
+                }
+
+                return;
+            }
+
+            FlagsChangedHere();
+        }
+
+        private void DetailSetButton_Click(object sender, RoutedEventArgs e) => ApplyDetailValue();
+
+        private void DetailValue_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+                ApplyDetailValue();
+        }
+
+        private void DetailRemoveButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGrid.SelectedItem is not FastFlagRow row || !row.IsConfigured)
+                return;
+
+            Editor.Remove(row.Name);
+            FlagsChangedHere();
+        }
+
+        #endregion
+
+        #region Experimental mode
+
+        private void SetExperimentalMode(bool enabled)
+        {
+            _workspace.ExperimentalMode = enabled;
+            ExperimentalToggle.IsChecked = enabled;
+        }
+
+        private void ExperimentalToggle_Click(object sender, RoutedEventArgs e)
+        {
+            bool wanted = ExperimentalToggle.IsChecked == true;
+
+            if (wanted)
+            {
+                var answer = Frontend.ShowMessageBox(
+                    Strings.Menu_FastFlagEditor_Experimental_Confirm,
+                    MessageBoxImage.Warning,
+                    MessageBoxButton.YesNo);
+
+                if (answer != MessageBoxResult.Yes)
+                {
+                    ExperimentalToggle.IsChecked = false;
+                    return;
+                }
+            }
+
+            // turning it off never removes anything: existing experimental flags stay as they are
+            SetExperimentalMode(wanted);
+        }
+
+        #endregion
+
+        // refresh list on page load to synchronize with preset page
+        private void Page_Loaded(object sender, RoutedEventArgs e)
+        {
+            ExperimentalToggle.IsChecked = _workspace.ExperimentalMode;
+
+            if (!_subscribed)
+            {
+                _workspace.FlagsChanged += Workspace_DataChanged;
+                _workspace.CatalogChanged += Workspace_DataChanged;
+                _subscribed = true;
+            }
+
+            ReloadList();
+
+            // automatic catalog check, only if the user enabled it and the interval elapsed
+            _ = _workspace.RunAutomaticCheckIfDueAsync();
+        }
+
+        private void Page_Unloaded(object sender, RoutedEventArgs e)
+        {
+            // pages are cached by the navigation service; unhook so a closed window is not kept alive
+            if (_subscribed)
+            {
+                _workspace.FlagsChanged -= Workspace_DataChanged;
+                _workspace.CatalogChanged -= Workspace_DataChanged;
+                _subscribed = false;
+            }
+
+            _searchDebounce.Stop();
+            _searchCts?.Cancel();
+        }
+
+        private void Workspace_DataChanged(object? sender, EventArgs e)
+        {
+            if (!Dispatcher.CheckAccess())
+            {
+                Dispatcher.BeginInvoke(() => Workspace_DataChanged(sender, e));
+                return;
+            }
+
+            ReloadList();
         }
 
         private void BackButton_Click(object sender, RoutedEventArgs e)
@@ -367,16 +742,17 @@ namespace Bloxstrap.UI.Elements.Settings.Pages
 
         private void DeleteButton_Click(object sender, RoutedEventArgs e)
         {
-            var tempList = new List<FastFlag>();
+            var names = DataGrid.SelectedItems.OfType<FastFlagRow>().Where(x => x.IsConfigured).Select(x => x.Name).ToList();
 
-            foreach (FastFlag entry in DataGrid.SelectedItems)
-                tempList.Add(entry);
+            if (names.Count == 0)
+                return;
 
-            foreach (FastFlag entry in tempList)
-            {
-                _fastFlagList.Remove(entry);
-                App.FastFlags.SetValue(entry.Name, null);
-            }
+            var editor = Editor;
+
+            foreach (string name in names)
+                editor.Remove(name);
+
+            FlagsChangedHere();
         }
 
         private void ToggleButton_Click(object sender, RoutedEventArgs e)
@@ -393,15 +769,6 @@ namespace Bloxstrap.UI.Elements.Settings.Pages
             string json = JsonSerializer.Serialize(App.FastFlags.Prop, new JsonSerializerOptions { WriteIndented = true });
             Clipboard.SetDataObject(json);
             Frontend.ShowMessageBox(Strings.Menu_FastFlagEditor_JsonCopiedToClipboard, MessageBoxImage.Information);
-        }
-
-        private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (sender is not TextBox textbox)
-                return;
-
-            _searchFilter = textbox.Text;
-            ReloadList();
         }
     }
 }

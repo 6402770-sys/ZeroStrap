@@ -3610,5 +3610,1485 @@ namespace Bloxstrap.Resources {
                 return ResourceManager.GetString("Uninstaller.Uninstall", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to On Roblox's Player allowlist.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Status_PlayerTooltip {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Status.PlayerTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Not on Roblox's Player allowlist: saved, but Roblox Player ignores it (Studio does not).
+        /// </summary>
+        public static string Menu_FastFlagEditor_Status_ExperimentalTooltip {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Status.ExperimentalTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Allow adding flags that are not on Roblox's Player allowlist.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Experimental_Tooltip {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Experimental.Tooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Experimental flags.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Experimental_Toggle {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Experimental.Toggle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Flags.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Tab_Flags {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Tab.Flags", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Catalog.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Tab_Catalog {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Tab.Catalog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to PLAYER flags are on.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Notice_Start {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Notice.Start", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Roblox's allowlist.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Notice_Link {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Notice.Link", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to . EXPERIMENTAL flags are saved, but Roblox Player ignores them (Studio does not). Edits apply after Save and the next Roblox launch. Use with caution..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Notice_End {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Notice.End", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Where to search.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Filter_Scope {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Filter.Scope", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Configured.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Filter_Configured {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Filter.Configured", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Everything.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Filter_Everything {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Filter.Everything", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Value type.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Filter_Type {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Filter.Type", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Any type.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Filter_AnyType {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Filter.AnyType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Player allowlist status.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Filter_Status {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Filter.Status", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Any status.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Filter_AnyStatus {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Filter.AnyStatus", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Player.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Filter_Player {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Filter.Player", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Experimental.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Filter_Experimental {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Filter.Experimental", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Status.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Column_Status {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Column.Status", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Column_Type {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Column.Type", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SELECTED FLAG.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Details_Title {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Details.Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Nothing selected.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Details_NothingSelected {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Details.NothingSelected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to VALUE.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Details_Value {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Details.Value", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Details_Set {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Details.Set", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remove.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Details_Remove {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Details.Remove", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Search failed: {0}.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Status_SearchFailed {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Status.SearchFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 1 flag.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Status_OneFlag {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Status.OneFlag", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0:N0} flags.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Status_Flags {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Status.Flags", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to  · showing the first {0:N0}, refine the search to narrow it down.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Status_Truncated {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Status.Truncated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to  · catalog not downloaded: only configured and Player-allowlisted flags are searchable (see the Catalog tab).
+        /// </summary>
+        public static string Menu_FastFlagEditor_Status_NoCatalog {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Status.NoCatalog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to  · catalog {0:N0} flags, updated {1:d}.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Status_Catalog {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Status.Catalog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No Fast Flags configured yet.
+        ///Add one, or switch the scope to Catalog to browse known flags..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Empty_NoFlags {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Empty.NoFlags", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Nothing matches "{0}" with these filters.
+        ///Try fewer words, or search "Everything"..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Empty_NoMatches {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Empty.NoMatches", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} is not on Roblox's Player allowlist, so Roblox Player will ignore it (Studio is not restricted).
+        ///
+        ///Enable experimental flags to add it anyway?.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Experimental_AddBlocked {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Experimental.AddBlocked", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid flag..
+        /// </summary>
+        public static string Menu_FastFlagEditor_InvalidFlag {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.InvalidFlag", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} flag(s) are not on Roblox's Player allowlist (Roblox Player ignores them):
+        ///{1}
+        ///
+        ///Enable experimental flags and import them too?.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Experimental_ImportBlocked {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Experimental.ImportBlocked", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Imported {0} flag(s). {1} were skipped because they are invalid:
+        ///
+        ///{2}.
+        /// </summary>
+        public static string Menu_FastFlagEditor_ImportSkippedInvalid {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.ImportSkippedInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} flags selected.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Details_MultipleSelected {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Details.MultipleSelected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SET.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Details_TagSet {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Details.TagSet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to NOT SET.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Details_TagNotSet {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Details.TagNotSet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Saved to ClientAppSettings.json, but Roblox Player ignores flags outside its allowlist. Roblox Studio may still use it. Saving it does not mean it works..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Details_ExperimentalEffect {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Details.ExperimentalEffect", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to On Roblox's Player allowlist: Roblox Player reads it on its next launch..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Details_PlayerEffect {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Details.PlayerEffect", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Add.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Details_Add {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Details.Add", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Experimental flags lets you add any valid Fast Flag, including ones that are not on Roblox's Player allowlist.
+        ///
+        ///ZeroBootstrap will save them, but Roblox Player ignores them (Roblox Studio is not restricted). Misusing flags can make Roblox unstable.
+        ///
+        ///Enable experimental flags?.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Experimental_Confirm {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Experimental.Confirm", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Shortcuts edit the pending configuration while this window is focused (never while you type). They do not touch a running Roblox: press Save, and Roblox uses the values on its next launch..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_Notice {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.Notice", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Shortcuts enabled.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_Enabled {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.Enabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Turns every shortcut on or off.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_EnabledTooltip {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.EnabledTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to On.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_Column_On {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.Column.On", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Shortcut.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_Column_Shortcut {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.Column.Shortcut", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Flag.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_Column_Flag {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.Column.Flag", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cycles through.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_Column_Values {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.Column.Values", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No shortcuts yet.
+        ///Create one below: click the shortcut box and press the keys..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_Empty {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.Empty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to NEW SHORTCUT.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_NewTitle {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.NewTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Click here and press the shortcut (F1-F24, or a key with Ctrl/Alt/Win).
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_GestureTooltip {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.GestureTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Press keys….
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_PressKeys {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.PressKeys", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Flag name.
+        /// </summary>
+        public static string Menu_FastFlagEditor_FlagName {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.FlagName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Values, comma separated.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_ValuesPlaceholder {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.ValuesPlaceholder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Leave empty for bool flags to toggle True/False.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_ValuesTooltip {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.ValuesTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Include "not set" (Roblox default) in the cycle.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_IncludeUnset {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.IncludeUnset", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Add shortcut.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_Add {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.Add", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (not set).
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_NotSetValue {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.NotSetValue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_Invalid {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.Invalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Shortcut used twice.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_UsedTwice {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.UsedTwice", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to EDIT SHORTCUT.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_EditTitle {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.EditTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Save shortcut.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_Save {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.Save", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} (not allowed).
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_NotAllowed {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.NotAllowed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} is not on Roblox's Player allowlist. Enable experimental flags to bind it..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_ExperimentalBlocked {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.ExperimentalBlocked", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} is already used for {1}. Only the first shortcut in the list would run.
+        ///
+        ///Save anyway?.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_Clash {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.Clash", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The catalog is a list of known Fast Flag names used for search. It is plain text that is validated before use; nothing in it is executed. Updating it never changes your flags, and it is separate from ZeroBootstrap's own updates..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_Notice {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.Notice", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to CATALOG.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_Title {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Source.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_Source {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.Source", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Version.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_Version {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.Version", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Last updated.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_LastUpdated {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.LastUpdated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Last check.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_LastCheck {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.LastCheck", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Check for catalog updates.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_Check {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.Check", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Updates.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_Updates {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.Updates", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Check automatically.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_Auto {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.Auto", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to When on, the catalog source is checked when you open the Fast Flag editor and the interval has passed. When off, it is only checked when you press the button above..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_AutoDescription {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.AutoDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Check interval.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_Interval {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.Interval", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Automatic checks never run more often than every 6 hours..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_IntervalDescription {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.IntervalDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Every 6 hours.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_Interval_6Hours {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.Interval.6Hours", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Every 12 hours.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_Interval_12Hours {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.Interval.12Hours", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Every day.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_Interval_Day {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.Interval.Day", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Every 3 days.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_Interval_3Days {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.Interval.3Days", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Every week.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_Interval_Week {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.Interval.Week", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Local catalog unusable ({0}). Check for updates to replace it..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_Unusable {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.Unusable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Not downloaded yet.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_NotDownloaded {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.NotDownloaded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Never.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_Never {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.Never", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Checking….
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_Checking {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.Checking", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unexpected error: {0}.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Catalog_UnexpectedError {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Catalog.UnexpectedError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to New empty preset.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_NewTooltip {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.NewTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to New preset from the flags configured now.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_CaptureTooltip {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.CaptureTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Duplicate.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_Duplicate {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.Duplicate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Include in the next apply.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_IncludeTooltip {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.IncludeTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No presets yet.
+        ///Capture the current flags with the camera button, or import a preset file..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_Empty {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.Empty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Exports the checked presets, or all presets if none is checked.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_ExportTooltip {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.ExportTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to PRESET.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_Title {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select a preset.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_SelectPreset {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.SelectPreset", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This preset has no flags. Add one below..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_NoFlags {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.NoFlags", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remove the selected flags from this preset.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_RemoveFlagsTooltip {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.RemoveFlagsTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Revert last apply.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_Revert {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.Revert", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Review &amp; apply.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_Apply {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.Apply", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Check one or more presets to apply them..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_SelectionNone {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.SelectionNone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 1 preset selected: {0}.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_SelectionOne {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.SelectionOne", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} presets selected. Values are merged; conflicts are shown before anything changes..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_SelectionMany {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.SelectionMany", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Last apply: {0} · {1} flag(s) · {2:g}.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_LastApply {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.LastApply", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to New preset.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_NewTitle {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.NewTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Name of the new, empty preset:.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_NewPrompt {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.NewPrompt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No Fast Flags are configured right now, so there is nothing to capture..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_NothingToCapture {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.NothingToCapture", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Save the {0} flag(s) configured now as a preset:.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_CapturePrompt {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.CapturePrompt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to My flags.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_CaptureDefaultName {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.CaptureDefaultName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} copy.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_CopyName {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.CopyName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rename preset.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_RenameTitle {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.RenameTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to New name:.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_RenamePrompt {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.RenamePrompt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Delete the preset "{0}"? This does not change any configured flag..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_DeleteConfirm {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.DeleteConfirm", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} is not on Roblox's Player allowlist. Enable experimental flags (top right) to put it in a preset..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_ExperimentalBlocked {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.ExperimentalBlocked", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Applied {0} change(s). They are pending: press Save, then start Roblox to use them..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_Applied {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.Applied", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Restore the {0} flag(s) changed by "{1}" to their previous values?.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_RevertConfirm {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.RevertConfirm", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Reverted, except {0} flag(s) you changed again after applying (kept as they are):
+        ///{1}.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_RevertSkipped {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.RevertSkipped", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ZeroBootstrap presets|*.json|All files|*.*.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_OpenFilter {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.OpenFilter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to That file is too large to be a preset file..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_FileTooLarge {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.FileTooLarge", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Nothing was imported:
+        ///
+        ///{0}.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_ImportFailed {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.ImportFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Imported {0} preset(s)..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_Imported {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.Imported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 
+        ///
+        ///{0} flag(s) in them are not on Roblox's Player allowlist; Roblox Player will ignore those..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_ImportedExperimental {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.ImportedExperimental", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to There are no presets to export..
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_NothingToExport {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.NothingToExport", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ZeroBootstrap presets|*.json.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Presets_SaveFilter {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Presets.SaveFilter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Apply presets.
+        /// </summary>
+        public static string Dialog_PresetApply_Title {
+            get {
+                return ResourceManager.GetString("Dialog.PresetApply.Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Nothing is written until you press Apply. Afterwards the changes are pending like any other edit: press Save in Settings, then start Roblox. You can revert this apply from the Presets tab..
+        /// </summary>
+        public static string Dialog_PresetApply_Description {
+            get {
+                return ResourceManager.GetString("Dialog.PresetApply.Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to CONFLICTS — CHOOSE A VALUE.
+        /// </summary>
+        public static string Dialog_PresetApply_Conflicts {
+            get {
+                return ResourceManager.GetString("Dialog.PresetApply.Conflicts", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to CHANGES.
+        /// </summary>
+        public static string Dialog_PresetApply_Changes {
+            get {
+                return ResourceManager.GetString("Dialog.PresetApply.Changes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Apply.
+        /// </summary>
+        public static string Dialog_PresetApply_Apply {
+            get {
+                return ResourceManager.GetString("Dialog.PresetApply.Apply", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Apply "{0}".
+        /// </summary>
+        public static string Dialog_PresetApply_HeaderOne {
+            get {
+                return ResourceManager.GetString("Dialog.PresetApply.HeaderOne", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Apply {0} presets: {1}.
+        /// </summary>
+        public static string Dialog_PresetApply_HeaderMany {
+            get {
+                return ResourceManager.GetString("Dialog.PresetApply.HeaderMany", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ADD.
+        /// </summary>
+        public static string Dialog_PresetApply_KindAdd {
+            get {
+                return ResourceManager.GetString("Dialog.PresetApply.KindAdd", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to CHANGE.
+        /// </summary>
+        public static string Dialog_PresetApply_KindChange {
+            get {
+                return ResourceManager.GetString("Dialog.PresetApply.KindChange", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Every flag already has the preset value ({0} unchanged)..
+        /// </summary>
+        public static string Dialog_PresetApply_AllUnchanged {
+            get {
+                return ResourceManager.GetString("Dialog.PresetApply.AllUnchanged", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to These presets contain no flags..
+        /// </summary>
+        public static string Dialog_PresetApply_NoFlags {
+            get {
+                return ResourceManager.GetString("Dialog.PresetApply.NoFlags", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Resolve {0} conflict.
+        /// </summary>
+        public static string Dialog_PresetApply_ResolveOne {
+            get {
+                return ResourceManager.GetString("Dialog.PresetApply.ResolveOne", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Resolve {0} conflicts.
+        /// </summary>
+        public static string Dialog_PresetApply_ResolveMany {
+            get {
+                return ResourceManager.GetString("Dialog.PresetApply.ResolveMany", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Apply {0} change.
+        /// </summary>
+        public static string Dialog_PresetApply_ApplyOne {
+            get {
+                return ResourceManager.GetString("Dialog.PresetApply.ApplyOne", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Apply {0} changes.
+        /// </summary>
+        public static string Dialog_PresetApply_ApplyMany {
+            get {
+                return ResourceManager.GetString("Dialog.PresetApply.ApplyMany", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A catalog check is already running..
+        /// </summary>
+        public static string FastFlags_CatalogUpdater_AlreadyRunning {
+            get {
+                return ResourceManager.GetString("FastFlags.CatalogUpdater.AlreadyRunning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The catalog is up to date..
+        /// </summary>
+        public static string FastFlags_CatalogUpdater_UpToDate {
+            get {
+                return ResourceManager.GetString("FastFlags.CatalogUpdater.UpToDate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The source answered {0} {1}. The previous catalog was kept..
+        /// </summary>
+        public static string FastFlags_CatalogUpdater_HttpError {
+            get {
+                return ResourceManager.GetString("FastFlags.CatalogUpdater.HttpError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The download is larger than expected. The previous catalog was kept..
+        /// </summary>
+        public static string FastFlags_CatalogUpdater_TooLargeKept {
+            get {
+                return ResourceManager.GetString("FastFlags.CatalogUpdater.TooLargeKept", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cancelled. Nothing was changed..
+        /// </summary>
+        public static string FastFlags_CatalogUpdater_Cancelled {
+            get {
+                return ResourceManager.GetString("FastFlags.CatalogUpdater.Cancelled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Timed out after {0:0} s. The previous catalog was kept..
+        /// </summary>
+        public static string FastFlags_CatalogUpdater_TimedOut {
+            get {
+                return ResourceManager.GetString("FastFlags.CatalogUpdater.TimedOut", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Network error: {0} The previous catalog was kept..
+        /// </summary>
+        public static string FastFlags_CatalogUpdater_NetworkError {
+            get {
+                return ResourceManager.GetString("FastFlags.CatalogUpdater.NetworkError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} The previous catalog was kept..
+        /// </summary>
+        public static string FastFlags_CatalogUpdater_Invalid {
+            get {
+                return ResourceManager.GetString("FastFlags.CatalogUpdater.Invalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Catalog updated: {0:N0} flags..
+        /// </summary>
+        public static string FastFlags_CatalogUpdater_Updated {
+            get {
+                return ResourceManager.GetString("FastFlags.CatalogUpdater.Updated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The download is larger than expected..
+        /// </summary>
+        public static string FastFlags_CatalogUpdater_TooLarge {
+            get {
+                return ResourceManager.GetString("FastFlags.CatalogUpdater.TooLarge", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to  (Could not save catalog metadata: {0}).
+        /// </summary>
+        public static string FastFlags_CatalogUpdater_MetadataNotSaved {
+            get {
+                return ResourceManager.GetString("FastFlags.CatalogUpdater.MetadataNotSaved", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} → {1}. Pending: press Save; Roblox uses it on its next launch..
+        /// </summary>
+        public static string FastFlags_Binding_Applied {
+            get {
+                return ResourceManager.GetString("FastFlags.Binding.Applied", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to not set.
+        /// </summary>
+        public static string FastFlags_Binding_NotSet {
+            get {
+                return ResourceManager.GetString("FastFlags.Binding.NotSet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid JSON: {0}.
+        /// </summary>
+        public static string FastFlags_PresetFile_InvalidJson {
+            get {
+                return ResourceManager.GetString("FastFlags.PresetFile.InvalidJson", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Not a preset file (expected "format": "{0}")..
+        /// </summary>
+        public static string FastFlags_PresetFile_WrongFormat {
+            get {
+                return ResourceManager.GetString("FastFlags.PresetFile.WrongFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unsupported version {0} (expected {1})..
+        /// </summary>
+        public static string FastFlags_PresetFile_UnsupportedVersion {
+            get {
+                return ResourceManager.GetString("FastFlags.PresetFile.UnsupportedVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The file contains no presets..
+        /// </summary>
+        public static string FastFlags_PresetFile_NoPresets {
+            get {
+                return ResourceManager.GetString("FastFlags.PresetFile.NoPresets", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Too many presets ({0}, maximum {1})..
+        /// </summary>
+        public static string FastFlags_PresetFile_TooMany {
+            get {
+                return ResourceManager.GetString("FastFlags.PresetFile.TooMany", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Preset {0} has no name..
+        /// </summary>
+        public static string FastFlags_PresetFile_NoName {
+            get {
+                return ResourceManager.GetString("FastFlags.PresetFile.NoName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: {1} has an unsupported value type..
+        /// </summary>
+        public static string FastFlags_PresetFile_UnsupportedValue {
+            get {
+                return ResourceManager.GetString("FastFlags.PresetFile.UnsupportedValue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Fast Flag shortcut.
+        /// </summary>
+        public static string Menu_FastFlagEditor_Shortcuts_SnackbarTitle {
+            get {
+                return ResourceManager.GetString("Menu.FastFlagEditor.Shortcuts.SnackbarTitle", resourceCulture);
+            }
+        }
     }
 }

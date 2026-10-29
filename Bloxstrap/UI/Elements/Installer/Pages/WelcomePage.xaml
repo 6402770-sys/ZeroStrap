@@ -16,8 +16,21 @@
       Title="WelcomePage"
       Scrollable="True"
       Loaded="UiPage_Loaded">
-
     <StackPanel Margin="0,0,14,14">
+        <!--  ZeroBootstrap: first impression of the product. Purely presentational.  -->
+        <Border Style="{StaticResource ZeroHeroStyle}" Margin="0,0,0,24">
+            <StackPanel Orientation="Horizontal">
+                <Border Style="{StaticResource ZeroMarkTileStyle}" Width="64" Height="64" Padding="16">
+                    <Path Style="{StaticResource ZeroMarkStyle}" Data="{StaticResource ZeroLogoGeometry}" />
+                </Border>
+                <StackPanel Margin="20,0,0,0" VerticalAlignment="Center" AutomationProperties.Name="ZeroBootstrap">
+                    <Path Style="{StaticResource ZeroWordmarkPathStyle}" Height="20" HorizontalAlignment="Left" />
+                    <TextBlock Style="{StaticResource ZeroDescriptorStyle}" FontSize="11" Margin="0,8,0,0"
+                               Text="B&#x200A;O&#x200A;O&#x200A;T&#x200A;S&#x200A;T&#x200A;R&#x200A;A&#x200A;P" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
         <controls:MarkdownTextBlock FontSize="14" MarkdownText="{Binding MainText, Mode=OneWay}" TextWrapping="Wrap" />
 
         <Grid Margin="0,24,0,0">
