@@ -46,11 +46,23 @@
 
             <Border Style="{StaticResource ZeroCardStyle}" Margin="0,12,0,0">
                 <StackPanel>
+                    <TextBlock Text="Backups" Style="{StaticResource ZeroSectionTitleStyle}" />
+                    <TextBlock Text="Save a snapshot of your Fast Flags, settings and shortcuts to a folder of your choice." Style="{StaticResource ZeroCaptionStyle}" Margin="0,6,0,10" />
+                    <StackPanel Orientation="Horizontal">
+                        <ui:Button Content="Export configuration" Icon="ArrowExport24" Style="{StaticResource ZeroButtonGhost}" Click="ExportConfig_Click" Margin="0,0,8,0" />
+                        <ui:Button Content="Open backups folder" Icon="FolderOpen24" Style="{StaticResource ZeroButtonGhost}" Click="OpenBackups_Click" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ZeroCardStyle}" Margin="0,12,0,0">
+                <StackPanel>
                     <TextBlock Text="Installation" Style="{StaticResource ZeroSectionTitleStyle}" />
-                    <TextBlock Text="Reinstall or uninstall ZeroStrap. Fast Flags, mods and profiles are preserved by reinstall." Style="{StaticResource ZeroCaptionStyle}" Margin="0,6,0,10" />
+                    <TextBlock Text="Reinstall or uninstall ZeroStrap. Fast Flags, mods and profiles are preserved unless you choose otherwise." Style="{StaticResource ZeroCaptionStyle}" Margin="0,6,0,10" />
                     <StackPanel Orientation="Horizontal">
                         <ui:Button Content="Open install folder" Icon="FolderOpen24" Style="{StaticResource ZeroButtonGhost}" Click="OpenInstall_Click" Margin="0,0,8,0" />
                         <ui:Button Content="Check for updates" Icon="ArrowDownload24" Style="{StaticResource ZeroButtonGhost}" Click="CheckUpdates_Click" Margin="0,0,8,0" />
+                        <ui:Button Content="Uninstall ZeroStrap" Icon="Delete24" Appearance="Danger" Style="{StaticResource ZeroButtonGhost}" Click="Uninstall_Click" />
                     </StackPanel>
                 </StackPanel>
             </Border>

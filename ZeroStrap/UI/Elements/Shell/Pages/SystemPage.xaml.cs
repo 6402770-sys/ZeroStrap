@@ -91,5 +91,79 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
                 App.Logger.WriteException("SystemPage::CheckUpdates_Click", ex);
             }
         }
+
+        private static string BackupsRoot => Path.Combine(Paths.Base, "Backups");
+
+        private void ExportConfig_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Directory.CreateDirectory(BackupsRoot);
+                var stamp = DateTime.Now.ToString("yyyyMMdd-HHmmss");
+                var dir = Path.Combine(BackupsRoot, $"ZeroStrap-{stamp}");
+                Directory.CreateDirectory(dir);
+
+                // Settings and state JSONs
+                CopyIfExists(Path.Combine(Paths.Base, "Settings.json"), Path.Combine(dir, "Settings.json"));
+                CopyIfExists(Path.Combine(Paths.Base, "State.json"), Path.Combine(dir, "State.json"));
+
+                // Fast Flags JSON (lives inside the Modifications tree)
+                var flagsPath = App.FastFlags.FileLocation;
+                if (File.Exists(flagsPath))
+                {
+                    var dest = Path.Combine(dir, "ClientAppSettings.json");
+                    File.Copy(flagsPath, dest, overwrite: true);
+                }
+
+                Frontend.ShowMessageBox(
+                    $"Backup saved to:\n{dir}",
+                    MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteException("SystemPage::ExportConfig_Click", ex);
+                Frontend.ShowMessageBox($"Backup failed: {ex.Message}", MessageBoxImage.Error);
+            }
+        }
+
+        private void OpenBackups_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Directory.CreateDirectory(BackupsRoot);
+                Process.Start(new ProcessStartInfo { FileName = BackupsRoot, UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteException("SystemPage::OpenBackups_Click", ex);
+            }
+        }
+
+        private void Uninstall_Click(object sender, RoutedEventArgs e)
+        {
+            var confirm = Frontend.ShowMessageBox(
+                "Uninstall ZeroStrap now?\n\nYour saved Fast Flags, settings and mods will be kept unless you clear them separately.",
+                MessageBoxImage.Warning,
+                MessageBoxButton.YesNo);
+
+            if (confirm != MessageBoxResult.Yes)
+                return;
+
+            try
+            {
+                ZeroStrap.Installer.DoUninstall(keepData: true);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteException("SystemPage::Uninstall_Click", ex);
+                Frontend.ShowMessageBox($"Uninstall failed: {ex.Message}", MessageBoxImage.Error);
+            }
+        }
+
+        private static void CopyIfExists(string from, string to)
+        {
+            if (File.Exists(from))
+                File.Copy(from, to, overwrite: true);
+        }
     }
 }
