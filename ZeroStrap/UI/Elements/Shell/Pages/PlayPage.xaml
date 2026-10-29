@@ -1,0 +1,77 @@
+<Page x:Class="ZeroStrap.UI.Elements.Shell.Pages.PlayPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      mc:Ignorable="d"
+      d:DesignHeight="520" d:DesignWidth="860"
+      Background="{DynamicResource ApplicationBackgroundBrush}"
+      Title="Play">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="32,24,32,32">
+            <TextBlock Text="PLAY" Style="{StaticResource ZeroEyebrowStyle}" />
+            <TextBlock Text="Launch Roblox" Style="{StaticResource ZeroPageTitleStyle}" FontSize="28" />
+            <TextBlock Text="Start a session with the current profile, or override launch options for this run." Style="{StaticResource ZeroBodyStyle}" Margin="0,4,0,0" MaxWidth="640" HorizontalAlignment="Left" />
+
+            <Border Style="{StaticResource ZeroHeroStyle}" Margin="0,24,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Text="Ready to launch" Style="{StaticResource ZeroSectionTitleStyle}" FontSize="18" />
+                        <TextBlock x:Name="VersionLine" Text="Roblox Player, default profile." Style="{StaticResource ZeroBodyStyle}" Margin="0,4,0,0" />
+                    </StackPanel>
+                    <ui:Button Grid.Column="1" Content="Launch Roblox" Icon="Play24"
+                               Style="{StaticResource ZeroButtonPrimary}" Padding="22,12"
+                               Click="LaunchButton_Click" VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <TextBlock Text="LAUNCH CONFIGURATION" Style="{StaticResource ZeroEyebrowStyle}" Margin="0,32,0,8" />
+            <Border Style="{StaticResource ZeroCardStyle}">
+                <StackPanel>
+                    <Border Style="{StaticResource ZeroSettingRowStyle}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Launch target" Style="{StaticResource ZeroBodyStyle}" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                <TextBlock Text="Which Roblox client to start." Style="{StaticResource ZeroCaptionStyle}" />
+                            </StackPanel>
+                            <ComboBox Grid.Column="1" Style="{StaticResource ZeroDropdown}" MinWidth="160" SelectedIndex="0">
+                                <ComboBoxItem Content="Player" />
+                                <ComboBoxItem Content="Studio" />
+                            </ComboBox>
+                        </Grid>
+                    </Border>
+                    <Border Style="{StaticResource ZeroSettingRowStyle}" BorderThickness="0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Confirm before launch" Style="{StaticResource ZeroBodyStyle}" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                <TextBlock Text="Show a confirmation dialog each run." Style="{StaticResource ZeroCaptionStyle}" />
+                            </StackPanel>
+                            <ui:ToggleSwitch Grid.Column="1" x:Name="ConfirmLaunchToggle" Style="{StaticResource ZeroToggle}" />
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <TextBlock Text="RECENT LAUNCHES" Style="{StaticResource ZeroEyebrowStyle}" Margin="0,32,0,8" />
+            <Border Style="{StaticResource ZeroCardStyle}">
+                <StackPanel x:Name="LaunchHistoryList">
+                    <TextBlock Text="No launches recorded yet." Style="{StaticResource ZeroEmptyStateStyle}" Margin="0,12" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

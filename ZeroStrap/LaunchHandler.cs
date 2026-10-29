@@ -180,7 +180,7 @@ namespace ZeroStrap
             {
                 bool showAlreadyRunningWarning = Process.GetProcessesByName(App.ProjectName).Length > 1;
 
-                var window = new UI.Elements.Settings.MainWindow(showAlreadyRunningWarning);
+                var window = new UI.Elements.Shell.ShellWindow(showAlreadyRunningWarning);
 
                 // typically we'd use Show(), but we need to block to ensure IPL stays in scope
                 window.ShowDialog();

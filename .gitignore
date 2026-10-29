@@ -350,4 +350,4 @@ MigrationBackup/
 .ionide/
 
 # Local test builds
-Bloxstrap/build-test-zero/
+ZeroStrap/build-test-zero/

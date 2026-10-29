@@ -1,0 +1,59 @@
+<Page x:Class="ZeroStrap.UI.Elements.Shell.Pages.SystemPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      mc:Ignorable="d"
+      d:DesignHeight="520" d:DesignWidth="860"
+      Background="{DynamicResource ApplicationBackgroundBrush}"
+      Title="System">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="32,24,32,32">
+            <TextBlock Text="SYSTEM" Style="{StaticResource ZeroEyebrowStyle}" />
+            <TextBlock Text="Diagnostics and maintenance" Style="{StaticResource ZeroPageTitleStyle}" FontSize="28" />
+            <TextBlock Text="Updates, logs, backups and installation repair." Style="{StaticResource ZeroBodyStyle}" Margin="0,4,0,0" />
+
+            <Border Style="{StaticResource ZeroCardStyle}" Margin="0,24,0,0">
+                <StackPanel>
+                    <TextBlock Text="Diagnostics" Style="{StaticResource ZeroSectionTitleStyle}" />
+                    <Grid Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock x:Name="DiagRoblox" Text="Roblox Player: checking..." Style="{StaticResource ZeroBodyStyle}" />
+                            <TextBlock x:Name="DiagStudio" Text="Roblox Studio: checking..." Style="{StaticResource ZeroBodyStyle}" />
+                            <TextBlock x:Name="DiagConfig" Text="Configuration: checking..." Style="{StaticResource ZeroBodyStyle}" />
+                        </StackPanel>
+                        <ui:Button Grid.Column="1" Content="Refresh" Icon="ArrowClockwise24" Style="{StaticResource ZeroButtonGhost}" Click="Refresh_Click" VerticalAlignment="Top" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ZeroCardStyle}" Margin="0,12,0,0">
+                <StackPanel>
+                    <TextBlock Text="Logs" Style="{StaticResource ZeroSectionTitleStyle}" />
+                    <TextBlock Text="Open the current log directory or copy the latest log to the clipboard." Style="{StaticResource ZeroCaptionStyle}" Margin="0,6,0,10" />
+                    <StackPanel Orientation="Horizontal">
+                        <ui:Button Content="Open log folder" Icon="FolderOpen24" Style="{StaticResource ZeroButtonGhost}" Click="OpenLogs_Click" Margin="0,0,8,0" />
+                        <ui:Button Content="Copy latest log" Icon="ClipboardTextLtr24" Style="{StaticResource ZeroButtonGhost}" Click="CopyLog_Click" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource ZeroCardStyle}" Margin="0,12,0,0">
+                <StackPanel>
+                    <TextBlock Text="Installation" Style="{StaticResource ZeroSectionTitleStyle}" />
+                    <TextBlock Text="Reinstall or uninstall ZeroStrap. Fast Flags, mods and profiles are preserved by reinstall." Style="{StaticResource ZeroCaptionStyle}" Margin="0,6,0,10" />
+                    <StackPanel Orientation="Horizontal">
+                        <ui:Button Content="Open install folder" Icon="FolderOpen24" Style="{StaticResource ZeroButtonGhost}" Click="OpenInstall_Click" Margin="0,0,8,0" />
+                        <ui:Button Content="Check for updates" Icon="ArrowDownload24" Style="{StaticResource ZeroButtonGhost}" Click="CheckUpdates_Click" Margin="0,0,8,0" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
