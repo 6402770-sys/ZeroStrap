@@ -116,28 +116,97 @@ namespace ZeroStrap.UI.Elements.Shell
 
         private void CommandPaletteBox_KeyDown(object sender, KeyEventArgs e)
         {
+            if (e.Key == Key.Escape)
+            {
+                CommandPaletteBox.Clear();
+                Keyboard.ClearFocus();
+                e.Handled = true;
+                return;
+            }
+
             if (e.Key != Key.Enter)
                 return;
 
-            var query = CommandPaletteBox.Text.Trim().ToLowerInvariant();
-            if (string.IsNullOrEmpty(query))
+            var raw = CommandPaletteBox.Text.Trim();
+            if (string.IsNullOrEmpty(raw))
                 return;
 
-            var section = query switch
-            {
-                "overview" or "home" => ShellSection.Overview,
-                "play" or "launch" => ShellSection.Play,
-                "configure" or "fast flags" or "flags" or "mods" or "integrations" => ShellSection.Configure,
-                "appearance" or "theme" or "themes" => ShellSection.Appearance,
-                "system" or "logs" or "diagnostics" => ShellSection.System,
-                _ => (ShellSection?)null
-            };
+            var query = raw.ToLowerInvariant();
 
+            // Direct action verbs
+            if (query is "launch" or "launch roblox" or "play roblox" or "start" or "start roblox")
+            {
+                try { LaunchHandler.LaunchRoblox(LaunchMode.Player); CommandPaletteBox.Clear(); }
+                catch (Exception ex) { App.Logger.WriteException("ShellWindow::CP::Launch", ex); }
+                return;
+            }
+
+            if (query.StartsWith("theme "))
+            {
+                var choice = query[6..].Trim();
+                var theme = choice switch
+                {
+                    "light" => (Enums.Theme?)Enums.Theme.Light,
+                    "dark" or "obsidian" => Enums.Theme.Dark,
+                    "default" or "system" => Enums.Theme.Default,
+                    _ => null
+                };
+                if (theme is not null)
+                {
+                    App.Settings.Prop.Theme = theme.Value;
+                    ApplyTheme();
+                    CommandPaletteBox.Clear();
+                    return;
+                }
+            }
+
+            if (query is "save" or "save settings")
+            {
+                _viewModel.SaveSettingsCommand.Execute(null);
+                CommandPaletteBox.Clear();
+                return;
+            }
+
+            if (query is "about")
+            {
+                _viewModel.OpenAboutCommand.Execute(null);
+                CommandPaletteBox.Clear();
+                return;
+            }
+
+            // Navigation keywords (fuzzy via prefix / contains)
+            var section = ResolveSection(query);
             if (section is not null)
             {
                 NavigateTo(section.Value);
                 CommandPaletteBox.Clear();
             }
+        }
+
+        private static ShellSection? ResolveSection(string query)
+        {
+            if (query.Length == 0) return null;
+
+            // Explicit matches first
+            var map = new (string[] keys, ShellSection s)[]
+            {
+                (new[] { "overview", "home", "dashboard" }, ShellSection.Overview),
+                (new[] { "play", "launcher" }, ShellSection.Play),
+                (new[] { "configure", "config", "settings", "fast flags", "flags", "fflags", "mods", "integrations", "shortcuts", "behaviour", "behavior" }, ShellSection.Configure),
+                (new[] { "appearance", "theme", "themes", "typography", "look", "ui" }, ShellSection.Appearance),
+                (new[] { "system", "logs", "diagnostics", "backup", "backups", "repair", "update", "updates", "uninstall" }, ShellSection.System),
+            };
+
+            foreach (var (keys, s) in map)
+            {
+                foreach (var k in keys)
+                {
+                    if (query == k || query.StartsWith(k + " ") || k.StartsWith(query))
+                        return s;
+                }
+            }
+
+            return null;
         }
 
         private void ShellWindow_PreviewKeyDown(object sender, KeyEventArgs e)
