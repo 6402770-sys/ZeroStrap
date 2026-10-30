@@ -1,0 +1,465 @@
+<Page x:Class="ZeroStrap.UI.Elements.Shell.Pages.OverviewPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:motion="clr-namespace:ZeroStrap.UI.Utility"
+      mc:Ignorable="d"
+      d:DesignHeight="760" d:DesignWidth="1030"
+      Title="Overview">
+
+    <Page.Resources>
+        <!--  Status line in the System Status card: icon, label, value, dot.  -->
+        <Style x:Key="StatusRowGrid" TargetType="{x:Type Grid}">
+            <Setter Property="Margin" Value="0,11" />
+        </Style>
+        <Style x:Key="StatusRowIcon" TargetType="{x:Type ui:SymbolIcon}" BasedOn="{StaticResource {x:Type ui:SymbolIcon}}">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Setter Property="Margin" Value="0,0,12,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </Page.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid Margin="40,30,32,32">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="300" />
+            </Grid.ColumnDefinitions>
+
+            <!-- ============================== MAIN COLUMN ============================== -->
+            <StackPanel Grid.Column="0" Margin="0,0,24,0">
+
+                <!-- Greeting -->
+                <StackPanel motion:Motion.Enter="0" Margin="4,0,0,0">
+                    <TextBlock x:Name="GreetingDay" Style="{StaticResource ZeroEyebrowStyle}" FontSize="11" Margin="0,4,0,8" />
+                    <TextBlock x:Name="GreetingText" Text="Good morning." FontSize="38" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <TextBlock Text="Your Roblox experience, under control." FontSize="16" Margin="0,6,0,0"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+
+                <!-- Hero: Roblox client -->
+                <Border motion:Motion.Enter="1" Margin="0,26,0,0" CornerRadius="{StaticResource ZeroRadiusSurface}" ClipToBounds="True"
+                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                    <Grid>
+                        <!--  Decorative shards echoing the mark's diagonal; purely background, never hit-tested.  -->
+                        <Canvas IsHitTestVisible="False" HorizontalAlignment="Right" Width="380" ClipToBounds="True">
+                            <Path Data="M150,0 L380,0 L380,140 L230,140 Z" Opacity="0.55">
+                                <Path.Fill>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Offset="0" Color="#00FFFFFF" />
+                                        <GradientStop Offset="1" Color="#0FFFFFFF" />
+                                    </LinearGradientBrush>
+                                </Path.Fill>
+                            </Path>
+                            <Path Data="M250,0 L300,0 L190,160 L140,160 Z" Opacity="0.8">
+                                <Path.Fill>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Offset="0" Color="#12FFFFFF" />
+                                        <GradientStop Offset="1" Color="#02FFFFFF" />
+                                    </LinearGradientBrush>
+                                </Path.Fill>
+                            </Path>
+                            <Path Data="M340,0 L380,0 L380,40 L270,160 L230,160 Z" Fill="#08FFFFFF" />
+                        </Canvas>
+
+                        <Grid Margin="26,24">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Client glyph: a tilted plate with a square cut, lit from the top left -->
+                            <Grid Grid.Column="0" Width="76" Height="76" VerticalAlignment="Center" motion:Motion.Enter="3">
+                                <Border Width="60" Height="60" CornerRadius="7" RenderTransformOrigin="0.5,0.5">
+                                    <Border.RenderTransform>
+                                        <RotateTransform Angle="15" />
+                                    </Border.RenderTransform>
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Offset="0" Color="#FFF4F4F4" />
+                                            <GradientStop Offset="1" Color="#FF8E8E8E" />
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="18" ShadowDepth="4" Opacity="0.5" Color="Black" />
+                                    </Border.Effect>
+                                    <Border Width="18" Height="18" CornerRadius="2" Background="#FF161616" />
+                                </Border>
+                            </Grid>
+
+                            <StackPanel Grid.Column="1" Margin="20,0,16,0" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="ROBLOX CLIENT" FontFamily="{StaticResource ZeroMonoFont}" FontSize="13.5" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextFillColorPrimaryBrush}" VerticalAlignment="Center" />
+                                    <Border x:Name="ClientPill" Style="{StaticResource ZeroStatusPillStyle}" Margin="12,0,0,0">
+                                        <TextBlock x:Name="ClientPillText" Text="READY" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource ZeroStatusHealthyBrush}" />
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock Margin="0,10,0,0" FontSize="14" Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+                                    <Run x:Name="VersionRun" Text="Version unknown" />
+                                    <Run x:Name="VersionNoteRun" Text="" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                </TextBlock>
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <ui:SymbolIcon Symbol="Folder16" FontSize="13" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,8,0" />
+                                    <TextBlock x:Name="InstallPathText" Style="{StaticResource ZeroMonoTextStyle}" FontSize="11"
+                                               Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextTrimming="CharacterEllipsis" MaxWidth="340" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <ui:Button Grid.Column="2" x:Name="LaunchButton" Style="{StaticResource ZeroButtonPrimary}"
+                                       Padding="22,12" MinWidth="184" Click="LaunchButton_Click" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Play24" Filled="True" FontSize="16" Margin="0,0,12,0" />
+                                    <TextBlock Text="Launch Roblox" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                    <ui:SymbolIcon Symbol="ChevronRight16" FontSize="12" Margin="14,0,0,0" />
+                                </StackPanel>
+                            </ui:Button>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- Quick info row -->
+                <Grid Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0" Style="{StaticResource ZeroTileButton}" Padding="16,14" Tag="Configure:0" Click="Tile_Click" motion:Motion.Enter="2">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Border Style="{StaticResource ZeroIconTileStyle}">
+                                <ui:SymbolIcon Symbol="Flag24" Style="{StaticResource ZeroIconTileGlyphStyle}" />
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="14,0,8,0" VerticalAlignment="Center">
+                                <TextBlock Text="Fast Flags" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock x:Name="FlagsSummaryText" Text="None configured" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                            <ui:SymbolIcon Grid.Column="2" Style="{StaticResource ZeroChevronStyle}" />
+                        </Grid>
+                    </Button>
+
+                    <Button Grid.Column="2" Style="{StaticResource ZeroTileButton}" Padding="16,14" Tag="Configure:1" Click="Tile_Click" motion:Motion.Enter="3">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Border Style="{StaticResource ZeroIconTileStyle}">
+                                <ui:SymbolIcon Symbol="PuzzlePiece24" Style="{StaticResource ZeroIconTileGlyphStyle}" />
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="14,0,8,0" VerticalAlignment="Center">
+                                <TextBlock Text="Mods" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock x:Name="ModsSummaryText" Text="None installed" FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                            <ui:SymbolIcon Grid.Column="2" Style="{StaticResource ZeroChevronStyle}" />
+                        </Grid>
+                    </Button>
+
+                    <Button Grid.Column="4" Style="{StaticResource ZeroTileButton}" Padding="16,14" Tag="System" Click="Tile_Click" motion:Motion.Enter="4">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Border Style="{StaticResource ZeroIconTileStyle}">
+                                <ui:SymbolIcon Symbol="Folder24" Style="{StaticResource ZeroIconTileGlyphStyle}" />
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="14,0,8,0" VerticalAlignment="Center">
+                                <TextBlock Text="Installation" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                    <TextBlock x:Name="InstallationStatusText" Text="Up to date" FontSize="14" FontWeight="SemiBold" />
+                                    <Ellipse x:Name="InstallationDot" Style="{StaticResource ZeroStatusDotStyle}" Fill="{StaticResource ZeroStatusHealthyBrush}" Margin="10,1,0,0" />
+                                </StackPanel>
+                            </StackPanel>
+                            <ui:SymbolIcon Grid.Column="2" Style="{StaticResource ZeroChevronStyle}" />
+                        </Grid>
+                    </Button>
+                </Grid>
+
+                <!-- Section shortcuts -->
+                <Grid Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0" Style="{StaticResource ZeroTileButton}" Tag="Configure:0" Click="Tile_Click" motion:Motion.Enter="5" MinHeight="148">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Border Style="{StaticResource ZeroIconTileStyle}">
+                                <ui:SymbolIcon Symbol="Options24" Style="{StaticResource ZeroIconTileGlyphStyle}" />
+                            </Border>
+                            <StackPanel Grid.Row="1" Margin="0,16,0,0">
+                                <TextBlock Text="Configure" FontSize="15" FontWeight="SemiBold" />
+                                <TextBlock Text="Fast Flags, settings and more." Style="{StaticResource ZeroCaptionStyle}" Margin="0,6,0,0" />
+                            </StackPanel>
+                            <ui:SymbolIcon Grid.Row="2" Style="{StaticResource ZeroChevronStyle}" HorizontalAlignment="Right" />
+                        </Grid>
+                    </Button>
+                    <Button Grid.Column="2" Style="{StaticResource ZeroTileButton}" Tag="Appearance" Click="Tile_Click" motion:Motion.Enter="6" MinHeight="148">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Border Style="{StaticResource ZeroIconTileStyle}">
+                                <ui:SymbolIcon Symbol="Color24" Style="{StaticResource ZeroIconTileGlyphStyle}" />
+                            </Border>
+                            <StackPanel Grid.Row="1" Margin="0,16,0,0">
+                                <TextBlock Text="Appearance" FontSize="15" FontWeight="SemiBold" />
+                                <TextBlock Text="Themes, launcher style and motion." Style="{StaticResource ZeroCaptionStyle}" Margin="0,6,0,0" />
+                            </StackPanel>
+                            <ui:SymbolIcon Grid.Row="2" Style="{StaticResource ZeroChevronStyle}" HorizontalAlignment="Right" />
+                        </Grid>
+                    </Button>
+                    <Button Grid.Column="4" Style="{StaticResource ZeroTileButton}" Tag="System" Click="Tile_Click" motion:Motion.Enter="7" MinHeight="148">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Border Style="{StaticResource ZeroIconTileStyle}">
+                                <ui:SymbolIcon Symbol="Wrench24" Style="{StaticResource ZeroIconTileGlyphStyle}" />
+                            </Border>
+                            <StackPanel Grid.Row="1" Margin="0,16,0,0">
+                                <TextBlock Text="System" FontSize="15" FontWeight="SemiBold" />
+                                <TextBlock Text="Diagnostics, logs and maintenance." Style="{StaticResource ZeroCaptionStyle}" Margin="0,6,0,0" />
+                            </StackPanel>
+                            <ui:SymbolIcon Grid.Row="2" Style="{StaticResource ZeroChevronStyle}" HorizontalAlignment="Right" />
+                        </Grid>
+                    </Button>
+                    <Button Grid.Column="6" Style="{StaticResource ZeroTileButton}" Tag="System" Click="Tile_Click" motion:Motion.Enter="8" MinHeight="148">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Border Style="{StaticResource ZeroIconTileStyle}">
+                                <ui:SymbolIcon Symbol="Document24" Style="{StaticResource ZeroIconTileGlyphStyle}" />
+                            </Border>
+                            <StackPanel Grid.Row="1" Margin="0,16,0,0">
+                                <TextBlock Text="Backups" FontSize="15" FontWeight="SemiBold" />
+                                <TextBlock Text="Export and restore your configuration." Style="{StaticResource ZeroCaptionStyle}" Margin="0,6,0,0" />
+                            </StackPanel>
+                            <ui:SymbolIcon Grid.Row="2" Style="{StaticResource ZeroChevronStyle}" HorizontalAlignment="Right" />
+                        </Grid>
+                    </Button>
+                </Grid>
+
+                <!-- Recent activity -->
+                <Border Style="{StaticResource ZeroCardStyle}" Margin="0,14,0,0" Padding="22,18,22,8" motion:Motion.Enter="9">
+                    <StackPanel>
+                        <TextBlock Text="Recent Activity" Style="{StaticResource ZeroCardTitleStyle}" />
+                        <ItemsControl x:Name="RecentActivityList" Margin="0,10,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border x:Name="Row" Padding="0,10" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border Style="{StaticResource ZeroIconTileStyle}" Width="34" Height="34" CornerRadius="17">
+                                                <ui:SymbolIcon Symbol="{Binding Icon}" FontSize="15" Style="{StaticResource ZeroIconTileGlyphStyle}" />
+                                            </Border>
+                                            <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Title}" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                                <TextBlock Text="{Binding Detail}" FontSize="11.5" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding When}" Style="{StaticResource ZeroMetaTextStyle}" FontSize="11.5" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock x:Name="RecentActivityEmpty" Text="Nothing here yet. Launches, saves and theme changes will show up here."
+                                   Style="{StaticResource ZeroCaptionStyle}" Margin="0,4,0,14" Visibility="Collapsed" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- ============================== RIGHT COLUMN ============================== -->
+            <StackPanel Grid.Column="1">
+
+                <!-- System Status -->
+                <Border Style="{StaticResource ZeroCardStyle}" Padding="20,18,20,8" motion:Motion.Enter="2">
+                    <StackPanel>
+                        <TextBlock Text="System Status" Style="{StaticResource ZeroCardTitleStyle}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,10">
+                            <Ellipse x:Name="OverallDot" Style="{StaticResource ZeroStatusDotStyle}" Width="8" Height="8" Fill="{StaticResource ZeroStatusHealthyBrush}" Margin="2,0,10,0" />
+                            <TextBlock x:Name="OverallText" Text="All systems operational" FontSize="13" Foreground="{StaticResource ZeroStatusHealthyBrush}" />
+                        </StackPanel>
+
+                        <Border Style="{StaticResource ZeroDividerStyle}" />
+                        <Grid Style="{StaticResource StatusRowGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Symbol="Info24" Style="{StaticResource StatusRowIcon}" />
+                            <TextBlock Grid.Column="1" Text="Roblox Client" Style="{StaticResource ZeroInfoLabelStyle}" />
+                            <TextBlock Grid.Column="2" x:Name="StatusClientText" Text="Ready" Style="{StaticResource ZeroInfoValueStyle}" Margin="0,0,10,0" />
+                            <Ellipse Grid.Column="3" x:Name="StatusClientDot" Style="{StaticResource ZeroStatusDotStyle}" Fill="{StaticResource ZeroStatusHealthyBrush}" />
+                        </Grid>
+                        <Border Style="{StaticResource ZeroDividerStyle}" />
+                        <Grid Style="{StaticResource StatusRowGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Symbol="Settings24" Style="{StaticResource StatusRowIcon}" />
+                            <TextBlock Grid.Column="1" Text="Configuration" Style="{StaticResource ZeroInfoLabelStyle}" />
+                            <TextBlock Grid.Column="2" x:Name="StatusConfigText" Text="Loaded" Style="{StaticResource ZeroInfoValueStyle}" Margin="0,0,10,0" />
+                            <Ellipse Grid.Column="3" x:Name="StatusConfigDot" Style="{StaticResource ZeroStatusDotStyle}" Fill="{StaticResource ZeroStatusHealthyBrush}" />
+                        </Grid>
+                        <Border Style="{StaticResource ZeroDividerStyle}" />
+                        <Grid Style="{StaticResource StatusRowGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Symbol="Globe24" Style="{StaticResource StatusRowIcon}" />
+                            <TextBlock Grid.Column="1" Text="Network" Style="{StaticResource ZeroInfoLabelStyle}" />
+                            <TextBlock Grid.Column="2" x:Name="StatusNetworkText" Text="Online" Style="{StaticResource ZeroInfoValueStyle}" Margin="0,0,10,0" />
+                            <Ellipse Grid.Column="3" x:Name="StatusNetworkDot" Style="{StaticResource ZeroStatusDotStyle}" Fill="{StaticResource ZeroStatusHealthyBrush}" />
+                        </Grid>
+                        <Border Style="{StaticResource ZeroDividerStyle}" />
+                        <Grid Style="{StaticResource StatusRowGrid}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Symbol="HardDrive20" Style="{StaticResource StatusRowIcon}" />
+                            <TextBlock Grid.Column="1" Text="Disk Space" Style="{StaticResource ZeroInfoLabelStyle}" />
+                            <TextBlock Grid.Column="2" x:Name="StatusDiskText" Text="Healthy" Style="{StaticResource ZeroInfoValueStyle}" Margin="0,0,10,0" />
+                            <Ellipse Grid.Column="3" x:Name="StatusDiskDot" Style="{StaticResource ZeroStatusDotStyle}" Fill="{StaticResource ZeroStatusHealthyBrush}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Quick Information -->
+                <Border Style="{StaticResource ZeroCardStyle}" Margin="0,14,0,0" Padding="20,18,20,8" motion:Motion.Enter="3">
+                    <StackPanel>
+                        <TextBlock Text="Quick Information" Style="{StaticResource ZeroCardTitleStyle}" Margin="0,0,0,8" />
+                        <Grid Style="{StaticResource StatusRowGrid}" Margin="0,9">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Roblox Version" Style="{StaticResource ZeroInfoLabelStyle}" />
+                            <TextBlock Grid.Column="1" x:Name="InfoRobloxVersion" Text="unknown" Style="{StaticResource ZeroInfoValueStyle}" HorizontalAlignment="Right" Margin="12,0,0,0" />
+                        </Grid>
+                        <Border Style="{StaticResource ZeroDividerStyle}" />
+                        <Grid Style="{StaticResource StatusRowGrid}" Margin="0,9">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Launcher Version" Style="{StaticResource ZeroInfoLabelStyle}" />
+                            <TextBlock Grid.Column="1" x:Name="InfoLauncherVersion" Text="unknown" Style="{StaticResource ZeroInfoValueStyle}" HorizontalAlignment="Right" Margin="12,0,0,0" />
+                        </Grid>
+                        <Border Style="{StaticResource ZeroDividerStyle}" />
+                        <Grid Style="{StaticResource StatusRowGrid}" Margin="0,9">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Platform" Style="{StaticResource ZeroInfoLabelStyle}" />
+                            <TextBlock Grid.Column="1" x:Name="InfoPlatform" Text="Windows" Style="{StaticResource ZeroInfoValueStyle}" HorizontalAlignment="Right" Margin="12,0,0,0" />
+                        </Grid>
+                        <Border Style="{StaticResource ZeroDividerStyle}" />
+                        <Grid Style="{StaticResource StatusRowGrid}" Margin="0,9">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Installation Path" Style="{StaticResource ZeroInfoLabelStyle}" />
+                            <TextBlock Grid.Column="1" x:Name="InfoInstallPath" Text="..." Style="{StaticResource ZeroInfoValueStyle}" HorizontalAlignment="Right" Margin="12,0,0,0" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Theme Preview -->
+                <Border Style="{StaticResource ZeroCardStyle}" Margin="0,14,0,0" Padding="20,18" motion:Motion.Enter="4">
+                    <StackPanel>
+                        <TextBlock Text="Theme Preview" Style="{StaticResource ZeroCardTitleStyle}" />
+                        <Grid Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="124" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="ThemeThumb" Height="72" CornerRadius="8" ClipToBounds="True" BorderThickness="1"
+                                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" Background="#FF111111">
+                                <Canvas ClipToBounds="True">
+                                    <Path Data="M30,0 L60,0 L28,72 L0,72 L0,50 Z" Fill="#14FFFFFF" />
+                                    <Path Data="M70,0 L95,0 L60,72 L36,72 Z" Fill="#22FFFFFF" />
+                                    <Path Data="M105,0 L124,0 L124,30 L90,72 L72,72 Z" Fill="#0CFFFFFF" />
+                                </Canvas>
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="16,2,0,0">
+                                <TextBlock x:Name="ThemeNameText" Text="Obsidian" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                <TextBlock Text="Current theme" Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,0" />
+                                <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                                    <RadioButton x:Name="ThemeDotDark" GroupName="OverviewTheme" Tag="Dark" Checked="ThemeDot_Checked" ToolTip="Obsidian" Style="{StaticResource ThemeDotStyle}" />
+                                    <RadioButton x:Name="ThemeDotLight" GroupName="OverviewTheme" Tag="Light" Checked="ThemeDot_Checked" ToolTip="Light" Style="{StaticResource ThemeDotStyle}" Margin="8,0,0,0" />
+                                    <RadioButton x:Name="ThemeDotDefault" GroupName="OverviewTheme" Tag="Default" Checked="ThemeDot_Checked" ToolTip="Follow Windows" Style="{StaticResource ThemeDotStyle}" Margin="8,0,0,0" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Tagline -->
+                <Border Style="{StaticResource ZeroCardStyle}" Margin="0,14,0,0" Padding="20,22" motion:Motion.Enter="5">
+                    <Grid>
+                        <Border BorderThickness="1.5,0,0,0" BorderBrush="{DynamicResource TextFillColorTertiaryBrush}" Padding="18,0,0,0" Margin="2,0,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Better tools." FontSize="13.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Text="Smoother experience." FontSize="13.5" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,3,0,0" />
+                                <TextBlock Text="ZeroStrap." FontSize="13.5" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </Border>
+                        <Path Style="{StaticResource ZeroMarkStyle}" Width="22" Height="22" Opacity="0.35" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</Page>

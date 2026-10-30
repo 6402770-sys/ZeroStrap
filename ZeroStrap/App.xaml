@@ -1,0 +1,48 @@
+﻿<Application x:Class="ZeroStrap.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:ZeroStrap"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:converters="clr-namespace:ZeroStrap.UI.Converters"
+             ShutdownMode="OnExplicitShutdown"
+             DispatcherUnhandledException="GlobalExceptionHandler">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ui:ThemesDictionary Theme="Dark" />
+                <ui:ControlsDictionary />
+                <ResourceDictionary x:Name="CustomTheme" Source="UI/Style/Dark.xaml" /> <!-- NOTE: WpfUiWindow::ApplyTheme relies on this order. If you plan to change the order, please update the index in the function. -->
+                <ResourceDictionary x:Name="Default" Source="UI/Style/Default.xaml" />
+                <!-- ZeroStrap: brand system (logo, cards, animations) -->
+                <ResourceDictionary Source="UI/Style/ZeroBrand.xaml" />
+                <!-- ZeroStrap: component library (buttons, nav items, tiles) -->
+                <ResourceDictionary Source="UI/Components/ZeroControls.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <FontFamily x:Key="Rubik">pack://application:,,,/Resources/Fonts/#Rubik Light</FontFamily>
+
+            <Style TargetType="Hyperlink">
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Foreground">
+                            <Setter.Value>
+                                <SolidColorBrush Color="{DynamicResource SystemAccentColorTertiary}" />
+                            </Setter.Value>
+                        </Setter>
+                    </Trigger>
+                </Style.Triggers>
+                <!-- ZeroStrap: links are monochrome, so the underline is what marks them as links -->
+                <Setter Property="TextDecorations" Value="Underline" />
+                <Setter Property="Foreground">
+                    <Setter.Value>
+                        <SolidColorBrush Color="{DynamicResource SystemAccentColorSecondary}" />
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <converters:StringFormatConverter x:Key="StringFormatConverter" />
+            <converters:RangeConverter x:Key="RangeConverter" />
+            <converters:EnumNameConverter x:Key="EnumNameConverter" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
