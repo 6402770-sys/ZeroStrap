@@ -19,7 +19,7 @@ namespace ZeroStrap.Extensions
             {
                 try
                 {
-                    return BitmapFrame.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                    return LargestFrame(stream);
                 }
                 catch (Exception ex)
                 {
@@ -30,8 +30,27 @@ namespace ZeroStrap.Extensions
             }
             else
             {
-                return BitmapFrame.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                return LargestFrame(stream);
             }
+        }
+
+        /// <summary>
+        /// BitmapFrame.Create on an .ico returns its first entry (usually 16x16), which then gets
+        /// upscaled and looks pixelated. Decode every entry and keep the biggest one instead.
+        /// </summary>
+        private static BitmapSource LargestFrame(Stream stream)
+        {
+            var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+
+            BitmapSource best = decoder.Frames[0];
+            foreach (var frame in decoder.Frames)
+            {
+                if (frame.PixelWidth > best.PixelWidth)
+                    best = frame;
+            }
+
+            best.Freeze();
+            return best;
         }
     }
 }

@@ -30,7 +30,7 @@
     <!--  Background is for Aero theme only  -->
     <Grid Background="{Binding Path=BackgroundColourBrush, Mode=OneTime}" Style="{StaticResource ZeroWindowRootStyle}">
         <!--
-            ZeroBootstrap: the plain Fluent style asks for Mica, which tints the window with the
+            ZeroStrap: the plain Fluent style asks for Mica, which tints the window with the
             wallpaper. Cover it with the BLACKOUT base so the dialog matches the rest of the app;
             the Aero style (translucent by design) is left as is.
         -->
@@ -56,7 +56,7 @@
             ShowMaximize="False"
             ShowMinimize="False">
             <ui:TitleBar.Header>
-                <ContentPresenter Content="ZeroBootstrap" ContentTemplate="{StaticResource ZeroTitleBarLockup}" VerticalAlignment="Center" Margin="4,8,0,0" Opacity="0.7" />
+                <ContentPresenter Content="ZeroStrap" ContentTemplate="{StaticResource ZeroTitleBarLockup}" VerticalAlignment="Center" Margin="4,8,0,0" Opacity="0.7" />
             </ui:TitleBar.Header>
         </ui:TitleBar>
 

@@ -11,7 +11,7 @@
         xmlns:controls="clr-namespace:ZeroStrap.UI.Elements.Controls"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance dmodels:UninstallerViewModel, IsDesignTimeCreatable=True}"
-        Title="ZeroBootstrap"
+        Title="ZeroStrap"
         MinWidth="0"
         MinHeight="0"
         Width="480"
@@ -30,7 +30,7 @@
 
         <ui:TitleBar Grid.Row="0" Grid.ColumnSpan="2" Padding="8" Title="" Icon="{x:Null}" ShowMinimize="False" ShowMaximize="False" CanMaximize="False" KeyboardNavigation.TabNavigation="None">
             <ui:TitleBar.Header>
-                <ContentPresenter Content="ZeroBootstrap" ContentTemplate="{StaticResource ZeroTitleBarLockup}" VerticalAlignment="Center" />
+                <ContentPresenter Content="ZeroStrap" ContentTemplate="{StaticResource ZeroTitleBarLockup}" VerticalAlignment="Center" />
             </ui:TitleBar.Header>
         </ui:TitleBar>
 

@@ -1527,7 +1527,7 @@ Enable experimental flags and import them too?</value>
   <data name="Menu.FastFlagEditor.Experimental.Confirm" xml:space="preserve">
     <value>Experimental flags lets you add any valid Fast Flag, including ones that are not on Roblox's Player allowlist.
 
-ZeroBootstrap will save them, but Roblox Player ignores them (Roblox Studio is not restricted). Misusing flags can make Roblox unstable.
+ZeroStrap will save them, but Roblox Player ignores them (Roblox Studio is not restricted). Misusing flags can make Roblox unstable.
 
 Enable experimental flags?</value>
   </data>
@@ -1607,7 +1607,7 @@ Create one below: click the shortcut box and press the keys.</value>
 Save anyway?</value>
   </data>
   <data name="Menu.FastFlagEditor.Catalog.Notice" xml:space="preserve">
-    <value>The catalog is a list of known Fast Flag names used for search. It is plain text that is validated before use; nothing in it is executed. Updating it never changes your flags, and it is separate from ZeroBootstrap's own updates.</value>
+    <value>The catalog is a list of known Fast Flag names used for search. It is plain text that is validated before use; nothing in it is executed. Updating it never changes your flags, and it is separate from ZeroStrap's own updates.</value>
   </data>
   <data name="Menu.FastFlagEditor.Catalog.Title" xml:space="preserve">
     <value>CATALOG</value>
@@ -1762,7 +1762,7 @@ Capture the current flags with the camera button, or import a preset file.</valu
 {1}</value>
   </data>
   <data name="Menu.FastFlagEditor.Presets.OpenFilter" xml:space="preserve">
-    <value>ZeroBootstrap presets|*.json|All files|*.*</value>
+    <value>ZeroStrap presets|*.json|All files|*.*</value>
   </data>
   <data name="Menu.FastFlagEditor.Presets.FileTooLarge" xml:space="preserve">
     <value>That file is too large to be a preset file.</value>
@@ -1784,7 +1784,7 @@ Capture the current flags with the camera button, or import a preset file.</valu
     <value>There are no presets to export.</value>
   </data>
   <data name="Menu.FastFlagEditor.Presets.SaveFilter" xml:space="preserve">
-    <value>ZeroBootstrap presets|*.json</value>
+    <value>ZeroStrap presets|*.json</value>
   </data>
   <data name="Dialog.PresetApply.Title" xml:space="preserve">
     <value>Apply presets</value>

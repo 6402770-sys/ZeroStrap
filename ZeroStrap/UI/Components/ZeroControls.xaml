@@ -7,9 +7,14 @@
     <!--
         ZeroStrap Obsidian component library. Styles wrap wpfui primitives so the
         whole app shares one visual grammar. Everything is theme-aware.
+
+        Motion rule: hover/press feedback animates an overlay's Opacity (or a transform),
+        never a theme brush, so DynamicResource brushes stay frozen and theme switches stay instant.
     -->
 
-    <!-- ============================== PRIMARY BUTTON ============================== -->
+    <BackEase x:Key="ZeroEaseOutBack" EasingMode="EaseOut" Amplitude="0.35" />
+
+    <!-- ============================== BUTTONS ============================== -->
 
     <Style x:Key="ZeroButton" TargetType="{x:Type ui:Button}" BasedOn="{StaticResource {x:Type ui:Button}}">
         <Setter Property="Padding" Value="14,8" />
@@ -29,11 +34,11 @@
 
     <Style x:Key="ZeroButtonGhost" TargetType="{x:Type ui:Button}" BasedOn="{StaticResource ZeroButton}">
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderBrush" Value="{DynamicResource DividerStrokeColorDefaultBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="FontWeight" Value="Normal" />
     </Style>
 
-    <!--  Icon-only square button for toolbars. 32x32 target so it reads with the body copy.  -->
     <Style x:Key="ZeroIconButton" TargetType="{x:Type ui:Button}" BasedOn="{StaticResource ZeroButton}">
         <Setter Property="Padding" Value="0" />
         <Setter Property="Width" Value="34" />
@@ -44,20 +49,281 @@
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
     </Style>
 
+    <!--
+        Flat interactive surface (header icons, window caption buttons, sidebar utility rows,
+        list rows). Transparent at rest, a soft fill fades in on hover, a little darker on press.
+    -->
+    <Style x:Key="ZeroFlatButton" TargetType="{x:Type Button}">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Grid Background="Transparent">
+                        <Border x:Name="Fill" CornerRadius="8" Background="{DynamicResource ControlFillColorTertiaryBrush}" Opacity="0" />
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          TextElement.Foreground="{TemplateBinding Foreground}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Fill" Storyboard.TargetProperty="Opacity" To="0.75" Duration="0:0:0.14" EasingFunction="{StaticResource ZeroEaseOut}" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Fill" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.22" EasingFunction="{StaticResource ZeroEaseOut}" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Fill" Property="Opacity" Value="1" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <!--  Square icon button for the top bar (34x34).  -->
+    <Style x:Key="ZeroHeaderIconButton" TargetType="{x:Type Button}" BasedOn="{StaticResource ZeroFlatButton}">
+        <Setter Property="Width" Value="34" />
+        <Setter Property="Height" Value="34" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+
+    <!--  Window caption buttons (minimise / maximise / close), flush with the top bar.  -->
+    <Style x:Key="ZeroCaptionButton" TargetType="{x:Type Button}" BasedOn="{StaticResource ZeroFlatButton}">
+        <Setter Property="Width" Value="38" />
+        <Setter Property="Height" Value="34" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="Cursor" Value="Arrow" />
+        <Setter Property="IsTabStop" Value="False" />
+    </Style>
+
+    <!--
+        Interactive card. Hover: the surface lifts 2px, an elevated fill and a brighter outline fade in.
+        Press: settles back down. Content is free-form.
+    -->
+    <Style x:Key="ZeroTileButton" TargetType="{x:Type Button}">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Padding" Value="18" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        <Setter Property="RenderTransform">
+            <Setter.Value>
+                <TranslateTransform />
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Grid>
+                        <Border x:Name="Surface" CornerRadius="{StaticResource ZeroRadiusSurface}"
+                                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1" />
+                        <Border x:Name="Lift" CornerRadius="{StaticResource ZeroRadiusSurface}"
+                                Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" Opacity="0" />
+                        <Border x:Name="Outline" CornerRadius="{StaticResource ZeroRadiusSurface}" BorderThickness="1"
+                                BorderBrush="{DynamicResource TextFillColorPrimaryBrush}" Opacity="0" />
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Lift" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.18" EasingFunction="{StaticResource ZeroEaseOut}" />
+                                        <DoubleAnimation Storyboard.TargetName="Outline" Storyboard.TargetProperty="Opacity" To="0.14" Duration="0:0:0.18" EasingFunction="{StaticResource ZeroEaseOut}" />
+                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Y" To="-2" Duration="0:0:0.22" EasingFunction="{StaticResource ZeroEaseOutStrong}" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Lift" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.26" EasingFunction="{StaticResource ZeroEaseOut}" />
+                                        <DoubleAnimation Storyboard.TargetName="Outline" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.26" EasingFunction="{StaticResource ZeroEaseOut}" />
+                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Y" To="0" Duration="0:0:0.28" EasingFunction="{StaticResource ZeroEaseOutStrong}" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Outline" Property="Opacity" Value="0.26" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  Selected state for a tile used as a choice (theme cards): solid outline.  -->
+    <Style x:Key="ZeroChoiceTile" TargetType="{x:Type RadioButton}">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Padding" Value="14" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RadioButton}">
+                    <Grid>
+                        <Border CornerRadius="{StaticResource ZeroRadiusSurface}"
+                                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1" />
+                        <Border x:Name="Lift" CornerRadius="{StaticResource ZeroRadiusSurface}"
+                                Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}" Opacity="0" />
+                        <Border x:Name="Outline" CornerRadius="{StaticResource ZeroRadiusSurface}" BorderThickness="1.5"
+                                BorderBrush="{DynamicResource TextFillColorPrimaryBrush}" Opacity="0" />
+                        <ContentPresenter Margin="{TemplateBinding Padding}" />
+                        <Border x:Name="Check" Width="20" Height="20" CornerRadius="10" Margin="0,10,10,0"
+                                HorizontalAlignment="Right" VerticalAlignment="Top"
+                                Background="{DynamicResource TextFillColorPrimaryBrush}" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="0.6" ScaleY="0.6" />
+                            </Border.RenderTransform>
+                            <ui:SymbolIcon Symbol="Checkmark12" FontSize="12" Foreground="{DynamicResource ApplicationBackgroundBrush}" />
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Lift" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.18" EasingFunction="{StaticResource ZeroEaseOut}" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Lift" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.26" EasingFunction="{StaticResource ZeroEaseOut}" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Outline" Storyboard.TargetProperty="Opacity" To="0.9" Duration="0:0:0.2" EasingFunction="{StaticResource ZeroEaseOut}" />
+                                        <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.2" EasingFunction="{StaticResource ZeroEaseOut}" />
+                                        <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="RenderTransform.ScaleX" To="1" Duration="0:0:0.32" EasingFunction="{StaticResource ZeroEaseOutBack}" />
+                                        <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="RenderTransform.ScaleY" To="1" Duration="0:0:0.32" EasingFunction="{StaticResource ZeroEaseOutBack}" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Outline" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.2" />
+                                        <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.16" />
+                                        <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="RenderTransform.ScaleX" To="0.6" Duration="0:0:0.16" />
+                                        <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="RenderTransform.ScaleY" To="0.6" Duration="0:0:0.16" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <!--  Small round theme switch used in the Theme Preview card.  -->
+    <Style x:Key="ThemeDotStyle" TargetType="{x:Type RadioButton}">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Width" Value="16" />
+        <Setter Property="Height" Value="16" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RadioButton}">
+                    <Grid Background="Transparent">
+                        <Ellipse Stroke="{DynamicResource TextFillColorTertiaryBrush}" StrokeThickness="1.2" />
+                        <Ellipse x:Name="Dot" Margin="3" Fill="{DynamicResource TextFillColorPrimaryBrush}" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                            <Ellipse.RenderTransform>
+                                <ScaleTransform ScaleX="0.4" ScaleY="0.4" />
+                            </Ellipse.RenderTransform>
+                        </Ellipse>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Dot" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.18" />
+                                        <DoubleAnimation Storyboard.TargetName="Dot" Storyboard.TargetProperty="RenderTransform.ScaleX" To="1" Duration="0:0:0.3" EasingFunction="{StaticResource ZeroEaseOutBack}" />
+                                        <DoubleAnimation Storyboard.TargetName="Dot" Storyboard.TargetProperty="RenderTransform.ScaleY" To="1" Duration="0:0:0.3" EasingFunction="{StaticResource ZeroEaseOutBack}" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Dot" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.14" />
+                                        <DoubleAnimation Storyboard.TargetName="Dot" Storyboard.TargetProperty="RenderTransform.ScaleX" To="0.4" Duration="0:0:0.14" />
+                                        <DoubleAnimation Storyboard.TargetName="Dot" Storyboard.TargetProperty="RenderTransform.ScaleY" To="0.4" Duration="0:0:0.14" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ============================== STATUS INDICATOR ============================== -->
 
-    <!--  12x12 dot that reads at the end of a line of body text. Fill is picked per instance.  -->
     <Style x:Key="ZeroStatusDotStyle" TargetType="{x:Type Ellipse}">
-        <Setter Property="Width" Value="8" />
-        <Setter Property="Height" Value="8" />
+        <Setter Property="Width" Value="7" />
+        <Setter Property="Height" Value="7" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
     </Style>
 
-    <SolidColorBrush x:Key="ZeroStatusHealthyBrush" Color="#43B581" />
+    <SolidColorBrush x:Key="ZeroStatusHealthyBrush" Color="#3FBF7F" />
     <SolidColorBrush x:Key="ZeroStatusWarningBrush" Color="#D4A054" />
     <SolidColorBrush x:Key="ZeroStatusErrorBrush" Color="#D15B5B" />
     <SolidColorBrush x:Key="ZeroStatusIdleBrush" Color="#686868" />
+
+    <!--  "READY" style pill: tinted semantic background, semantic text.  -->
+    <Style x:Key="ZeroStatusPillStyle" TargetType="{x:Type Border}">
+        <Setter Property="CornerRadius" Value="5" />
+        <Setter Property="Padding" Value="8,2,8,3" />
+        <Setter Property="Background" Value="#1A3FBF7F" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
 
     <!-- ============================== SECTION HEADER ============================== -->
 
@@ -66,28 +332,32 @@
         <Setter Property="Margin" Value="0,0,0,10" />
     </Style>
 
+    <!--  Card heading (System Status, Quick Information...).  -->
+    <Style x:Key="ZeroCardTitleStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    </Style>
+
     <!-- ============================== TOGGLE ============================== -->
 
     <Style x:Key="ZeroToggle" TargetType="{x:Type ui:ToggleSwitch}" BasedOn="{StaticResource {x:Type ui:ToggleSwitch}}">
         <Setter Property="Cursor" Value="Hand" />
     </Style>
 
-    <!--  Row combining a label and a toggle; use inside Configure/Appearance panels.  -->
     <Style x:Key="ZeroSettingRowStyle" TargetType="{x:Type Border}">
-        <Setter Property="Padding" Value="14,10" />
+        <Setter Property="Padding" Value="0,14" />
         <Setter Property="BorderThickness" Value="0,0,0,1" />
         <Setter Property="BorderBrush" Value="{DynamicResource DividerStrokeColorDefaultBrush}" />
     </Style>
 
-    <!-- ============================== DROPDOWN ============================== -->
+    <!-- ============================== DROPDOWN / TEXT FIELD ============================== -->
 
     <Style x:Key="ZeroDropdown" TargetType="{x:Type ComboBox}" BasedOn="{StaticResource {x:Type ComboBox}}">
         <Setter Property="MinHeight" Value="34" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="Padding" Value="10,0" />
     </Style>
-
-    <!-- ============================== TEXT FIELD ============================== -->
 
     <Style x:Key="ZeroTextField" TargetType="{x:Type ui:TextBox}" BasedOn="{StaticResource {x:Type ui:TextBox}}">
         <Setter Property="MinHeight" Value="34" />
@@ -98,34 +368,33 @@
     <!-- ============================== NAV ITEM (sidebar) ============================== -->
 
     <!--
-        Sidebar nav item: 40px row, icon on the left, label, selection stripe on the left.
-        Toggleable so a RadioButton-style group behaves correctly inside the shell.
+        Sidebar nav item: 44px row. Hover fades a soft fill in; selection crossfades to a stronger
+        fill and grows a 3px stripe from the centre. Content is icon + label (+ optional chip).
     -->
     <Style x:Key="ZeroNavItem" TargetType="{x:Type RadioButton}">
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontSize" Value="14" />
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="Padding" Value="12,0" />
-        <Setter Property="Height" Value="40" />
+        <Setter Property="Padding" Value="14,0,10,0" />
+        <Setter Property="Height" Value="44" />
         <Setter Property="Margin" Value="0,2" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type RadioButton}">
-                    <Grid>
-                        <Border x:Name="Bg"
-                                CornerRadius="8"
-                                Background="{TemplateBinding Background}" />
-                        <Border x:Name="Stripe"
-                                Width="3"
-                                HorizontalAlignment="Left"
-                                CornerRadius="2"
-                                Margin="0,8"
-                                Background="{DynamicResource TextFillColorPrimaryBrush}"
-                                Opacity="0" />
+                    <Grid Background="Transparent">
+                        <Border x:Name="Hover" CornerRadius="10" Background="{DynamicResource ControlFillColorSecondaryBrush}" Opacity="0" />
+                        <Border x:Name="Selected" CornerRadius="10" Background="{DynamicResource ControlFillColorTertiaryBrush}" Opacity="0" />
+                        <Border x:Name="Stripe" Width="3" Height="18" HorizontalAlignment="Left" CornerRadius="2"
+                                Background="{DynamicResource TextFillColorPrimaryBrush}" RenderTransformOrigin="0.5,0.5">
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleY="0" />
+                            </Border.RenderTransform>
+                        </Border>
                         <ContentPresenter Margin="{TemplateBinding Padding}"
                                           HorizontalAlignment="Stretch"
                                           VerticalAlignment="Center"
@@ -133,11 +402,39 @@
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bg" Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.14" EasingFunction="{StaticResource ZeroEaseOut}" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.24" EasingFunction="{StaticResource ZeroEaseOut}" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Bg" Property="Background" Value="{DynamicResource ControlFillColorTertiaryBrush}" />
-                            <Setter TargetName="Stripe" Property="Opacity" Value="1" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Selected" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.2" EasingFunction="{StaticResource ZeroEaseOut}" />
+                                        <DoubleAnimation Storyboard.TargetName="Stripe" Storyboard.TargetProperty="RenderTransform.ScaleY" To="1" Duration="0:0:0.32" EasingFunction="{StaticResource ZeroEaseOutStrong}" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Selected" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.22" EasingFunction="{StaticResource ZeroEaseOut}" />
+                                        <DoubleAnimation Storyboard.TargetName="Stripe" Storyboard.TargetProperty="RenderTransform.ScaleY" To="0" Duration="0:0:0.2" EasingFunction="{StaticResource ZeroEaseOut}" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                             <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                             <Setter Property="FontWeight" Value="SemiBold" />
                         </Trigger>
@@ -147,26 +444,69 @@
         </Setter>
     </Style>
 
-    <!-- ============================== LARGE ACTION TILE ============================== -->
+    <!-- ============================== SMALL PARTS ============================== -->
 
-    <!--
-        4-up tile used on Overview to launch into Configure / Appearance / System / Profiles.
-        Card body + hover outline, hit target the whole tile.
-    -->
+    <!--  36x36 rounded tile that hosts a SymbolIcon in rows and action cards.  -->
+    <Style x:Key="ZeroIconTileStyle" TargetType="{x:Type Border}">
+        <Setter Property="Width" Value="38" />
+        <Setter Property="Height" Value="38" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+    </Style>
+
+    <Style x:Key="ZeroIconTileGlyphStyle" TargetType="{x:Type ui:SymbolIcon}" BasedOn="{StaticResource {x:Type ui:SymbolIcon}}">
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!--  Trailing ">" affordance on navigable rows and tiles.  -->
+    <Style x:Key="ZeroChevronStyle" TargetType="{x:Type ui:SymbolIcon}" BasedOn="{StaticResource {x:Type ui:SymbolIcon}}">
+        <Setter Property="Symbol" Value="ChevronRight16" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!--  Keyboard shortcut chip: "Ctrl + K".  -->
+    <Style x:Key="ZeroKbdStyle" TargetType="{x:Type Border}">
+        <Setter Property="CornerRadius" Value="5" />
+        <Setter Property="Padding" Value="6,1,6,2" />
+        <Setter Property="Background" Value="{DynamicResource ControlFillColorTertiaryBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="ZeroKbdTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="10.5" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+    </Style>
+
+    <!--  Thin divider between rows inside a card.  -->
+    <Style x:Key="ZeroDividerStyle" TargetType="{x:Type Border}">
+        <Setter Property="Height" Value="1" />
+        <Setter Property="Background" Value="{DynamicResource DividerStrokeColorDefaultBrush}" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+    </Style>
+
+    <!--  Large action tile kept for back-compat (non-interactive card with hand cursor).  -->
     <Style x:Key="ZeroActionTileStyle" TargetType="{x:Type Border}" BasedOn="{StaticResource ZeroCardStyle}">
-        <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Padding" Value="18" />
         <Setter Property="MinHeight" Value="120" />
     </Style>
 
     <!-- ============================== TOAST ============================== -->
 
-    <!--  Alias; the wpfui Snackbar is the toast primitive. Kept here so pages reference ZeroToast.  -->
     <Style x:Key="ZeroToast" TargetType="{x:Type ui:Snackbar}" BasedOn="{StaticResource {x:Type ui:Snackbar}}" />
 
     <!-- ============================== DIALOG SHELL ============================== -->
 
-    <!--  Content-area style for a dialog body. Footer uses ZeroDialogFooterStyle from ZeroBrand.  -->
     <Style x:Key="ZeroDialogBodyStyle" TargetType="{x:Type Border}">
         <Setter Property="Padding" Value="24,20" />
         <Setter Property="Background" Value="{DynamicResource SolidBackgroundFillColorBaseBrush}" />
@@ -174,41 +514,100 @@
 
     <!-- ============================== COMMAND PALETTE ============================== -->
 
-    <!--  Top search affordance. Phase 1: static chrome; Phase 6 hooks the behaviour.  -->
+    <!--  Search field in the top bar. Focus brightens the outline.  -->
     <Style x:Key="ZeroCommandPaletteStyle" TargetType="{x:Type Border}">
-        <Setter Property="CornerRadius" Value="8" />
-        <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource DividerStrokeColorDefaultBrush}" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="10,0" />
-        <Setter Property="Height" Value="34" />
-        <Setter Property="MinWidth" Value="420" />
+        <Setter Property="Padding" Value="14,0,8,0" />
+        <Setter Property="Height" Value="38" />
+        <Style.Triggers>
+            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorSecondaryBrush}" />
+                <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorSecondaryBrush}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  Plain text box with no chrome, used inside the palette field.  -->
+    <Style x:Key="ZeroBareTextBox" TargetType="{x:Type TextBox}">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="SelectionBrush" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TextBox}">
+                    <ScrollViewer x:Name="PART_ContentHost" Focusable="False" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" VerticalAlignment="Center" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  Result row in the palette popup.  -->
+    <Style x:Key="ZeroPaletteItemStyle" TargetType="{x:Type ListBoxItem}">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                    <Grid Background="Transparent">
+                        <Border x:Name="Fill" CornerRadius="8" Background="{DynamicResource ControlFillColorTertiaryBrush}" Opacity="0" />
+                        <ContentPresenter Margin="10,8" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Fill" Property="Opacity" Value="0.6" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Fill" Property="Opacity" Value="1" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <!-- ============================== LIST ROW ============================== -->
 
-    <!--  Horizontal row for activity feeds, log tables, launch history.  -->
     <Style x:Key="ZeroListRowStyle" TargetType="{x:Type Border}">
-        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="Padding" Value="0,12" />
         <Setter Property="BorderThickness" Value="0,0,0,1" />
         <Setter Property="BorderBrush" Value="{DynamicResource DividerStrokeColorDefaultBrush}" />
     </Style>
 
-    <!-- ============================== META LABEL ============================== -->
+    <!-- ============================== META / MONO LABELS ============================== -->
 
-    <!--  Small secondary line of metadata next to a title.  -->
     <Style x:Key="ZeroMetaTextStyle" TargetType="{x:Type TextBlock}">
         <Setter Property="FontSize" Value="12" />
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
-    <!-- ============================== MONO LABEL ============================== -->
-
     <Style x:Key="ZeroMonoTextStyle" TargetType="{x:Type TextBlock}">
         <Setter Property="FontFamily" Value="{StaticResource ZeroMonoFont}" />
         <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!--  Label / value row in an info card.  -->
+    <Style x:Key="ZeroInfoLabelStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="12.5" />
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="ZeroInfoValueStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
     </Style>
 
 </ResourceDictionary>

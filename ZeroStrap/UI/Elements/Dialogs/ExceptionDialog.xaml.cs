@@ -27,7 +27,7 @@ namespace ZeroStrap.UI.Elements.Dialogs
                 LocateLogFileButton.Content = Strings.Dialog_Exception_CopyLogContents;
 
             string repoUrl = $"https://github.com/{App.ProjectRepository}";
-            string wikiUrl = $"https://zerostraplabs.com/wiki/help/";
+            string wikiUrl = $"https://github.com/6402770-sys/idkvro/issues";
 
             string title = HttpUtility.UrlEncode($"[BUG] {exception.GetType()}: {exception.Message}");
             string log = HttpUtility.UrlEncode(App.Logger.AsDocument);

@@ -7,184 +7,254 @@
                   xmlns:base="clr-namespace:ZeroStrap.UI.Elements.Base"
                   xmlns:resources="clr-namespace:ZeroStrap.Resources"
                   xmlns:vm="clr-namespace:ZeroStrap.UI.ViewModels.Shell"
-                  xmlns:zs="clr-namespace:ZeroStrap"
+                  xmlns:motion="clr-namespace:ZeroStrap.UI.Utility"
                   mc:Ignorable="d"
                   d:DataContext="{d:DesignInstance vm:ShellViewModel, IsDesignTimeCreatable=True}"
                   Title="ZeroStrap"
-                  MinWidth="1100"
-                  Width="1200"
-                  MinHeight="640"
-                  Height="760"
+                  MinWidth="1120"
+                  Width="1280"
+                  MinHeight="700"
+                  Height="820"
                   Background="{ui:ThemeResource ApplicationBackgroundBrush}"
                   ExtendsContentIntoTitleBar="True"
                   WindowBackdropType="None"
                   WindowStartupLocation="CenterScreen"
+                  StateChanged="Window_StateChanged"
                   Closing="WpfUiWindow_Closing"
                   Closed="WpfUiWindow_Closed">
 
-    <Grid Style="{StaticResource ZeroWindowRootStyle}">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <Grid x:Name="RootGrid" Style="{StaticResource ZeroWindowRootStyle}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="248" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
         <ui:Snackbar x:Name="SettingsSavedSnackbar"
                      Title="{x:Static resources:Strings.Menu_SettingsSaved_Title}"
                      Message="{x:Static resources:Strings.Menu_SettingsSaved_Message}"
                      Appearance="Success" Icon="CheckmarkCircle32" Timeout="3000"
-                     Margin="200,0,200,20" Grid.RowSpan="10" Panel.ZIndex="9" />
+                     Margin="200,0,200,20" Grid.ColumnSpan="2" Panel.ZIndex="9" />
 
         <ui:Snackbar x:Name="FlagBindingSnackbar"
                      Title="{x:Static resources:Strings.Menu_FastFlagEditor_Shortcuts_SnackbarTitle}"
                      Icon="Keyboard24" Timeout="4000"
-                     Margin="200,0,200,20" Grid.RowSpan="10" Panel.ZIndex="11" />
+                     Margin="200,0,200,20" Grid.ColumnSpan="2" Panel.ZIndex="11" />
 
-        <!-- ============================== TITLE BAR ============================== -->
-        <ui:TitleBar Padding="8" Grid.Row="0" ForceShutdown="False" MinimizeToTray="False"
-                     UseSnapLayout="True" Title="" Icon="{x:Null}">
-            <ui:TitleBar.Header>
-                <ContentPresenter Content="ZeroStrap" ContentTemplate="{StaticResource ZeroTitleBarLockup}" VerticalAlignment="Center" />
-            </ui:TitleBar.Header>
-        </ui:TitleBar>
-
-        <!-- ============================== BODY ============================== -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="220" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-
-            <!-- Sidebar -->
-            <Border Grid.Column="0" Background="{DynamicResource SolidBackgroundFillColorBaseAltBrush}"
-                    BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,1,0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Grid.Row="0" Margin="12,14,12,0">
-                        <TextBlock Text="WORKSPACE" Style="{StaticResource ZeroEyebrowStyle}" Margin="12,0,0,8" />
-                        <RadioButton x:Name="NavOverview" Style="{StaticResource ZeroNavItem}" GroupName="ShellNav"
-                                     IsChecked="True" Checked="Nav_Checked" Tag="Overview">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Home24" FontSize="16" Margin="0,0,12,0" />
-                                <TextBlock Text="Overview" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </RadioButton>
-                        <RadioButton x:Name="NavPlay" Style="{StaticResource ZeroNavItem}" GroupName="ShellNav"
-                                     Checked="Nav_Checked" Tag="Play">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Play24" FontSize="16" Margin="0,0,12,0" />
-                                <TextBlock Text="Play" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </RadioButton>
-                        <RadioButton x:Name="NavConfigure" Style="{StaticResource ZeroNavItem}" GroupName="ShellNav"
-                                     Checked="Nav_Checked" Tag="Configure">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Settings24" FontSize="16" Margin="0,0,12,0" />
-                                <TextBlock Text="Configure" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </RadioButton>
-                        <RadioButton x:Name="NavAppearance" Style="{StaticResource ZeroNavItem}" GroupName="ShellNav"
-                                     Checked="Nav_Checked" Tag="Appearance">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="PaintBrush24" FontSize="16" Margin="0,0,12,0" />
-                                <TextBlock Text="Appearance" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </RadioButton>
-                        <RadioButton x:Name="NavSystem" Style="{StaticResource ZeroNavItem}" GroupName="ShellNav"
-                                     Checked="Nav_Checked" Tag="System">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="DeviceEq24" FontSize="16" Margin="0,0,12,0" />
-                                <TextBlock Text="System" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </RadioButton>
-                    </StackPanel>
-
-                    <!-- Sidebar footer -->
-                    <StackPanel Grid.Row="1" Margin="12,0,12,16">
-                        <Border Height="1" Background="{DynamicResource DividerStrokeColorDefaultBrush}" Margin="12,8" />
-                        <TextBlock Text="GLOBAL" Style="{StaticResource ZeroEyebrowStyle}" Margin="12,0,0,8" />
-                        <Button Content="About" Click="AboutButton_Click"
-                                HorizontalContentAlignment="Left"
-                                Background="Transparent" BorderThickness="0"
-                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                FontSize="13" Padding="12,8" Cursor="Hand" />
-                        <TextBlock x:Name="VersionLabel"
-                                   Style="{StaticResource ZeroCaptionStyle}" Margin="12,8,0,0" />
-                        <TextBlock Text="Built for a better Roblox experience."
-                                   Style="{StaticResource ZeroCaptionStyle}" Margin="12,2,0,0" TextWrapping="Wrap" />
-                    </StackPanel>
-                </Grid>
-            </Border>
-
-            <!-- Content area -->
-            <Grid Grid.Column="1">
+        <!-- ============================== SIDEBAR ============================== -->
+        <Border Grid.Column="0" Background="{DynamicResource ApplicationBackgroundBrush}"
+                BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,1,0">
+            <Grid>
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="68" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <!-- Top bar: command palette placeholder -->
-                <Grid Grid.Row="0" Margin="24,16,24,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <Border Grid.Column="0" Style="{StaticResource ZeroCommandPaletteStyle}" HorizontalAlignment="Center" MinWidth="420" MaxWidth="560">
+                <!-- Brand (also a drag handle) -->
+                <Grid Grid.Row="0" Background="Transparent" MouseLeftButtonDown="DragArea_MouseLeftButtonDown">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="26,4,0,0">
+                        <Path Style="{StaticResource ZeroMarkStyle}" Width="20" Height="20" />
+                        <ContentPresenter ContentTemplate="{StaticResource ZeroWordmark}" Margin="14,0,0,0" TextElement.FontSize="14" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Primary navigation -->
+                <StackPanel Grid.Row="1" Margin="14,10,14,0">
+                    <RadioButton x:Name="NavOverview" Style="{StaticResource ZeroNavItem}" GroupName="ShellNav"
+                                 IsChecked="True" Checked="Nav_Checked" Tag="Overview">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <ui:SymbolIcon Grid.Column="0" Symbol="Search24" FontSize="14" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                            <TextBox Grid.Column="1" x:Name="CommandPaletteBox" BorderThickness="0" Background="Transparent" Margin="8,0,0,0"
-                                     FontSize="13" VerticalAlignment="Center"
-                                     ToolTip="Type a section (overview, play, configure, appearance, system), a theme (theme dark, theme light), or a verb (launch, save, about). Enter to run." />
-                            <Border Grid.Column="2" Background="{DynamicResource ControlFillColorTertiaryBrush}" CornerRadius="3" Padding="6,1" VerticalAlignment="Center">
-                                <TextBlock Text="Ctrl + K" FontSize="10" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                            <ui:SymbolIcon Symbol="Home24" FontSize="19" Margin="0,0,14,0" />
+                            <TextBlock Grid.Column="1" Text="Overview" VerticalAlignment="Center" />
+                            <Border Grid.Column="2" Style="{StaticResource ZeroKbdStyle}">
+                                <TextBlock Text="Home" Style="{StaticResource ZeroKbdTextStyle}" />
+                            </Border>
+                        </Grid>
+                    </RadioButton>
+                    <RadioButton x:Name="NavConfigure" Style="{StaticResource ZeroNavItem}" GroupName="ShellNav"
+                                 Checked="Nav_Checked" Tag="Configure">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Options24" FontSize="19" Margin="0,0,14,0" />
+                            <TextBlock Text="Configure" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton x:Name="NavAppearance" Style="{StaticResource ZeroNavItem}" GroupName="ShellNav"
+                                 Checked="Nav_Checked" Tag="Appearance">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Color24" FontSize="19" Margin="0,0,14,0" />
+                            <TextBlock Text="Appearance" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton x:Name="NavSystem" Style="{StaticResource ZeroNavItem}" GroupName="ShellNav"
+                                 Checked="Nav_Checked" Tag="System">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Pulse24" FontSize="19" Margin="0,0,14,0" />
+                            <TextBlock Text="System" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </RadioButton>
+                </StackPanel>
+
+                <!-- Global interface -->
+                <StackPanel Grid.Row="3" Margin="14,0,14,8">
+                    <Border Style="{StaticResource ZeroDividerStyle}" Margin="12,0,12,16" />
+                    <TextBlock Text="G L O B A L   I N T E R F A C E" Style="{StaticResource ZeroEyebrowStyle}" FontSize="10" Margin="14,0,0,8" />
+
+                    <Button Style="{StaticResource ZeroFlatButton}" Click="SearchButton_Click" ToolTip="Search commands and sections">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Symbol="Search24" FontSize="16" Margin="4,0,14,0" />
+                            <TextBlock Grid.Column="1" Text="Search" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="2" Text="Ctrl + K" Style="{StaticResource ZeroMetaTextStyle}" FontSize="11" />
+                        </Grid>
+                    </Button>
+                    <Button Style="{StaticResource ZeroFlatButton}" Command="{Binding SaveSettingsCommand, Mode=OneWay}" ToolTip="Save all pending changes">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Symbol="Save24" FontSize="16" Margin="4,0,14,0" />
+                            <TextBlock Grid.Column="1" Text="Save changes" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="2" Text="Ctrl + S" Style="{StaticResource ZeroMetaTextStyle}" FontSize="11" />
+                        </Grid>
+                    </Button>
+                    <Button Style="{StaticResource ZeroFlatButton}" Click="AboutButton_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Info24" FontSize="16" Margin="4,0,14,0" />
+                            <TextBlock Text="About ZeroStrap" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <!-- Footer -->
+                <StackPanel Grid.Row="4" Margin="28,8,20,22">
+                    <Border Style="{StaticResource ZeroDividerStyle}" Margin="-2,0,8,16" />
+                    <TextBlock x:Name="VersionLabel" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="Built for a better Roblox experience." Style="{StaticResource ZeroCaptionStyle}" FontSize="11" Margin="0,3,0,0" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ============================== CONTENT ============================== -->
+        <Grid Grid.Column="1" Background="{DynamicResource SolidBackgroundFillColorBaseBrush}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="68" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Top bar: search, status, actions, window controls. Empty space drags the window. -->
+            <Border Grid.Row="0" Background="Transparent" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1"
+                    MouseLeftButtonDown="DragArea_MouseLeftButtonDown">
+                <Grid Margin="28,0,8,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Command palette field -->
+                    <Border x:Name="PaletteField" Grid.Column="0" Style="{StaticResource ZeroCommandPaletteStyle}" Width="460" VerticalAlignment="Center">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="Search24" FontSize="16" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="PalettePlaceholder" Grid.Column="1" Text="Search anything..." Margin="12,0,0,0" FontSize="13"
+                                       VerticalAlignment="Center" IsHitTestVisible="False" Foreground="{DynamicResource TextPlaceholderColorBrush}" />
+                            <TextBox x:Name="CommandPaletteBox" Grid.Column="1" Style="{StaticResource ZeroBareTextBox}" Margin="10,0,8,0"
+                                     TextChanged="CommandPaletteBox_TextChanged" GotKeyboardFocus="CommandPaletteBox_GotKeyboardFocus"
+                                     LostKeyboardFocus="CommandPaletteBox_LostKeyboardFocus" PreviewKeyDown="CommandPaletteBox_PreviewKeyDown" />
+                            <Border Grid.Column="2" Style="{StaticResource ZeroKbdStyle}">
+                                <TextBlock Text="Ctrl + K" Style="{StaticResource ZeroKbdTextStyle}" />
                             </Border>
                         </Grid>
                     </Border>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Ellipse Style="{StaticResource ZeroStatusDotStyle}" Fill="{StaticResource ZeroStatusHealthyBrush}" Margin="0,0,6,0" />
-                        <TextBlock Text="Connected" Style="{StaticResource ZeroMetaTextStyle}" FontSize="12" />
+
+                    <!-- Palette results -->
+                    <Popup x:Name="PalettePopup" PlacementTarget="{Binding ElementName=PaletteField}" Placement="Bottom" VerticalOffset="8"
+                           AllowsTransparency="True" StaysOpen="True" PopupAnimation="Fade" Focusable="False">
+                        <Border Width="460" CornerRadius="12" Padding="6" Margin="0,0,12,12"
+                                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="24" ShadowDepth="6" Opacity="0.45" Color="Black" />
+                            </Border.Effect>
+                            <StackPanel>
+                                <TextBlock Text="COMMANDS" Style="{StaticResource ZeroEyebrowStyle}" FontSize="10" Margin="10,6,0,4" />
+                                <ListBox x:Name="PaletteList" MaxHeight="340" BorderThickness="0" Background="Transparent"
+                                         ItemContainerStyle="{StaticResource ZeroPaletteItemStyle}"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                         PreviewMouseLeftButtonUp="PaletteList_PreviewMouseLeftButtonUp">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Style="{StaticResource ZeroIconTileStyle}" Width="30" Height="30" CornerRadius="8">
+                                                    <ui:SymbolIcon Symbol="{Binding Icon}" FontSize="15" Style="{StaticResource ZeroIconTileGlyphStyle}" />
+                                                </Border>
+                                                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Title}" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding Hint}" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="2" Text="{Binding Group}" Style="{StaticResource ZeroMetaTextStyle}" FontSize="11" Margin="8,0,4,0" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                                <TextBlock x:Name="PaletteEmpty" Text="No matching commands." Style="{StaticResource ZeroCaptionStyle}" Margin="10,8,0,10" Visibility="Collapsed" />
+                                <Border Style="{StaticResource ZeroDividerStyle}" Margin="4,6,4,6" />
+                                <TextBlock Text="↑ ↓ to move   ·   Enter to run   ·   Esc to close" Style="{StaticResource ZeroCaptionStyle}" FontSize="11" Margin="10,0,0,4" />
+                            </StackPanel>
+                        </Border>
+                    </Popup>
+
+                    <!-- Status -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0" ToolTip="Network availability">
+                        <Ellipse x:Name="NetworkDot" Style="{StaticResource ZeroStatusDotStyle}" Fill="{StaticResource ZeroStatusHealthyBrush}" Width="8" Height="8" Margin="0,0,8,0" />
+                        <TextBlock x:Name="NetworkText" Text="Connected" FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <!-- Actions + window controls -->
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Style="{StaticResource ZeroHeaderIconButton}" Command="{Binding SaveSettingsCommand, Mode=OneWay}" ToolTip="Save changes (Ctrl + S)">
+                            <ui:SymbolIcon Symbol="Save24" FontSize="18" />
+                        </Button>
+                        <Button Style="{StaticResource ZeroHeaderIconButton}" Click="SettingsButton_Click" ToolTip="Settings" Margin="4,0,0,0">
+                            <ui:SymbolIcon Symbol="Settings24" FontSize="18" />
+                        </Button>
+                        <Border Width="1" Height="18" Margin="12,0,6,0" Background="{DynamicResource DividerStrokeColorDefaultBrush}" />
+                        <Button Style="{StaticResource ZeroCaptionButton}" Click="Minimize_Click" ToolTip="Minimize">
+                            <ui:SymbolIcon Symbol="Subtract16" FontSize="14" />
+                        </Button>
+                        <Button Style="{StaticResource ZeroCaptionButton}" Click="Maximize_Click" ToolTip="Maximize">
+                            <ui:SymbolIcon x:Name="MaximizeGlyph" Symbol="Maximize16" FontSize="13" />
+                        </Button>
+                        <Button Style="{StaticResource ZeroCaptionButton}" Click="Close_Click" ToolTip="Close">
+                            <ui:SymbolIcon Symbol="Dismiss16" FontSize="14" />
+                        </Button>
                     </StackPanel>
                 </Grid>
+            </Border>
 
-                <Frame x:Name="ContentFrame" Grid.Row="1" NavigationUIVisibility="Hidden" Margin="0,8,0,0" />
-            </Grid>
+            <Frame x:Name="ContentFrame" Grid.Row="1" NavigationUIVisibility="Hidden" Navigated="ContentFrame_Navigated" Focusable="False" />
         </Grid>
-
-        <!-- ============================== STATUS BAR ============================== -->
-        <StatusBar Grid.Row="2" Padding="20,10" BorderThickness="0,1,0,0"
-                   BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
-            <StatusBar.Background>
-                <SolidColorBrush Color="{ui:ThemeResource ApplicationBackgroundColor}" Opacity="0" />
-            </StatusBar.Background>
-            <StatusBar.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                    </Grid>
-                </ItemsPanelTemplate>
-            </StatusBar.ItemsPanel>
-            <StatusBarItem Grid.Column="0">
-                <TextBlock x:Name="StatusHint" Text="Ready." Style="{StaticResource ZeroMetaTextStyle}" FontSize="12" />
-            </StatusBarItem>
-            <StatusBarItem Grid.Column="1" Padding="0,0,8,0">
-                <ui:Button Content="{x:Static resources:Strings.Menu_Save}" Style="{StaticResource ZeroButtonPrimary}" Command="{Binding SaveSettingsCommand, Mode=OneWay}" />
-            </StatusBarItem>
-            <StatusBarItem Grid.Column="2">
-                <ui:Button Content="{x:Static resources:Strings.Common_Close}" Style="{StaticResource ZeroButtonGhost}" Command="{Binding CloseWindowCommand, Mode=OneWay}" />
-            </StatusBarItem>
-        </StatusBar>
     </Grid>
 </base:WpfUiWindow>

@@ -9,10 +9,29 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 {
     public partial class ConfigurePage : Page
     {
-        public ConfigurePage()
+        public const int BehaviourTab = 4;
+
+        public ConfigurePage(int initialTab = 0)
         {
             InitializeComponent();
+            SelectTab(initialTab);
             Loaded += (_, _) => RefreshStats();
+        }
+
+        public void SelectTab(int index)
+        {
+            if (index >= 0 && index < ConfigureTabs.Items.Count)
+                ConfigureTabs.SelectedIndex = index;
+        }
+
+        private void ConfigureTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // SelectionChanged bubbles up from combo boxes inside the hosted pages; only react to the tabs.
+            if (!ReferenceEquals(e.OriginalSource, ConfigureTabs) || !IsLoaded)
+                return;
+
+            if (ConfigureTabs.SelectedContent is UIElement content)
+                ZeroStrap.UI.Utility.Motion.FadeRise(content, 0, 8, 300);
         }
 
         private void RefreshStats()
@@ -44,7 +63,9 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             {
                 var modsDir = Paths.Modifications;
                 if (Directory.Exists(modsDir))
-                    StatModsCount.Text = Directory.EnumerateFiles(modsDir, "*", SearchOption.AllDirectories).Count().ToString();
+                    StatModsCount.Text = Directory.EnumerateFiles(modsDir, "*", SearchOption.AllDirectories)
+                        .Count(f => !f.Contains(@"\ClientSettings\", System.StringComparison.OrdinalIgnoreCase)) // Fast Flags live here, not mods
+                        .ToString();
                 else
                     StatModsCount.Text = "0";
             }
@@ -65,11 +86,5 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
         private void IntegrationsHost_Loaded(object sender, RoutedEventArgs e) => NavigateOnce(sender, new IntegrationsPage());
         private void ShortcutsHost_Loaded(object sender, RoutedEventArgs e) => NavigateOnce(sender, new ShortcutsPage());
         private void BehaviourHost_Loaded(object sender, RoutedEventArgs e) => NavigateOnce(sender, new BehaviourPage());
-
-        private void OpenFlagEditor_Click(object sender, RoutedEventArgs e)
-        {
-            // Switch to the Fast Flags tab (the editor opens from inside it via its own flow).
-            ConfigureTabs.SelectedIndex = 0;
-        }
     }
 }

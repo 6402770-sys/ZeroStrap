@@ -15,7 +15,7 @@ namespace ZeroStrap.UI.Elements.Base
         {
             ApplyTheme();
 
-            // ZeroBootstrap: re-assert the "None" backdrop after WPF-UI's theme engine has run,
+            // ZeroStrap: re-assert the "None" backdrop after WPF-UI's theme engine has run,
             // which force-applies Mica to the first window of the process at Loaded.
             Loaded += (_, _) =>
             {
@@ -42,7 +42,7 @@ namespace ZeroStrap.UI.Elements.Base
         {
             static System.Windows.Media.Color Grey(byte v) => System.Windows.Media.Color.FromRgb(v, v, v);
 
-            // ZeroBootstrap: explicit accent ramp. IThemeService.SetAccent always derives the ramp with
+            // ZeroStrap: explicit accent ramp. IThemeService.SetAccent always derives the ramp with
             // light-theme maths (darker steps), which turns #D4D4D4 into a muddy #BBBBBB on dark.
             // Order: system, primary, secondary (most used: primary buttons, toggles, nav pill), tertiary (hover).
             if (dark)
@@ -59,7 +59,7 @@ namespace ZeroStrap.UI.Elements.Base
 
             _themeService.SetTheme(dark ? ThemeType.Dark : ThemeType.Light);
 
-            // ZeroBootstrap: monochrome accent. Light grey on dark; near-black on light so accent-filled
+            // ZeroStrap: monochrome accent. Light grey on dark; near-black on light so accent-filled
             // controls (primary buttons, toggles) keep readable on-accent text.
             ApplyMonochromeAccent(dark);
 

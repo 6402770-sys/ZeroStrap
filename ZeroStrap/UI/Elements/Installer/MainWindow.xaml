@@ -11,7 +11,7 @@
         xmlns:local="clr-namespace:ZeroStrap.UI.Elements.Installer"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance dmodels:MainWindowViewModel, IsDesignTimeCreatable=True}"
-        Title="ZeroBootstrap Installer"
+        Title="ZeroStrap Installer"
         Height="540" Width="840" MinWidth="840"
         Background="{ui:ThemeResource ApplicationBackgroundBrush}"
         ExtendsContentIntoTitleBar="True"
@@ -25,9 +25,9 @@
         </Grid.RowDefinitions>
 
         <ui:TitleBar Padding="8" x:Name="RootTitleBar" Grid.Row="0" ForceShutdown="False" MinimizeToTray="False" UseSnapLayout="True" Title="" Icon="{x:Null}">
-            <!--  ZeroBootstrap: brand lockup, defined once in ZeroBrand.xaml  -->
+            <!--  ZeroStrap: brand lockup, defined once in ZeroBrand.xaml  -->
             <ui:TitleBar.Header>
-                <ContentPresenter Content="ZeroBootstrap" ContentTemplate="{StaticResource ZeroTitleBarLockup}" VerticalAlignment="Center" />
+                <ContentPresenter Content="ZeroStrap" ContentTemplate="{StaticResource ZeroTitleBarLockup}" VerticalAlignment="Center" />
             </ui:TitleBar.Header>
         </ui:TitleBar>
 

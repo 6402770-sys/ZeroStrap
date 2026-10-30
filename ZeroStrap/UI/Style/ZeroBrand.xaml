@@ -14,6 +14,10 @@
         in the mark and the wordmark, always cutting the top-left and bottom-right corners.
     -->
 
+    <!--  Easing curves, defined first so every style below can reference them.  -->
+    <CubicEase x:Key="ZeroEaseOut" EasingMode="EaseOut" />
+    <QuinticEase x:Key="ZeroEaseOutStrong" EasingMode="EaseOut" />
+
     <!-- ============================== BRAND GEOMETRY ============================== -->
 
     <!--  Z mark, 100x100, bar = 20. Single non-overlapping polygon (F1 = nonzero).  -->
@@ -32,7 +36,7 @@
 
     <!--  Slightly softer than Fluent's 4px; applied app-wide through WPF-UI's own key.  -->
     <CornerRadius x:Key="ControlCornerRadius">6</CornerRadius>
-    <CornerRadius x:Key="ZeroRadiusSurface">10</CornerRadius>
+    <CornerRadius x:Key="ZeroRadiusSurface">12</CornerRadius>
     <CornerRadius x:Key="ZeroRadiusTile">14</CornerRadius>
 
     <Thickness x:Key="ZeroSectionMargin">0,28,0,0</Thickness>
@@ -43,6 +47,12 @@
     <sys:Double x:Key="ZeroFontSizeBody">14</sys:Double>
     <sys:Double x:Key="ZeroFontSizeCaption">12</sys:Double>
     <sys:Double x:Key="ZeroFontSizeEyebrow">11</sys:Double>
+
+    <!-- ============================== TYPEFACES ============================== -->
+
+    <!--  Inter when installed, Segoe UI otherwise. JetBrains Mono for technical values.  -->
+    <FontFamily x:Key="ZeroUIFont">Inter, Segoe UI</FontFamily>
+    <FontFamily x:Key="ZeroMonoFont">JetBrains Mono, JetBrainsMonoNL Nerd Font, Cascadia Mono, Consolas</FontFamily>
 
     <!-- ============================== BRAND ELEMENTS ============================== -->
 
@@ -70,15 +80,28 @@
         <Setter Property="AutomationProperties.Name" Value="Bootstrap" />
     </Style>
 
-    <!--  Title bar lockup: mark | ZERO  BOOTSTRAP  -->
+    <!--
+        Product wordmark: ZERO (semibold) + STRAP (light), tracked with spaces because WPF has no
+        letter-spacing. Used by every title bar and by the shell sidebar.
+    -->
+    <Style x:Key="ZeroWordmarkTextStyle" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontFamily" Value="{StaticResource ZeroUIFont}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="AutomationProperties.Name" Value="ZeroStrap" />
+        <!--  Size is inherited: set TextElement.FontSize on the presenter.  -->
+    </Style>
+
+    <DataTemplate x:Key="ZeroWordmark">
+        <TextBlock Style="{StaticResource ZeroWordmarkTextStyle}"><Run Text="Z&#x2009;E&#x2009;R&#x2009;O&#x2009;" FontWeight="Bold" /><Run Text="S&#x2009;T&#x2009;R&#x2009;A&#x2009;P" FontWeight="Light" Foreground="{DynamicResource TextFillColorSecondaryBrush}" /></TextBlock>
+    </DataTemplate>
+
+    <!--  Title bar lockup: mark  ZEROSTRAP  -->
     <DataTemplate x:Key="ZeroTitleBarLockup">
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0,0,0"
-                    AutomationProperties.Name="ZeroBootstrap">
-            <Path Style="{StaticResource ZeroMarkStyle}" Width="15" Height="15" />
-            <Rectangle Width="1" Height="12" Margin="10,0" Fill="{DynamicResource DividerStrokeColorDefaultBrush}" />
-            <Path Style="{StaticResource ZeroWordmarkPathStyle}" Height="10" />
-            <TextBlock Style="{StaticResource ZeroDescriptorStyle}" Margin="8,1,0,0"
-                       Text="B&#x200A;O&#x200A;O&#x200A;T&#x200A;S&#x200A;T&#x200A;R&#x200A;A&#x200A;P" />
+                    AutomationProperties.Name="ZeroStrap">
+            <Path Style="{StaticResource ZeroMarkStyle}" Width="14" Height="14" />
+            <ContentPresenter ContentTemplate="{StaticResource ZeroWordmark}" Margin="10,0,0,0" TextElement.FontSize="11" />
         </StackPanel>
     </DataTemplate>
 
@@ -112,8 +135,6 @@
         <Setter Property="Padding" Value="16,14" />
     </Style>
 
-    <!--  Logs and stack traces.  -->
-    <FontFamily x:Key="ZeroMonoFont">Cascadia Mono, Consolas, Courier New</FontFamily>
 
     <!-- ============================== TYPOGRAPHY ============================== -->
 
@@ -253,13 +274,13 @@
     <Style x:Key="ZeroTabItemStyle" TargetType="{x:Type TabItem}">
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
         <Setter Property="FontSize" Value="13" />
-        <Setter Property="Cursor" Value="Hand" />
         <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type TabItem}">
-                    <Grid Background="Transparent" Margin="0,0,20,0">
-                        <ContentPresenter ContentSource="Header" Margin="0,4,0,8" RecognizesAccessKey="True" TextElement.Foreground="{TemplateBinding Foreground}" />
+                    <!--  Hand cursor on the header only: a Cursor on the TabItem itself leaks into the tab's page content.  -->
+                    <Grid Background="Transparent" Margin="0,0,22,0" Cursor="Hand">
+                        <ContentPresenter ContentSource="Header" Margin="0,6,0,10" RecognizesAccessKey="True" TextElement.Foreground="{TemplateBinding Foreground}" />
                         <Border x:Name="Indicator" Height="2" VerticalAlignment="Bottom" CornerRadius="1" Background="{DynamicResource TextFillColorPrimaryBrush}" Opacity="0" />
                     </Grid>
                     <ControlTemplate.Triggers>
@@ -297,6 +318,88 @@
                             <TabPanel IsItemsHost="True" KeyboardNavigation.TabIndex="1" />
                         </Border>
                         <ContentPresenter Grid.Row="1" x:Name="PART_SelectedContentHost" ContentSource="SelectedContent" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        Segmented tabs: the strip sits in a rounded track, the selected tab is a raised pill that
+        fades in. Used by the shell's Configure section.
+    -->
+    <Style x:Key="ZeroSegmentedTabItemStyle" TargetType="{x:Type TabItem}">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TabItem}">
+                    <Grid Background="Transparent" Cursor="Hand" Margin="2,0">
+                        <Border x:Name="Hover" CornerRadius="8" Background="{DynamicResource ControlFillColorSecondaryBrush}" Opacity="0" />
+                        <Border x:Name="Pill" CornerRadius="8" Background="{DynamicResource ControlFillColorTertiaryBrush}"
+                                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" Opacity="0" />
+                        <ContentPresenter ContentSource="Header" Margin="16,7,16,8" RecognizesAccessKey="True" TextElement.Foreground="{TemplateBinding Foreground}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.14" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.22" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Pill" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.2" EasingFunction="{StaticResource ZeroEaseOut}" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Pill" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.18" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ZeroSegmentedTabControlStyle" TargetType="{x:Type TabControl}">
+        <Setter Property="ItemContainerStyle" Value="{StaticResource ZeroSegmentedTabItemStyle}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TabControl}">
+                    <Grid KeyboardNavigation.TabNavigation="Local">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0" HorizontalAlignment="Left" CornerRadius="10" Padding="3"
+                                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                            <TabPanel IsItemsHost="True" KeyboardNavigation.TabIndex="1" />
+                        </Border>
+                        <ContentPresenter Grid.Row="1" x:Name="PART_SelectedContentHost" ContentSource="SelectedContent" Margin="0,16,0,0" />
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>
@@ -348,11 +451,11 @@
         (SystemParameters.ClientAreaAnimation). Without them the UI is fully static and usable.
     -->
 
-    <CubicEase x:Key="ZeroEaseOut" EasingMode="EaseOut" />
-    <QuinticEase x:Key="ZeroEaseOutStrong" EasingMode="EaseOut" />
 
     <!--  Root grid of every window: soft fade on first show.  -->
     <Style x:Key="ZeroWindowRootStyle" TargetType="{x:Type Grid}">
+        <Setter Property="TextElement.FontFamily" Value="{StaticResource ZeroUIFont}" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
         <Style.Triggers>
             <DataTrigger Binding="{Binding Source={x:Static SystemParameters.ClientAreaAnimation}}" Value="True">
                 <DataTrigger.EnterActions>

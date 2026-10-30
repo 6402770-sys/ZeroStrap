@@ -26,7 +26,7 @@
 
         <controls:OptionControl 
             Header="{x:Static resources:Strings.Menu_ZeroStrap_Analytics_Title}"
-            Description="{Binding Source={x:Static resources:Strings.Menu_ZeroStrap_Analytics_Description}, Converter={StaticResource StringFormatConverter}, ConverterParameter='https://zerostraplabs.com/wiki/info/privacy-policy/'}">
+            Description="{Binding Source={x:Static resources:Strings.Menu_ZeroStrap_Analytics_Description}, Converter={StaticResource StringFormatConverter}, ConverterParameter='https://bloxstraplabs.com/wiki/info/privacy-policy/'}">
             <ui:ToggleSwitch IsChecked="{Binding AnalyticsEnabled, Mode=TwoWay}" />
         </controls:OptionControl>
 

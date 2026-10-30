@@ -17,18 +17,58 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
         private void Refresh()
         {
-            DiagRoblox.Text = App.IsPlayerInstalled
-                ? $"Roblox Player: installed ({App.PlayerState.Prop.VersionGuid})"
-                : "Roblox Player: not installed";
+            SetDiag(DiagRoblox, DiagRobloxDot, App.IsPlayerInstalled,
+                App.IsPlayerInstalled ? App.PlayerState.Prop.VersionGuid : "Not installed — installs on first launch");
 
-            DiagStudio.Text = App.IsStudioInstalled
-                ? $"Roblox Studio: installed ({App.StudioState.Prop.VersionGuid})"
-                : "Roblox Studio: not installed";
+            SetDiag(DiagStudio, DiagStudioDot, App.IsStudioInstalled,
+                App.IsStudioInstalled ? App.StudioState.Prop.VersionGuid : "Not installed", idleWhenMissing: true);
 
-            DiagConfig.Text = $"Configuration path: {Paths.Base}";
+            SetDiag(DiagConfig, DiagConfigDot, App.Settings.Loaded, Paths.Base);
+            DiagConfig.ToolTip = Paths.Base;
+
+            try
+            {
+                var drive = new DriveInfo(Path.GetPathRoot(Paths.Base)!);
+                double freeGb = drive.AvailableFreeSpace / 1024d / 1024 / 1024;
+                SetDiag(DiagDisk, DiagDiskDot, freeGb >= 5, $"{freeGb:0.0} GB free on {drive.Name.TrimEnd('\\')}");
+            }
+            catch
+            {
+                SetDiag(DiagDisk, DiagDiskDot, true, "Unknown");
+            }
+
+            try
+            {
+                int logs = Directory.Exists(Paths.Logs) ? Directory.GetFiles(Paths.Logs, "*.log").Length : 0;
+                LogsDescription.Text = $"{logs} log file{(logs == 1 ? "" : "s")} · one per session.";
+
+                int backups = Directory.Exists(BackupsRoot) ? Directory.GetDirectories(BackupsRoot).Length : 0;
+                BackupsDescription.Text = backups == 0
+                    ? "Snapshot of Fast Flags, settings and state. No backups yet."
+                    : $"Snapshot of Fast Flags, settings and state. {backups} saved.";
+            }
+            catch { }
+
+            UpdatesDescription.Text = $"This build: v{App.Version}. Compares against the latest GitHub release.";
         }
 
-        private void Refresh_Click(object sender, RoutedEventArgs e) => Refresh();
+        private void SetDiag(TextBlock text, System.Windows.Shapes.Ellipse dot, bool ok, string detail, bool idleWhenMissing = false)
+        {
+            text.Text = detail;
+            dot.Fill = (System.Windows.Media.Brush)FindResource(ok ? "ZeroStatusHealthyBrush" : idleWhenMissing ? "ZeroStatusIdleBrush" : "ZeroStatusWarningBrush");
+        }
+
+        private void Refresh_Click(object sender, RoutedEventArgs e)
+        {
+            Refresh();
+
+            if (ZeroStrap.UI.Utility.Motion.Enabled && RefreshGlyph.RenderTransform is System.Windows.Media.RotateTransform spin)
+            {
+                spin.BeginAnimation(System.Windows.Media.RotateTransform.AngleProperty,
+                    new System.Windows.Media.Animation.DoubleAnimation(0, 360, TimeSpan.FromMilliseconds(560))
+                    { EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseInOut } });
+            }
+        }
 
         private void OpenLogs_Click(object sender, RoutedEventArgs e)
         {
@@ -83,7 +123,7 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
                 var release = await App.GetLatestRelease();
                 var msg = release?.TagName is null
                     ? "Could not reach the update server."
-                    : $"Latest release: {release.TagName}";
+                    : $"Latest release: {release.TagName}\nThis build: v{App.Version}";
                 Frontend.ShowMessageBox(msg, MessageBoxImage.Information);
             }
             catch (Exception ex)
@@ -114,6 +154,9 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
                     var dest = Path.Combine(dir, "ClientAppSettings.json");
                     File.Copy(flagsPath, dest, overwrite: true);
                 }
+
+                ZeroStrap.UI.Utility.ActivityLog.Record(ZeroStrap.UI.Utility.ActivityType.Backup, "Configuration backed up", Path.GetFileName(dir));
+                Refresh();
 
                 Frontend.ShowMessageBox(
                     $"Backup saved to:\n{dir}",

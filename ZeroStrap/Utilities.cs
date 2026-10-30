@@ -39,6 +39,10 @@ namespace ZeroStrap
             if (idx != -1)
                 version = version[..idx];
 
+            idx = version.IndexOf('-'); // pre-release / edition label, e.g. 3.0.0-obsidian
+            if (idx != -1)
+                version = version[..idx];
+
             return new Version(version);
         }
 

@@ -6,7 +6,7 @@
         public string MainText => String.Format(
             Strings.Installer_Welcome_MainText,
             "[github.com/6402770-sys/idkvro](https://github.com/6402770-sys/idkvro)",
-            "[zerostraplabs.com](https://zerostraplabs.com)"
+            "[github.com/6402770-sys/idkvro/releases](https://github.com/6402770-sys/idkvro/releases)"
         );
 
         public string VersionNotice { get; private set; } = "";

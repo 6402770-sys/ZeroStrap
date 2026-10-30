@@ -9,7 +9,7 @@
         xmlns:models="clr-namespace:ZeroStrap.UI.ViewModels"
         xmlns:resources="clr-namespace:ZeroStrap.Resources"
         mc:Ignorable="d"
-        Title="ZeroBootstrap"
+        Title="ZeroStrap"
         MinWidth="0"
         MinHeight="0"
         Width="600"
@@ -27,7 +27,7 @@
 
         <ui:TitleBar Grid.Row="0" Grid.ColumnSpan="2" Padding="8" ShowMinimize="False" ShowMaximize="False" Title="" Icon="{x:Null}" CanMaximize="False" KeyboardNavigation.TabNavigation="None">
             <ui:TitleBar.Header>
-                <ContentPresenter Content="ZeroBootstrap" ContentTemplate="{StaticResource ZeroTitleBarLockup}" VerticalAlignment="Center" />
+                <ContentPresenter Content="ZeroStrap" ContentTemplate="{StaticResource ZeroTitleBarLockup}" VerticalAlignment="Center" />
             </ui:TitleBar.Header>
         </ui:TitleBar>
 
@@ -37,7 +37,7 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!--  ZeroBootstrap: identity column. Mark tile, drawn wordmark, version chip, links.  -->
+            <!--  ZeroStrap: identity column. Mark tile, drawn wordmark, version chip, links.  -->
             <Grid Grid.Column="0" VerticalAlignment="Center" Margin="0,0,0,8">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -51,11 +51,7 @@
                         </Border>
                     </Grid>
 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0" AutomationProperties.Name="ZeroBootstrap">
-                        <Path Style="{StaticResource ZeroWordmarkPathStyle}" Height="16" />
-                        <TextBlock Style="{StaticResource ZeroDescriptorStyle}" Margin="10,2,0,0"
-                                   Text="B&#x200A;O&#x200A;O&#x200A;T&#x200A;S&#x200A;T&#x200A;R&#x200A;A&#x200A;P" />
-                    </StackPanel>
+                    <ContentPresenter ContentTemplate="{StaticResource ZeroWordmark}" HorizontalAlignment="Center" Margin="0,20,0,0" TextElement.FontSize="17" />
 
                     <Border Style="{StaticResource ZeroChipStyle}" Margin="0,12,0,0" HorizontalAlignment="Center">
                         <TextBlock Text="{Binding Version, Mode=OneTime}" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
@@ -64,7 +60,7 @@
 
                 <StackPanel Grid.Row="1" HorizontalAlignment="Center">
                     <ui:Hyperlink Icon="QuestionCircle48" Content="{x:Static resources:Strings.About_Title}" Command="{Binding LaunchAboutCommand, Mode=OneTime}" HorizontalAlignment="Center" />
-                    <ui:Hyperlink Icon="Book24" Content="{x:Static resources:Strings.LaunchMenu_ZeroStrapWiki}" NavigateUri="https://zerostraplabs.com/wiki/" HorizontalAlignment="Center" />
+                    <ui:Hyperlink Icon="Book24" Content="{x:Static resources:Strings.LaunchMenu_ZeroStrapWiki}" NavigateUri="https://github.com/6402770-sys/idkvro#readme" HorizontalAlignment="Center" />
                     <ui:Hyperlink Icon="PeopleCommunity28" Content="{x:Static resources:Strings.LaunchMenu_RobloxCommunity}" NavigateUri="https://www.roblox.com/communities/32380007/ZeroStrap" HorizontalAlignment="Center" />
                 </StackPanel>
             </Grid>
@@ -95,7 +91,7 @@
 
                 <TextBlock Style="{StaticResource ZeroEyebrowStyle}" Margin="0,24,0,6" Text="HELP" />
 
-                <ui:CardAction TabIndex="2" Icon="BookQuestionMark24" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="https://zerostraplabs.com/wiki/help/">
+                <ui:CardAction TabIndex="2" Icon="BookQuestionMark24" Command="models:GlobalViewModel.OpenWebpageCommand" CommandParameter="https://github.com/6402770-sys/idkvro/issues">
                     <StackPanel>
                         <TextBlock FontSize="14" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{x:Static resources:Strings.LaunchMenu_Wiki_Title}" />
                         <TextBlock Margin="0,2,0,0" Style="{StaticResource ZeroCaptionStyle}" Text="{x:Static resources:Strings.LaunchMenu_Wiki_Description}" Padding="0,0,16,0" />

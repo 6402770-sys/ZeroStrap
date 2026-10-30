@@ -31,7 +31,7 @@
                         </Setter>
                     </Trigger>
                 </Style.Triggers>
-                <!-- ZeroBootstrap: links are monochrome, so the underline is what marks them as links -->
+                <!-- ZeroStrap: links are monochrome, so the underline is what marks them as links -->
                 <Setter Property="TextDecorations" Value="Underline" />
                 <Setter Property="Foreground">
                     <Setter.Value>

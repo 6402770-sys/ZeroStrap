@@ -67,7 +67,7 @@
         </Grid>
 
         <TextBlock Style="{StaticResource ZeroSectionTitleStyle}" Text="{x:Static resources:Strings.Common_Analytics}" Margin="{StaticResource ZeroSectionMargin}" />
-        <controls:MarkdownTextBlock FontSize="14" MarkdownText="{Binding Source={x:Static resources:Strings.Menu_ZeroStrap_Analytics_Description}, Converter={StaticResource StringFormatConverter}, ConverterParameter='https://zerostraplabs.com/wiki/info/privacy-policy/'}" TextWrapping="Wrap" />
+        <controls:MarkdownTextBlock FontSize="14" MarkdownText="{Binding Source={x:Static resources:Strings.Menu_ZeroStrap_Analytics_Description}, Converter={StaticResource StringFormatConverter}, ConverterParameter='https://bloxstraplabs.com/wiki/info/privacy-policy/'}" TextWrapping="Wrap" />
 
         <controls:OptionControl 
             Header="{x:Static resources:Strings.Menu_ZeroStrap_Analytics_Title}">

@@ -34,7 +34,9 @@ namespace ZeroStrap.UI.Elements.Settings.Pages
         private void OpenFlagEditor(object? sender, EventArgs e)
         {
             if (Window.GetWindow(this) is INavigationWindow window)
-                    window.Navigate(typeof(FastFlagEditorPage));
+                window.Navigate(typeof(FastFlagEditorPage));
+            else
+                NavigationService?.Navigate(new FastFlagEditorPage()); // hosted in a Frame (Obsidian shell)
         }
 
         private void Page_Loaded(object sender, RoutedEventArgs e)

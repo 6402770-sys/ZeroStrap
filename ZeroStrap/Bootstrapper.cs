@@ -1636,7 +1636,7 @@ namespace ZeroStrap
 
                         Frontend.ShowConnectivityDialog(
                             Strings.Dialog_Connectivity_UnableToDownload,
-                            String.Format(Strings.Dialog_Connectivity_UnableToDownloadReason, "[https://zerostraplabs.com/wiki/help/zerostrap-cannot-download-roblox/](https://zerostraplabs.com/wiki/help/zerostrap-cannot-download-roblox/)"),
+                            String.Format(Strings.Dialog_Connectivity_UnableToDownloadReason, "[https://github.com/6402770-sys/idkvro/issues](https://github.com/6402770-sys/idkvro/issues)"),
                             MessageBoxImage.Error,
                             ex
                         );

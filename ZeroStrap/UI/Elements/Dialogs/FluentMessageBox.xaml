@@ -28,9 +28,9 @@
         </Grid.RowDefinitions>
 
         <ui:TitleBar Grid.Row="0" Grid.ColumnSpan="2" Padding="8" x:Name="RootTitleBar" Title="ZeroStrap" ShowMinimize="False" ShowMaximize="False" CanMaximize="False" KeyboardNavigation.TabNavigation="None">
-            <!--  ZeroBootstrap: Title is set from code (App.ProjectName); the masked lockup covers that text.  -->
+            <!--  ZeroStrap: Title is set from code (App.ProjectName); the masked lockup covers that text.  -->
             <ui:TitleBar.Header>
-                <ContentPresenter Content="ZeroBootstrap" ContentTemplate="{StaticResource ZeroTitleBarLockupMasked}" />
+                <ContentPresenter Content="ZeroStrap" ContentTemplate="{StaticResource ZeroTitleBarLockupMasked}" />
             </ui:TitleBar.Header>
         </ui:TitleBar>
 

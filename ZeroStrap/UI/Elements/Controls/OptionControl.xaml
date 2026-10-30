@@ -10,7 +10,7 @@
              mc:Ignorable="d" 
              x:Name="Control"
              d:DesignHeight="450" d:DesignWidth="800">
-    <!--  ZeroBootstrap: hover outline fades in over the card; theme brushes are never mutated.  -->
+    <!--  ZeroStrap: hover outline fades in over the card; theme brushes are never mutated.  -->
     <Grid Margin="0,8,0,0" Background="Transparent">
         <Grid.Triggers>
             <EventTrigger RoutedEvent="MouseEnter">

@@ -30,7 +30,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!--  ZeroBootstrap: the user-configured bootstrapper title, next to the mark  -->
+        <!--  ZeroStrap: the user-configured bootstrapper title, next to the mark  -->
         <ui:TitleBar Grid.Row="0" x:Name="RootTitleBar" Padding="8" Title="" Icon="{x:Null}" ShowMinimize="False" ShowMaximize="False" CanMaximize="False" ShowClose="False">
             <ui:TitleBar.Header>
                 <ContentPresenter Content="{Binding Title, Mode=OneTime}" ContentTemplate="{StaticResource ZeroTitleBarCaption}" VerticalAlignment="Center" />
@@ -50,7 +50,7 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <Image Grid.Column="0" Margin="0,12,0,0" Width="48" Height="48" VerticalAlignment="Top" Source="{Binding Icon, Mode=OneWay}" RenderOptions.BitmapScalingMode="HighQuality" />
+            <Image Grid.Column="0" Margin="0,12,0,0" Width="48" Height="48"  VerticalAlignment="Top" Source="{Binding Icon, Mode=OneWay}" RenderOptions.BitmapScalingMode="HighQuality" />
             <StackPanel Grid.Column="1">
                 <TextBlock Margin="16,8,0,0" FontSize="16" FontWeight="SemiBold" Text="{Binding Message, Mode=OneWay}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                 <ProgressBar Margin="16,16,0,16" IsIndeterminate="{Binding ProgressIndeterminate, Mode=OneWay}" Maximum="{Binding ProgressMaximum, Mode=OneWay}" Value="{Binding ProgressValue, Mode=OneWay}" />

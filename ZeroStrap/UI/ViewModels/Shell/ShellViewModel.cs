@@ -3,10 +3,12 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace ZeroStrap.UI.ViewModels.Shell
 {
+    /// <summary>A section plus, for Configure, which tab to open.</summary>
+    public readonly record struct ShellTarget(ShellSection Section, int Tab = 0);
+
     public enum ShellSection
     {
         Overview,
-        Play,
         Configure,
         Appearance,
         System
@@ -37,6 +39,8 @@ namespace ZeroStrap.UI.ViewModels.Shell
                 task.Execute();
 
             App.PendingSettingTasks.Clear();
+
+            UI.Utility.ActivityLog.Record(UI.Utility.ActivityType.Configuration, "Configuration saved", "Settings and Fast Flags written to disk");
 
             RequestSaveNoticeEvent?.Invoke(this, EventArgs.Empty);
         }

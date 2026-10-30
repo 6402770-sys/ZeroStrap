@@ -27,7 +27,7 @@
 
         <ui:TitleBar Grid.Row="0" Grid.ColumnSpan="2" Padding="8" Title="" Icon="{x:Null}" ShowMinimize="False" ShowMaximize="False" CanMaximize="False" KeyboardNavigation.TabNavigation="None">
             <ui:TitleBar.Header>
-                <ContentPresenter Content="ZeroBootstrap" ContentTemplate="{StaticResource ZeroTitleBarLockup}" VerticalAlignment="Center" />
+                <ContentPresenter Content="ZeroStrap" ContentTemplate="{StaticResource ZeroTitleBarLockup}" VerticalAlignment="Center" />
             </ui:TitleBar.Header>
         </ui:TitleBar>
 

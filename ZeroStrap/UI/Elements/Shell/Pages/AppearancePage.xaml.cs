@@ -1,63 +1,53 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 
 using ZeroStrap.Enums;
 using ZeroStrap.UI.Elements.Base;
+using ZeroStrap.UI.Utility;
 
 namespace ZeroStrap.UI.Elements.Shell.Pages
 {
     public partial class AppearancePage : Page
     {
+        private Settings.Pages.AppearancePage? _launcherPage;
+        private bool _refreshing;
+
         public AppearancePage()
         {
             InitializeComponent();
             Loaded += (_, _) => Refresh();
         }
 
-        private void Refresh()
+        public void Refresh()
         {
+            _refreshing = true;
+
             var theme = App.Settings.Prop.Theme;
-            UpdateSelection(theme);
+            ThemeCardDark.IsChecked = theme == Theme.Dark;
+            ThemeCardLight.IsChecked = theme == Theme.Light;
+            ThemeCardDefault.IsChecked = theme == Theme.Default;
 
-            CustomThemeText.Text = string.IsNullOrEmpty(App.Settings.Prop.SelectedCustomTheme)
-                ? "None"
+            AnimationsToggle.IsChecked = !App.Settings.Prop.ReduceMotion;
+
+            CustomThemeRun.Text = string.IsNullOrEmpty(App.Settings.Prop.SelectedCustomTheme)
+                ? "none"
                 : App.Settings.Prop.SelectedCustomTheme;
+
+            _refreshing = false;
         }
 
-        private void UpdateSelection(Theme theme)
+        private void ThemeCard_Checked(object sender, RoutedEventArgs e)
         {
-            var accent = (SolidColorBrush)FindResource("TextFillColorPrimaryBrush");
-            var neutral = (SolidColorBrush)FindResource("CardStrokeColorDefaultBrush");
-
-            ThemeCardDefault.BorderBrush = theme == Theme.Default ? accent : neutral;
-            ThemeCardLight.BorderBrush = theme == Theme.Light ? accent : neutral;
-            ThemeCardDark.BorderBrush = theme == Theme.Dark ? accent : neutral;
-
-            ThemeCardDefault.BorderThickness = new Thickness(theme == Theme.Default ? 2 : 1);
-            ThemeCardLight.BorderThickness = new Thickness(theme == Theme.Light ? 2 : 1);
-            ThemeCardDark.BorderThickness = new Thickness(theme == Theme.Dark ? 2 : 1);
-
-            ActiveThemeHint.Text = theme switch
-            {
-                Theme.Light => "Light is active. Themed brushes update immediately.",
-                Theme.Dark => "Obsidian (Dark) is active. Themed brushes update immediately.",
-                _ => "Following Windows theme."
-            };
-        }
-
-        private void ThemeCard_Click(object sender, MouseButtonEventArgs e)
-        {
-            if (sender is not Border { Tag: string tag })
+            if (_refreshing || sender is not RadioButton { Tag: string tag } || !Enum.TryParse<Theme>(tag, out var theme))
                 return;
 
-            if (!Enum.TryParse<Theme>(tag, out var theme))
+            if (App.Settings.Prop.Theme == theme)
                 return;
 
             App.Settings.Prop.Theme = theme;
-            UpdateSelection(theme);
 
             try
             {
@@ -66,21 +56,83 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             }
             catch (Exception ex)
             {
-                App.Logger.WriteException("AppearancePage::ThemeCard_Click", ex);
+                App.Logger.WriteException("AppearancePage::ThemeCard_Checked", ex);
             }
+
+            ActivityLog.Record(ActivityType.Theme, "Theme changed", $"Switched to {(theme == Theme.Dark ? "Obsidian" : theme == Theme.Default ? "System" : "Light")} theme");
         }
 
-        private void OpenAdvanced_Click(object sender, RoutedEventArgs e)
+        private void AnimationsToggle_Click(object sender, RoutedEventArgs e)
         {
-            // Jump to the embedded advanced panel.
-            if (Parent is DependencyObject)
-                AppearanceHost?.Navigate(new Settings.Pages.AppearancePage());
+            // Saved with the rest of the settings (Ctrl + S); takes effect immediately in this session.
+            App.Settings.Prop.ReduceMotion = AnimationsToggle.IsChecked != true;
         }
 
         private void AppearanceHost_Loaded(object sender, RoutedEventArgs e)
         {
             if (sender is Frame { Content: null } frame)
-                frame.Navigate(new Settings.Pages.AppearancePage());
+            {
+                _launcherPage = new Settings.Pages.AppearancePage();
+                frame.Navigate(_launcherPage);
+            }
+        }
+
+        /// <summary>Scrolls to the custom theme manager inside the launcher settings and highlights it.</summary>
+        private void ManageCustomThemes_Click(object sender, RoutedEventArgs e)
+        {
+            FrameworkElement target = LauncherCard;
+
+            // The themes list lives in the "Style" expander, which only opens once the Custom style is
+            // picked; target the expander itself so its Style selector is what the user lands on.
+            DependencyObject? node = _launcherPage?.FindName("CustomThemesListBox") as DependencyObject;
+            while (node is not null && node is not Wpf.Ui.Controls.CardExpander)
+                node = LogicalTreeHelper.GetParent(node);
+
+            if (node is FrameworkElement { IsVisible: true } expander)
+                target = expander;
+
+            if (target is Wpf.Ui.Controls.CardExpander { IsExpanded: false })
+                CustomThemeHint.Visibility = Visibility.Visible;
+
+            var offset = target.TransformToAncestor(PageScroll).Transform(new Point(0, 0)).Y;
+            AnimateScroll(PageScroll.VerticalOffset + offset - 24);
+            Flash(target);
+        }
+
+        private void AnimateScroll(double to)
+        {
+            to = Math.Max(0, Math.Min(to, PageScroll.ScrollableHeight));
+
+            if (!Motion.Enabled)
+            {
+                PageScroll.ScrollToVerticalOffset(to);
+                return;
+            }
+
+            double from = PageScroll.VerticalOffset;
+            var start = DateTime.Now;
+            const double durationMs = 420;
+
+            EventHandler? tick = null;
+            tick = (_, _) =>
+            {
+                double t = Math.Min(1, (DateTime.Now - start).TotalMilliseconds / durationMs);
+                double eased = 1 - Math.Pow(1 - t, 4);
+                PageScroll.ScrollToVerticalOffset(from + (to - from) * eased);
+
+                if (t >= 1)
+                    CompositionTarget.Rendering -= tick;
+            };
+            CompositionTarget.Rendering += tick;
+        }
+
+        private static void Flash(FrameworkElement element)
+        {
+            var pulse = new DoubleAnimationUsingKeyFrames { BeginTime = TimeSpan.FromMilliseconds(380) };
+            pulse.KeyFrames.Add(new EasingDoubleKeyFrame(0.45, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(160))));
+            pulse.KeyFrames.Add(new EasingDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(520)), new CubicEase { EasingMode = EasingMode.EaseOut }));
+            pulse.Completed += (_, _) => element.BeginAnimation(OpacityProperty, null);
+            element.BeginAnimation(OpacityProperty, pulse);
         }
     }
 }

@@ -24,7 +24,7 @@ namespace ZeroStrap.UI
 
             string info = String.Format(
                 Strings.Dialog_PlayerError_FailedLaunch,
-                $"https://zerostraplabs.com/wiki/help/roblox-crashes-or-does-not-launch/"
+                $"https://bloxstraplabs.com/wiki/help/roblox-crashes-or-does-not-launch/"
             );
 
             ShowMessageBox(info, MessageBoxImage.Error);

@@ -677,6 +677,8 @@ namespace ZeroStrap.UI.Elements.Settings.Pages
         {
             if (Window.GetWindow(this) is INavigationWindow window)
                 window.Navigate(typeof(FastFlagsPage));
+            else
+                NavigationService?.Navigate(new FastFlagsPage()); // hosted in a Frame (Obsidian shell)
         }
 
         private void AddButton_Click(object sender, RoutedEventArgs e) => ShowAddDialog();

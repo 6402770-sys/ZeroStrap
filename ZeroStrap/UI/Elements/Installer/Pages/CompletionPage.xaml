@@ -12,7 +12,7 @@
       Scrollable="True"
       Loaded="UiPage_Loaded">
     <StackPanel Margin="0,0,14,14">
-        <!--  ZeroBootstrap: this page is only reachable after InstallViewModel.DoInstall() returned true,
+        <!--  ZeroStrap: this page is only reachable after InstallViewModel.DoInstall() returned true,
               so the confirmation mark reflects a real, finished install.  -->
         <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
             <Border Style="{StaticResource ZeroMarkTileStyle}" Width="48" Height="48" Padding="0">

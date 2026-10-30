@@ -10,7 +10,7 @@
              xmlns:dmodels="clr-namespace:ZeroStrap.UI.ViewModels.Settings"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance dmodels:MainWindowViewModel, IsDesignTimeCreatable=True}"
-             Title="ZeroBootstrap Settings"
+             Title="ZeroStrap Settings"
              MinWidth="1000"
              Width="1000"
              Height="580"
@@ -39,16 +39,16 @@
             Message="{x:Static resources:Strings.Menu_SettingsSaved_Message}"
             Appearance="Success" Icon="CheckmarkCircle32" Timeout="3000" Margin="200,0,200,20" Grid.RowSpan="10" Panel.ZIndex="9" />
 
-        <!--  ZeroBootstrap: feedback for Fast Flag keyboard shortcuts (FlagBindingHost)  -->
+        <!--  ZeroStrap: feedback for Fast Flag keyboard shortcuts (FlagBindingHost)  -->
         <ui:Snackbar
             x:Name="FlagBindingSnackbar"
             Title="{x:Static resources:Strings.Menu_FastFlagEditor_Shortcuts_SnackbarTitle}"
             Icon="Keyboard24" Timeout="4000" Margin="200,0,200,20" Grid.RowSpan="10" Panel.ZIndex="11" />
 
         <ui:TitleBar Padding="8" x:Name="RootTitleBar" Grid.Row="0" ForceShutdown="False" MinimizeToTray="False" UseSnapLayout="True" Title="" Icon="{x:Null}">
-            <!--  ZeroBootstrap: brand lockup, defined once in ZeroBrand.xaml  -->
+            <!--  ZeroStrap: brand lockup, defined once in ZeroBrand.xaml  -->
             <ui:TitleBar.Header>
-                <ContentPresenter Content="ZeroBootstrap" ContentTemplate="{StaticResource ZeroTitleBarLockup}" VerticalAlignment="Center" />
+                <ContentPresenter Content="ZeroStrap" ContentTemplate="{StaticResource ZeroTitleBarLockup}" VerticalAlignment="Center" />
             </ui:TitleBar.Header>
         </ui:TitleBar>
 
@@ -74,7 +74,7 @@
                     <ui:NavigationItem Content="{x:Static resources:Strings.Menu_FastFlagEditor_Title}" PageType="{x:Type pages:FastFlagEditorPage}" Tag="fastflageditor" Visibility="Collapsed" />
                 </ui:NavigationFluent.Items>
                 <ui:NavigationFluent.Footer>
-                    <ui:NavigationItem Content="ZeroBootstrap" PageType="{x:Type pages:ZeroStrapPage}" Icon="Settings24" Tag="shortcuts" />
+                    <ui:NavigationItem Content="ZeroStrap" PageType="{x:Type pages:ZeroStrapPage}" Icon="Settings24" Tag="shortcuts" />
                     <ui:NavigationItem Content="{x:Static resources:Strings.Menu_About_Title}" Icon="QuestionCircle48" Margin="0,0,0,12" Command="{Binding OpenAboutCommand, Mode=OneTime}" />
                 </ui:NavigationFluent.Footer>
             </ui:NavigationFluent>

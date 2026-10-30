@@ -25,7 +25,7 @@
 
     <StackPanel Margin="0,0,14,14">
 
-        <!--  ZeroBootstrap: identity hero. Mark tile | drawn wordmark, descriptor, version chip, tagline.  -->
+        <!--  ZeroStrap: identity hero. Mark tile | drawn wordmark, descriptor, version chip, tagline.  -->
         <Border Style="{StaticResource ZeroHeroStyle}" Margin="0,0,0,28">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -42,11 +42,7 @@
                 </Grid>
 
                 <StackPanel Grid.Column="1" Margin="24,0,0,0" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" AutomationProperties.Name="ZeroBootstrap">
-                        <Path Style="{StaticResource ZeroWordmarkPathStyle}" Height="24" />
-                        <TextBlock Style="{StaticResource ZeroDescriptorStyle}" FontSize="12" Margin="12,3,0,0"
-                                   Text="B&#x200A;O&#x200A;O&#x200A;T&#x200A;S&#x200A;T&#x200A;R&#x200A;A&#x200A;P" />
-                    </StackPanel>
+                    <ContentPresenter ContentTemplate="{StaticResource ZeroWordmark}" HorizontalAlignment="Left" TextElement.FontSize="24" />
                     <TextBlock Margin="0,12,0,0" Style="{StaticResource ZeroBodyStyle}" Text="{x:Static resources:Strings.Menu_About_Description}" />
                     <Border Style="{StaticResource ZeroChipStyle}" Margin="0,14,0,0" HorizontalAlignment="Left">
                         <TextBlock Text="{Binding Version, Mode=OneTime}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
@@ -55,11 +51,11 @@
             </Grid>
         </Border>
 
-        <!--  These links belong to the upstream project ZeroBootstrap is forked from; labelled as such.  -->
-        <TextBlock Style="{StaticResource ZeroEyebrowStyle}" Text="UPSTREAM PROJECT · BLOXSTRAP" />
+        <!--  Project links.  -->
+        <TextBlock Style="{StaticResource ZeroEyebrowStyle}" Text="PROJECT · ZEROSTRAP" />
         <WrapPanel HorizontalAlignment="Left" Orientation="Horizontal">
             <ui:Anchor Margin="0,0,8,8" Content="{x:Static resources:Strings.Menu_About_GithubRepository}" Icon="Code24" NavigateUri="https://github.com/6402770-sys/idkvro" />
-            <ui:Anchor Margin="0,0,8,8" Content="{x:Static resources:Strings.Menu_About_HelpInformation}" Icon="BookQuestionMark24" NavigateUri="https://zerostraplabs.com/wiki/" />
+            <ui:Anchor Margin="0,0,8,8" Content="{x:Static resources:Strings.Menu_About_HelpInformation}" Icon="BookQuestionMark24" NavigateUri="https://github.com/6402770-sys/idkvro#readme" />
             <ui:Anchor Margin="0,0,8,8" Content="{x:Static resources:Strings.Menu_About_ReportIssue}" Icon="BookExclamationMark24" NavigateUri="https://github.com/6402770-sys/idkvro/issues" />
             <ui:Anchor Margin="0,0,0,8" Content="{x:Static resources:Strings.Menu_About_DiscordServer}" Icon="Chat48" NavigateUri="https://discord.gg/nKjV3mGq6R" />
         </WrapPanel>

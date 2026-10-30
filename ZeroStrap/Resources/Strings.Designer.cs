@@ -4010,7 +4010,7 @@ namespace ZeroStrap.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Experimental flags lets you add any valid Fast Flag, including ones that are not on Roblox's Player allowlist.
         ///
-        ///ZeroBootstrap will save them, but Roblox Player ignores them (Roblox Studio is not restricted). Misusing flags can make Roblox unstable.
+        ///ZeroStrap will save them, but Roblox Player ignores them (Roblox Studio is not restricted). Misusing flags can make Roblox unstable.
         ///
         ///Enable experimental flags?.
         /// </summary>
@@ -4240,7 +4240,7 @@ namespace ZeroStrap.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The catalog is a list of known Fast Flag names used for search. It is plain text that is validated before use; nothing in it is executed. Updating it never changes your flags, and it is separate from ZeroBootstrap's own updates..
+        ///   Looks up a localized string similar to The catalog is a list of known Fast Flag names used for search. It is plain text that is validated before use; nothing in it is executed. Updating it never changes your flags, and it is separate from ZeroStrap's own updates..
         /// </summary>
         public static string Menu_FastFlagEditor_Catalog_Notice {
             get {
@@ -4701,7 +4701,7 @@ namespace ZeroStrap.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to ZeroBootstrap presets|*.json|All files|*.*.
+        ///   Looks up a localized string similar to ZeroStrap presets|*.json|All files|*.*.
         /// </summary>
         public static string Menu_FastFlagEditor_Presets_OpenFilter {
             get {
@@ -4759,7 +4759,7 @@ namespace ZeroStrap.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to ZeroBootstrap presets|*.json.
+        ///   Looks up a localized string similar to ZeroStrap presets|*.json.
         /// </summary>
         public static string Menu_FastFlagEditor_Presets_SaveFilter {
             get {
