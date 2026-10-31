@@ -89,7 +89,7 @@ namespace ZeroStrap.UI.Elements.Shell
                 NavigateTo(section);
         }
 
-        public void NavigateTo(ShellSection section, int configureTab = 0)
+        public void NavigateTo(ShellSection section, ConfigureTab configureTab = ConfigureTab.FastFlags)
         {
             ClosePalette();
 
@@ -105,6 +105,8 @@ namespace ZeroStrap.UI.Elements.Shell
                 Page page = section switch
                 {
                     ShellSection.Configure => new ConfigurePage(configureTab),
+                    ShellSection.ModsStudio => BuildModsStudio(),
+                    ShellSection.MacroStudio => new MacroStudioPage(),
                     ShellSection.Appearance => new AppearancePage(),
                     ShellSection.System => new SystemPage(),
                     _ => BuildOverview()
@@ -117,6 +119,8 @@ namespace ZeroStrap.UI.Elements.Shell
                 {
                     case ShellSection.Overview: NavOverview.IsChecked = true; break;
                     case ShellSection.Configure: NavConfigure.IsChecked = true; break;
+                    case ShellSection.ModsStudio: NavModsStudio.IsChecked = true; break;
+                    case ShellSection.MacroStudio: NavMacroStudio.IsChecked = true; break;
                     case ShellSection.Appearance: NavAppearance.IsChecked = true; break;
                     case ShellSection.System: NavSystem.IsChecked = true; break;
                 }
@@ -146,7 +150,14 @@ namespace ZeroStrap.UI.Elements.Shell
 
         private void AboutButton_Click(object sender, RoutedEventArgs e) => _viewModel.OpenAboutCommand.Execute(null);
 
-        private void SettingsButton_Click(object sender, RoutedEventArgs e) => NavigateTo(ShellSection.Configure, ConfigurePage.BehaviourTab);
+        private Page BuildModsStudio()
+        {
+            var page = new ModsStudioPage();
+            page.OpenLegacyModsRequested += (_, _) => NavigateTo(ShellSection.Configure, ConfigureTab.Mods);
+            return page;
+        }
+
+        private void SettingsButton_Click(object sender, RoutedEventArgs e) => NavigateTo(ShellSection.Configure, ConfigureTab.Behaviour);
 
         private void SearchButton_Click(object sender, RoutedEventArgs e) => FocusPalette();
 
@@ -241,15 +252,19 @@ namespace ZeroStrap.UI.Elements.Shell
             new() { Title = "Overview", Hint = "Home dashboard", Group = "Go to", Icon = SymbolRegular.Home24,
                     Keywords = new[] { "overview", "home", "dashboard" }, Run = () => NavigateTo(ShellSection.Overview) },
             new() { Title = "Fast Flags", Hint = "Configure › Fast Flags", Group = "Go to", Icon = SymbolRegular.Flag24,
-                    Keywords = new[] { "fast flags", "fflags", "flags", "editor", "configure" }, Run = () => NavigateTo(ShellSection.Configure, 0) },
+                    Keywords = new[] { "fast flags", "fflags", "flags", "editor", "configure" }, Run = () => NavigateTo(ShellSection.Configure, ConfigureTab.FastFlags) },
             new() { Title = "Mods", Hint = "Configure › Mods", Group = "Go to", Icon = SymbolRegular.PuzzlePiece24,
-                    Keywords = new[] { "mods", "modifications", "fonts", "cursor" }, Run = () => NavigateTo(ShellSection.Configure, 1) },
+                    Keywords = new[] { "mods", "modifications", "fonts", "cursor" }, Run = () => NavigateTo(ShellSection.Configure, ConfigureTab.Mods) },
+            new() { Title = "Mods Studio", Hint = "Install and manage mod packages", Group = "Go to", Icon = SymbolRegular.PuzzlePiece24,
+                    Keywords = new[] { "mods studio", "mod packages", "import mod", "conflicts" }, Run = () => NavigateTo(ShellSection.ModsStudio) },
+            new() { Title = "Macro Studio", Hint = "Record and edit macros", Group = "Go to", Icon = SymbolRegular.Record24,
+                    Keywords = new[] { "macro", "macros", "record", "automation", "hotkey" }, Run = () => NavigateTo(ShellSection.MacroStudio) },
             new() { Title = "Integrations", Hint = "Configure › Integrations", Group = "Go to", Icon = SymbolRegular.PlugConnected24,
-                    Keywords = new[] { "integrations", "discord", "rich presence", "activity" }, Run = () => NavigateTo(ShellSection.Configure, 2) },
+                    Keywords = new[] { "integrations", "discord", "rich presence", "activity" }, Run = () => NavigateTo(ShellSection.Configure, ConfigureTab.Integrations) },
             new() { Title = "Shortcuts", Hint = "Configure › Shortcuts", Group = "Go to", Icon = SymbolRegular.Keyboard24,
-                    Keywords = new[] { "shortcuts", "desktop", "start menu" }, Run = () => NavigateTo(ShellSection.Configure, 3) },
+                    Keywords = new[] { "shortcuts", "desktop", "start menu" }, Run = () => NavigateTo(ShellSection.Configure, ConfigureTab.Shortcuts) },
             new() { Title = "Behaviour", Hint = "Configure › Behaviour", Group = "Go to", Icon = SymbolRegular.Settings24,
-                    Keywords = new[] { "behaviour", "behavior", "settings", "updates", "channel" }, Run = () => NavigateTo(ShellSection.Configure, ConfigurePage.BehaviourTab) },
+                    Keywords = new[] { "behaviour", "behavior", "settings", "updates", "channel" }, Run = () => NavigateTo(ShellSection.Configure, ConfigureTab.Behaviour) },
             new() { Title = "Appearance", Hint = "Themes and launcher window style", Group = "Go to", Icon = SymbolRegular.Color24,
                     Keywords = new[] { "appearance", "theme", "themes", "style", "look", "ui", "custom themes" }, Run = () => NavigateTo(ShellSection.Appearance) },
             new() { Title = "System", Hint = "Diagnostics, logs, backups, repair", Group = "Go to", Icon = SymbolRegular.Pulse24,

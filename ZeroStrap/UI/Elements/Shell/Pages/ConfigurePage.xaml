@@ -90,19 +90,19 @@
         <!-- ============================== TABS ============================== -->
         <TabControl x:Name="ConfigureTabs" Grid.Row="2" Style="{StaticResource ZeroSegmentedTabControlStyle}" Margin="0,22,0,0"
                     SelectionChanged="ConfigureTabs_SelectionChanged" motion:Motion.Enter="2">
-            <TabItem Header="Fast Flags">
+            <TabItem x:Name="TabFastFlags" Header="Fast Flags">
                 <Frame NavigationUIVisibility="Hidden" Loaded="FastFlagsHost_Loaded" />
             </TabItem>
-            <TabItem Header="Mods">
+            <TabItem x:Name="TabMods" Header="Mods">
                 <Frame NavigationUIVisibility="Hidden" Loaded="ModsHost_Loaded" />
             </TabItem>
-            <TabItem Header="Integrations">
+            <TabItem x:Name="TabIntegrations" Header="Integrations">
                 <Frame NavigationUIVisibility="Hidden" Loaded="IntegrationsHost_Loaded" />
             </TabItem>
-            <TabItem Header="Shortcuts">
+            <TabItem x:Name="TabShortcuts" Header="Shortcuts">
                 <Frame NavigationUIVisibility="Hidden" Loaded="ShortcutsHost_Loaded" />
             </TabItem>
-            <TabItem Header="Behaviour">
+            <TabItem x:Name="TabBehaviour" Header="Behaviour">
                 <Frame NavigationUIVisibility="Hidden" Loaded="BehaviourHost_Loaded" />
             </TabItem>
         </TabControl>

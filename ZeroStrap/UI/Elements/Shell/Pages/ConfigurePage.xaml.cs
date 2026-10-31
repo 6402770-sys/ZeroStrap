@@ -4,24 +4,29 @@ using System.Windows;
 using System.Windows.Controls;
 
 using ZeroStrap.UI.Elements.Settings.Pages;
+using ZeroStrap.UI.ViewModels.Shell;
 
 namespace ZeroStrap.UI.Elements.Shell.Pages
 {
     public partial class ConfigurePage : Page
     {
-        public const int BehaviourTab = 4;
-
-        public ConfigurePage(int initialTab = 0)
+        public ConfigurePage(ConfigureTab initialTab = ConfigureTab.FastFlags)
         {
             InitializeComponent();
             SelectTab(initialTab);
             Loaded += (_, _) => RefreshStats();
         }
 
-        public void SelectTab(int index)
+        public void SelectTab(ConfigureTab tab)
         {
-            if (index >= 0 && index < ConfigureTabs.Items.Count)
-                ConfigureTabs.SelectedIndex = index;
+            ConfigureTabs.SelectedItem = tab switch
+            {
+                ConfigureTab.Mods => TabMods,
+                ConfigureTab.Integrations => TabIntegrations,
+                ConfigureTab.Shortcuts => TabShortcuts,
+                ConfigureTab.Behaviour => TabBehaviour,
+                _ => TabFastFlags
+            };
         }
 
         private void ConfigureTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)

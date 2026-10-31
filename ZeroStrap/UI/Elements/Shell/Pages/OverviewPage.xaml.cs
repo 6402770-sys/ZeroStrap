@@ -266,7 +266,7 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             if (!Enum.TryParse<ShellSection>(parts[0], out var section))
                 return;
 
-            int tab = parts.Length > 1 && int.TryParse(parts[1], out var t) ? t : 0;
+            var tab = parts.Length > 1 && Enum.TryParse<ConfigureTab>(parts[1], out var t) ? t : ConfigureTab.FastFlags;
             NavigationRequested?.Invoke(this, new ShellTarget(section, tab));
         }
     }

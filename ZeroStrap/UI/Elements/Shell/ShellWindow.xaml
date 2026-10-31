@@ -84,6 +84,20 @@
                             <TextBlock Text="Configure" VerticalAlignment="Center" />
                         </StackPanel>
                     </RadioButton>
+                    <RadioButton x:Name="NavModsStudio" Style="{StaticResource ZeroNavItem}" GroupName="ShellNav"
+                                 Checked="Nav_Checked" Tag="ModsStudio">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="PuzzlePiece24" FontSize="19" Margin="0,0,14,0" />
+                            <TextBlock Text="Mods Studio" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton x:Name="NavMacroStudio" Style="{StaticResource ZeroNavItem}" GroupName="ShellNav"
+                                 Checked="Nav_Checked" Tag="MacroStudio">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Record24" FontSize="19" Margin="0,0,14,0" />
+                            <TextBlock Text="Macro Studio" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </RadioButton>
                     <RadioButton x:Name="NavAppearance" Style="{StaticResource ZeroNavItem}" GroupName="ShellNav"
                                  Checked="Nav_Checked" Tag="Appearance">
                         <StackPanel Orientation="Horizontal">

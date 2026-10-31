@@ -134,7 +134,7 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <Button Grid.Column="0" Style="{StaticResource ZeroTileButton}" Padding="16,14" Tag="Configure:0" Click="Tile_Click" motion:Motion.Enter="2">
+                    <Button Grid.Column="0" Style="{StaticResource ZeroTileButton}" Padding="16,14" Tag="Configure:FastFlags" Click="Tile_Click" motion:Motion.Enter="2">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -152,7 +152,7 @@
                         </Grid>
                     </Button>
 
-                    <Button Grid.Column="2" Style="{StaticResource ZeroTileButton}" Padding="16,14" Tag="Configure:1" Click="Tile_Click" motion:Motion.Enter="3">
+                    <Button Grid.Column="2" Style="{StaticResource ZeroTileButton}" Padding="16,14" Tag="Configure:Mods" Click="Tile_Click" motion:Motion.Enter="3">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -204,7 +204,7 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <Button Grid.Column="0" Style="{StaticResource ZeroTileButton}" Tag="Configure:0" Click="Tile_Click" motion:Motion.Enter="5" MinHeight="148">
+                    <Button Grid.Column="0" Style="{StaticResource ZeroTileButton}" Tag="Configure:FastFlags" Click="Tile_Click" motion:Motion.Enter="5" MinHeight="148">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
