@@ -109,6 +109,7 @@ namespace ZeroStrap.UI.Elements.Shell
                     ShellSection.MacroStudio => new MacroStudioPage(),
                     ShellSection.Appearance => new AppearancePage(),
                     ShellSection.System => new SystemPage(),
+                    ShellSection.About => new AboutPage(),
                     _ => BuildOverview()
                 };
 
@@ -123,6 +124,10 @@ namespace ZeroStrap.UI.Elements.Shell
                     case ShellSection.MacroStudio: NavMacroStudio.IsChecked = true; break;
                     case ShellSection.Appearance: NavAppearance.IsChecked = true; break;
                     case ShellSection.System: NavSystem.IsChecked = true; break;
+                    case ShellSection.About:
+                        foreach (var nav in new[] { NavOverview, NavConfigure, NavModsStudio, NavMacroStudio, NavAppearance, NavSystem })
+                            nav.IsChecked = false;
+                        break;
                 }
             }
             finally
@@ -148,7 +153,7 @@ namespace ZeroStrap.UI.Elements.Shell
                 Motion.PageEnter(page);
         }
 
-        private void AboutButton_Click(object sender, RoutedEventArgs e) => _viewModel.OpenAboutCommand.Execute(null);
+        private void AboutButton_Click(object sender, RoutedEventArgs e) => NavigateTo(ShellSection.About);
 
         private Page BuildModsStudio()
         {
@@ -284,7 +289,7 @@ namespace ZeroStrap.UI.Elements.Shell
             new() { Title = "Open install folder", Hint = Paths.Base, Group = "System", Icon = SymbolRegular.FolderOpen24,
                     Keywords = new[] { "folder", "install", "directory" }, Run = () => Utilities.ShellExecute(Paths.Base) },
             new() { Title = "About ZeroStrap", Hint = "Version, licenses and links", Group = "Help", Icon = SymbolRegular.Info24,
-                    Keywords = new[] { "about", "version", "license", "credits" }, Run = () => _viewModel.OpenAboutCommand.Execute(null) },
+                    Keywords = new[] { "about", "version", "license", "licenses", "credits", "translators", "build" }, Run = () => NavigateTo(ShellSection.About) },
         };
 
         private void OpenFastFlagEditor()

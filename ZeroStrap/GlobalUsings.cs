@@ -17,7 +17,6 @@ global using ZeroStrap.Enums;
 global using ZeroStrap.Exceptions;
 global using ZeroStrap.Extensions;
 global using ZeroStrap.Models;
-global using ZeroStrap.Models.APIs.Config;
 global using ZeroStrap.Models.APIs.GitHub;
 global using ZeroStrap.Models.APIs.Roblox;
 global using ZeroStrap.Models.Attributes;

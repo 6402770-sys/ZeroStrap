@@ -13,7 +13,8 @@ namespace ZeroStrap.UI.ViewModels.Shell
         ModsStudio,
         MacroStudio,
         Appearance,
-        System
+        System,
+        About
     }
 
     /// <summary>Tabs of the Configure page, addressed by name rather than position.</summary>
