@@ -41,6 +41,7 @@ namespace ZeroStrap.UI.Elements.Settings.Pages
         public void Reload()
         {
             SetupViewModel();
+            RefreshCollections();
             Dispatcher.BeginInvoke(() => OpenEditorButton.Focus(), DispatcherPriority.Input);
         }
 
@@ -77,7 +78,9 @@ namespace ZeroStrap.UI.Elements.Settings.Pages
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
             // refresh datacontext on page load to synchronize with editor page
-            
+
+            RefreshCollections();
+
             if (!_initialLoad)
             {
                 _initialLoad = true;

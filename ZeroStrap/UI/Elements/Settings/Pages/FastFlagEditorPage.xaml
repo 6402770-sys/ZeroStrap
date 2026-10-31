@@ -195,10 +195,6 @@
                 </Grid>
             </TabItem>
 
-            <!--  ================================ PRESETS ================================  -->
-            <TabItem Header="{x:Static resources:Strings.Common_Presets}">
-                <workspace:PresetsPanel x:Name="PresetsPanel" />
-            </TabItem>
 
             <!--  ================================ CATALOG ================================  -->
             <TabItem Header="{x:Static resources:Strings.Menu_FastFlagEditor_Tab_Catalog}">

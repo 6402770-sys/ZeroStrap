@@ -62,6 +62,8 @@ namespace ZeroStrap
 
         public static readonly FastFlagManager FastFlags = new();
 
+        public static readonly JsonManager<FastFlagCollections.FastFlagCollectionsState> FastFlagCollections = new("FastFlagCollections");
+
         public static readonly HttpClient HttpClient = new(
             new HttpClientLoggingHandler(
                 new HttpClientHandler { AutomaticDecompression = DecompressionMethods.All }
@@ -376,6 +378,7 @@ namespace ZeroStrap
                 Settings.Load();
                 State.Load();
                 FastFlags.Load();
+                FastFlagCollections.Load();
 
                 if (!Locale.SupportedLocales.ContainsKey(Settings.Prop.Locale))
                 {

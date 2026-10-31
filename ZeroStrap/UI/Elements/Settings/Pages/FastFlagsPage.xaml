@@ -7,6 +7,7 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:resources="clr-namespace:ZeroStrap.Resources"
       xmlns:flagpresets="clr-namespace:ZeroStrap.Enums.FlagPresets"
+      xmlns:fc="clr-namespace:ZeroStrap.FastFlagCollections"
       mc:Ignorable="d"
       d:DesignHeight="900" d:DesignWidth="800"
       Title="FastFlagsPage"
@@ -14,6 +15,74 @@
       Loaded="Page_Loaded">
 
     <ui:UiPage.Resources>
+        <!--  Collection status line: caption, green when applied, amber when edited since  -->
+        <Style x:Key="CollectionStatusStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource ZeroCaptionStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static fc:CollectionStatus.Applied}">
+                    <Setter Property="Foreground" Value="{DynamicResource ZeroStatusHealthyBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static fc:CollectionStatus.ChangedSinceApplied}">
+                    <Setter Property="Foreground" Value="{DynamicResource ZeroStatusWarningBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!--  Official collection card  -->
+        <DataTemplate x:Key="OfficialCollectionTemplate">
+            <Border Style="{StaticResource ZeroSettingCardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <WrapPanel>
+                            <TextBlock Text="{Binding Name}" Style="{StaticResource ZeroCardTitleStyle}" VerticalAlignment="Center" />
+                            <Border Style="{StaticResource ZeroTagOutlineStyle}" Margin="10,0,0,0">
+                                <TextBlock Text="Official" Style="{StaticResource ZeroTagTextStyle}" />
+                            </Border>
+                            <TextBlock Text="{Binding Meta}" Style="{StaticResource ZeroMetaTextStyle}" Margin="10,0,0,0" />
+                        </WrapPanel>
+                        <TextBlock Text="{Binding StatusText}" Style="{StaticResource CollectionStatusStyle}" Margin="0,4,0,0" />
+                    </StackPanel>
+                    <ui:Button Grid.Column="1" Content="Apply" Style="{StaticResource ZeroButtonSecondary}" Margin="16,0,0,0" MinWidth="76" VerticalAlignment="Center"
+                               Tag="{Binding Id}" Click="CollectionApply_Click"
+                               AutomationProperties.Name="{Binding Name, StringFormat=Apply {0}}" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!--  Imported collection row  -->
+        <DataTemplate x:Key="ImportedCollectionTemplate">
+            <Border Style="{StaticResource ZeroSettingCardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" Style="{StaticResource ZeroCardTitleStyle}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}" />
+                        <TextBlock Text="{Binding Meta}" Style="{StaticResource ZeroMetaTextStyle}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding StatusText}" Style="{StaticResource CollectionStatusStyle}" Margin="0,4,0,0" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                        <ui:Button Content="Apply" Style="{StaticResource ZeroButtonSecondary}" MinWidth="76"
+                                   Tag="{Binding Id}" Click="CollectionApply_Click"
+                                   AutomationProperties.Name="{Binding Name, StringFormat=Apply {0}}" />
+                        <ui:Button Content="Rename" Style="{StaticResource ZeroButtonGhostSmall}" Margin="6,0,0,0"
+                                   Tag="{Binding Id}" Click="CollectionRename_Click"
+                                   AutomationProperties.Name="{Binding Name, StringFormat=Rename {0}}" />
+                        <ui:Button Content="Export" Style="{StaticResource ZeroButtonGhostSmall}"
+                                   Tag="{Binding Id}" Click="CollectionExport_Click"
+                                   AutomationProperties.Name="{Binding Name, StringFormat=Export {0}}" />
+                        <ui:Button Content="Remove" Style="{StaticResource ZeroButtonGhostSmall}"
+                                   Tag="{Binding Id}" Click="CollectionRemove_Click"
+                                   AutomationProperties.Name="{Binding Name, StringFormat=Remove {0}}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
         <!--  Segment label: the enum's display name  -->
         <DataTemplate x:Key="EnumSegmentTemplate">
             <TextBlock Text="{Binding Path=., Converter={StaticResource EnumNameConverter}}" />
@@ -152,7 +221,39 @@
 
         <TextBlock Text="Direct3D exclusive fullscreen with Alt + Enter is enabled by default." Style="{StaticResource ZeroCaptionStyle}" Margin="2,2,0,0" />
 
-        <!-- Phase 3: Zero FastFlags collections -->
+        <!-- ============================== ZERO FASTFLAGS ============================== -->
+        <TextBlock Text="Zero FastFlags" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{StaticResource ZeroSectionMargin}" />
+        <TextBlock Text="Official collections by ZeroStrap. Applying one replaces your current Fast Flags." Style="{StaticResource ZeroCaptionStyle}" Margin="0,4,0,14" />
+
+        <StackPanel x:Name="UndoPanel" Orientation="Horizontal" Margin="0,0,0,12" Visibility="Collapsed">
+            <TextBlock x:Name="UndoText" Style="{StaticResource ZeroCaptionStyle}" VerticalAlignment="Center" />
+            <ui:Button x:Name="UndoButton" Content="Undo" Style="{StaticResource ZeroButtonGhostSmall}" Margin="8,0,0,0"
+                       Click="CollectionUndo_Click" AutomationProperties.Name="Undo the last collection apply" />
+        </StackPanel>
+
+        <ItemsControl x:Name="OfficialList" ItemTemplate="{StaticResource OfficialCollectionTemplate}" Focusable="False" />
+
+        <!-- ============================== MY COLLECTIONS ============================== -->
+        <Grid Margin="{StaticResource ZeroSectionMargin}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock Text="My collections" Style="{StaticResource ZeroSectionTitleStyle}" />
+                <TextBlock Text="Imported JSON collections. ZeroStrap keeps each file exactly as imported." Style="{StaticResource ZeroCaptionStyle}" Margin="0,4,0,0" />
+            </StackPanel>
+            <ui:Button Grid.Column="1" Content="Import JSON&#8230;" Style="{StaticResource ZeroButtonSecondary}" Margin="16,0,0,0" VerticalAlignment="Center"
+                       Click="CollectionImport_Click" AutomationProperties.Name="Import JSON collection" />
+        </Grid>
+
+        <ui:Button x:Name="MigratePresetsButton" Style="{StaticResource ZeroButtonGhost}" HorizontalAlignment="Left" Margin="0,14,0,0" Visibility="Collapsed"
+                   Click="CollectionMigrate_Click" />
+
+        <TextBlock x:Name="MyCollectionsEmptyText" Text="No imported collections yet. Import a JSON object of flag names and values."
+                   Style="{StaticResource ZeroCaptionStyle}" Margin="0,14,0,0" Visibility="Collapsed" />
+
+        <ItemsControl x:Name="MyCollectionsList" ItemTemplate="{StaticResource ImportedCollectionTemplate}" Margin="0,14,0,0" Focusable="False" />
 
         <!-- ============================== ADVANCED ============================== -->
         <TextBlock Text="Advanced" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{StaticResource ZeroSectionMargin}" />

@@ -223,6 +223,7 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
             var page = new FastFlagsPage();
             page.OpenEditorRequested += (_, _) => OpenFastFlagEditor();
+            page.FlagsReplaced += (_, _) => RefreshStats();
             _fastFlagsPage = page;
             NavigateOnce(sender, page);
         }

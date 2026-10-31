@@ -57,6 +57,8 @@
     <EmbeddedResource Include="Resources\Mods\Sounds\Empty.mp3" />
     <EmbeddedResource Include="Resources\Mods\OldAvatarBackground.rbxl" />
     <EmbeddedResource Include="Resources\FastFlags\FFlags_baseline.hpp" />
+    <EmbeddedResource Include="Resources\FastFlags\ZeroCollections\pure-fps.json" LogicalName="ZeroStrap.FastFlagCollections.pure-fps.json" />
+    <EmbeddedResource Include="Resources\FastFlags\ZeroCollections\low-ping.json" LogicalName="ZeroStrap.FastFlagCollections.low-ping.json" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,112 @@
+<base:WpfUiWindow x:Class="ZeroStrap.UI.Elements.Dialogs.LogicalProcessorsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:base="clr-namespace:ZeroStrap.UI.Elements.Base"
+        mc:Ignorable="d"
+        Width="480"
+        SizeToContent="Height"
+        MaxHeight="720"
+        ResizeMode="NoResize"
+        Background="{ui:ThemeResource ApplicationBackgroundBrush}"
+        ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="None"
+        WindowStartupLocation="CenterOwner">
+    <base:WpfUiWindow.Resources>
+        <!--  One step of the Task Manager tutorial: number column + text  -->
+        <Style x:Key="TutorialNumberStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource ZeroCaptionStyle}">
+            <Setter Property="Width" Value="18" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        </Style>
+        <Style x:Key="TutorialStepStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource ZeroCaptionStyle}">
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        </Style>
+    </base:WpfUiWindow.Resources>
+
+    <Grid Style="{StaticResource ZeroWindowRootStyle}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Padding="8" Title="" Icon="{x:Null}" ShowMinimize="False" ShowMaximize="False" CanMaximize="False" KeyboardNavigation.TabNavigation="None">
+            <ui:TitleBar.Header>
+                <ContentPresenter x:Name="Caption" Content="Logical processors" ContentTemplate="{StaticResource ZeroTitleBarCaption}" VerticalAlignment="Center" />
+            </ui:TitleBar.Header>
+        </ui:TitleBar>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="20,8,20,20">
+                <TextBlock Text="Logical processors" Style="{StaticResource ZeroCardTitleStyle}" />
+                <TextBlock x:Name="DetectedText" Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,10" />
+
+                <ui:TextBox x:Name="CountBox" Style="{StaticResource ZeroTextField}" MaxLength="4" HorizontalAlignment="Left" Width="140"
+                            InputMethod.IsInputMethodEnabled="False"
+                            PreviewTextInput="CountBox_PreviewTextInput" TextChanged="CountBox_TextChanged"
+                            AutomationProperties.Name="Logical processors" />
+
+                <TextBlock x:Name="ResultText" Style="{StaticResource ZeroMonoTextStyle}" Margin="0,10,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+                <Border Style="{StaticResource ZeroPanelStyle}" Margin="0,18,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Don't know how many Logical Processors you have?" Style="{StaticResource ZeroSubsectionTitleStyle}" />
+                        <TextBlock Text="You can find this information in Windows Task Manager." Style="{StaticResource TutorialStepStyle}" Margin="0,6,0,8" />
+
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="1." Style="{StaticResource TutorialNumberStyle}" />
+                            <TextBlock Grid.Column="1" Text="Press Ctrl + Shift + Esc to open Task Manager. Alternatively, press the Windows key, search for Task Manager, and open it." Style="{StaticResource TutorialStepStyle}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="2." Style="{StaticResource TutorialNumberStyle}" />
+                            <TextBlock Grid.Column="1" Text="Select the Performance tab." Style="{StaticResource TutorialStepStyle}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="3." Style="{StaticResource TutorialNumberStyle}" />
+                            <TextBlock Grid.Column="1" Text="Click CPU." Style="{StaticResource TutorialStepStyle}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="4." Style="{StaticResource TutorialNumberStyle}" />
+                            <TextBlock Grid.Column="1" Text="Find the Logical processors value in the CPU details area." Style="{StaticResource TutorialStepStyle}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="5." Style="{StaticResource TutorialNumberStyle}" />
+                            <TextBlock Grid.Column="1" Text="Enter that number in ZeroStrap." Style="{StaticResource TutorialStepStyle}" />
+                        </Grid>
+
+                        <TextBlock Text="ZeroStrap will automatically subtract 1 when preparing the Pure FPS collection." Style="{StaticResource ZeroCaptionStyle}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border Grid.Row="2" Style="{StaticResource ZeroDialogFooterStyle}">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <ui:Button MinWidth="100" Style="{StaticResource ZeroButtonSecondary}" Content="Cancel" IsCancel="True" />
+                <ui:Button x:Name="ContinueButton" MinWidth="100" Margin="8,0,0,0" Style="{StaticResource ZeroButtonPrimary}" Content="Continue" IsDefault="True" IsEnabled="False" Click="ContinueButton_Click" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</base:WpfUiWindow>
