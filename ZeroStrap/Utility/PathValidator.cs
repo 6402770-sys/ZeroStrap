@@ -39,8 +39,19 @@ namespace ZeroStrap.Utility
             "LPT6",
             "LPT7",
             "LPT8",
-            "LPT9"
+            "LPT9",
+            "CONIN$",
+            "CONOUT$",
+            "COM¹",
+            "COM²",
+            "COM³",
+            "LPT¹",
+            "LPT²",
+            "LPT³"
         };
+
+        // Keeps CustomThemes\<name>\Theme.xml well under MAX_PATH.
+        private const int MaxFileNameLength = 100;
 
         private static readonly char[] _directorySeperatorDelimiters = new char[]
         {
@@ -67,8 +78,22 @@ namespace ZeroStrap.Utility
             if (fileName.IndexOfAny(_invalidPathChars) != -1)
                 return ValidationResult.IllegalCharacter;
 
-            string fileNameNoExt = Path.GetFileNameWithoutExtension(fileName).ToUpperInvariant();
-            if (_reservedNames.Contains(fileNameNoExt))
+            if (string.IsNullOrWhiteSpace(fileName))
+                return ValidationResult.ReservedFileName;
+
+            if (fileName == "." || fileName == "..")
+                return ValidationResult.ReservedFileName;
+
+            if (fileName.EndsWith('.') || fileName.EndsWith(' '))
+                return ValidationResult.IllegalCharacter;
+
+            if (fileName.Length > MaxFileNameLength)
+                return ValidationResult.ReservedFileName;
+
+            int firstDot = fileName.IndexOf('.');
+            string baseName = firstDot >= 0 ? fileName[..firstDot] : fileName;
+            baseName = baseName.TrimEnd(' ').ToUpperInvariant();
+            if (_reservedNames.Contains(baseName))
                 return ValidationResult.ReservedFileName;
 
             return ValidationResult.Ok;
