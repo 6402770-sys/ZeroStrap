@@ -118,7 +118,7 @@
                             </StackPanel>
                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                                 <ui:Button Content="Open folder" Icon="FolderOpen24" Style="{StaticResource ZeroButtonGhost}" Click="OpenInstall_Click" Margin="0,0,8,0" />
-                                <ui:Button Content="Uninstall" Icon="Delete24" Style="{StaticResource ZeroButtonGhost}" Foreground="{StaticResource ZeroStatusErrorBrush}" Click="Uninstall_Click" />
+                                <ui:Button Content="Uninstall" Icon="Delete24" Style="{StaticResource ZeroButtonGhost}" Foreground="{DynamicResource ZeroStatusErrorBrush}" Click="Uninstall_Click" />
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -148,7 +148,7 @@
                             <TextBlock Text="Roblox Player" Style="{StaticResource ZeroInfoLabelStyle}" />
                             <TextBlock x:Name="DiagRoblox" Text="checking..." Style="{StaticResource ZeroMonoTextStyle}" FontSize="11" Margin="0,4,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
-                        <Ellipse x:Name="DiagRobloxDot" Grid.Column="1" Style="{StaticResource ZeroStatusDotStyle}" Fill="{StaticResource ZeroStatusIdleBrush}" />
+                        <Ellipse x:Name="DiagRobloxDot" Grid.Column="1" Style="{StaticResource ZeroStatusDotStyle}" Fill="{DynamicResource ZeroStatusIdleBrush}" />
                     </Grid>
                     <Border Style="{StaticResource ZeroDividerStyle}" />
                     <Grid Style="{StaticResource DiagRow}">
@@ -160,7 +160,7 @@
                             <TextBlock Text="Roblox Studio" Style="{StaticResource ZeroInfoLabelStyle}" />
                             <TextBlock x:Name="DiagStudio" Text="checking..." Style="{StaticResource ZeroMonoTextStyle}" FontSize="11" Margin="0,4,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
-                        <Ellipse x:Name="DiagStudioDot" Grid.Column="1" Style="{StaticResource ZeroStatusDotStyle}" Fill="{StaticResource ZeroStatusIdleBrush}" />
+                        <Ellipse x:Name="DiagStudioDot" Grid.Column="1" Style="{StaticResource ZeroStatusDotStyle}" Fill="{DynamicResource ZeroStatusIdleBrush}" />
                     </Grid>
                     <Border Style="{StaticResource ZeroDividerStyle}" />
                     <Grid Style="{StaticResource DiagRow}">
@@ -172,7 +172,7 @@
                             <TextBlock Text="Configuration" Style="{StaticResource ZeroInfoLabelStyle}" />
                             <TextBlock x:Name="DiagConfig" Text="checking..." Style="{StaticResource ZeroMonoTextStyle}" FontSize="11" Margin="0,4,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
-                        <Ellipse x:Name="DiagConfigDot" Grid.Column="1" Style="{StaticResource ZeroStatusDotStyle}" Fill="{StaticResource ZeroStatusIdleBrush}" />
+                        <Ellipse x:Name="DiagConfigDot" Grid.Column="1" Style="{StaticResource ZeroStatusDotStyle}" Fill="{DynamicResource ZeroStatusIdleBrush}" />
                     </Grid>
                     <Border Style="{StaticResource ZeroDividerStyle}" />
                     <Grid Style="{StaticResource DiagRow}">
@@ -184,7 +184,7 @@
                             <TextBlock Text="Disk" Style="{StaticResource ZeroInfoLabelStyle}" />
                             <TextBlock x:Name="DiagDisk" Text="checking..." Style="{StaticResource ZeroMonoTextStyle}" FontSize="11" Margin="0,4,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
-                        <Ellipse x:Name="DiagDiskDot" Grid.Column="1" Style="{StaticResource ZeroStatusDotStyle}" Fill="{StaticResource ZeroStatusIdleBrush}" />
+                        <Ellipse x:Name="DiagDiskDot" Grid.Column="1" Style="{StaticResource ZeroStatusDotStyle}" Fill="{DynamicResource ZeroStatusIdleBrush}" />
                     </Grid>
                 </StackPanel>
             </Border>

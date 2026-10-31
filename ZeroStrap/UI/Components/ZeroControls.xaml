@@ -317,6 +317,7 @@
     <SolidColorBrush x:Key="ZeroStatusHealthyBrush" Color="#3FBF7F" />
     <SolidColorBrush x:Key="ZeroStatusWarningBrush" Color="#D4A054" />
     <SolidColorBrush x:Key="ZeroStatusErrorBrush" Color="#D15B5B" />
+    <SolidColorBrush x:Key="ZeroStatusInfoBrush" Color="#5E9BD6" />
     <SolidColorBrush x:Key="ZeroStatusIdleBrush" Color="#686868" />
 
     <!--  "READY" style pill: tinted semantic background, semantic text.  -->

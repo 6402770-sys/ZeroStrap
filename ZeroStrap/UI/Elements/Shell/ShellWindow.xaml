@@ -242,7 +242,7 @@
 
                     <!-- Status -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0" ToolTip="Network availability">
-                        <Ellipse x:Name="NetworkDot" Style="{StaticResource ZeroStatusDotStyle}" Fill="{StaticResource ZeroStatusHealthyBrush}" Width="8" Height="8" Margin="0,0,8,0" />
+                        <Ellipse x:Name="NetworkDot" Style="{StaticResource ZeroStatusDotStyle}" Fill="{DynamicResource ZeroStatusHealthyBrush}" Width="8" Height="8" Margin="0,0,8,0" />
                         <TextBlock x:Name="NetworkText" Text="Connected" FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
                     </StackPanel>
 

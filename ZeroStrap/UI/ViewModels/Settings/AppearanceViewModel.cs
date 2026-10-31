@@ -64,18 +64,6 @@ namespace ZeroStrap.UI.ViewModels.Settings
             PopulateCustomThemes();
         }
 
-        public IEnumerable<Theme> Themes { get; } = Enum.GetValues(typeof(Theme)).Cast<Theme>();
-
-        public Theme Theme
-        {
-            get => App.Settings.Prop.Theme;
-            set
-            {
-                App.Settings.Prop.Theme = value;
-                ((MainWindow)Window.GetWindow(_page)!).ApplyTheme();
-            }
-        }
-
         public static List<string> Languages => Locale.GetLanguages();
 
         public string SelectedLanguage 

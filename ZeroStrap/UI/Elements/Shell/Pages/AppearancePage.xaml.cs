@@ -4,8 +4,8 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 
-using ZeroStrap.Enums;
 using ZeroStrap.UI.Elements.Base;
+using ZeroStrap.UI.Theming;
 using ZeroStrap.UI.Utility;
 
 namespace ZeroStrap.UI.Elements.Shell.Pages
@@ -25,10 +25,10 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
         {
             _refreshing = true;
 
-            var theme = App.Settings.Prop.Theme;
-            ThemeCardDark.IsChecked = theme == Theme.Dark;
-            ThemeCardLight.IsChecked = theme == Theme.Light;
-            ThemeCardDefault.IsChecked = theme == Theme.Default;
+            string themeId = ThemeManager.ActiveId;
+            ThemeCardDark.IsChecked = themeId == ThemeManager.ObsidianId;
+            ThemeCardLight.IsChecked = themeId == ThemeManager.LightId;
+            ThemeCardDefault.IsChecked = themeId == ThemeManager.SystemId;
 
             AnimationsToggle.IsChecked = !App.Settings.Prop.ReduceMotion;
 
@@ -41,25 +41,22 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
         private void ThemeCard_Checked(object sender, RoutedEventArgs e)
         {
-            if (_refreshing || sender is not RadioButton { Tag: string tag } || !Enum.TryParse<Theme>(tag, out var theme))
+            if (_refreshing || sender is not RadioButton { Tag: string id })
                 return;
 
-            if (App.Settings.Prop.Theme == theme)
+            if (ThemeManager.ActiveId == id)
                 return;
-
-            App.Settings.Prop.Theme = theme;
 
             try
             {
-                if (Window.GetWindow(this) is WpfUiWindow w)
-                    w.ApplyTheme();
+                ThemeManager.SetActive(id);
             }
             catch (Exception ex)
             {
                 App.Logger.WriteException("AppearancePage::ThemeCard_Checked", ex);
             }
 
-            ActivityLog.Record(ActivityType.Theme, "Theme changed", $"Switched to {(theme == Theme.Dark ? "Obsidian" : theme == Theme.Default ? "System" : "Light")} theme");
+            ActivityLog.Record(ActivityType.Theme, "Theme changed", $"Switched to {ThemeManager.ActiveDisplayName} theme");
         }
 
         private void AnimationsToggle_Click(object sender, RoutedEventArgs e)

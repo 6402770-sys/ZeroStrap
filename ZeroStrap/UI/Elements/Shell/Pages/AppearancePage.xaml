@@ -32,7 +32,7 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <RadioButton x:Name="ThemeCardDark" Grid.Column="0" Style="{StaticResource ZeroChoiceTile}" GroupName="Theme" Tag="Dark" Checked="ThemeCard_Checked">
+                <RadioButton x:Name="ThemeCardDark" Grid.Column="0" Style="{StaticResource ZeroChoiceTile}" GroupName="Theme" Tag="obsidian" Checked="ThemeCard_Checked">
                     <StackPanel>
                         <Border Height="96" CornerRadius="8" ClipToBounds="True" BorderThickness="1" BorderBrush="#FF262626" Background="#FF0E0E0E">
                             <Grid>
@@ -51,7 +51,7 @@
                     </StackPanel>
                 </RadioButton>
 
-                <RadioButton x:Name="ThemeCardLight" Grid.Column="2" Style="{StaticResource ZeroChoiceTile}" GroupName="Theme" Tag="Light" Checked="ThemeCard_Checked">
+                <RadioButton x:Name="ThemeCardLight" Grid.Column="2" Style="{StaticResource ZeroChoiceTile}" GroupName="Theme" Tag="light" Checked="ThemeCard_Checked">
                     <StackPanel>
                         <Border Height="96" CornerRadius="8" ClipToBounds="True" BorderThickness="1" BorderBrush="#FFD8D8D8" Background="#FFF4F4F4">
                             <StackPanel Margin="12" VerticalAlignment="Bottom">
@@ -64,7 +64,7 @@
                     </StackPanel>
                 </RadioButton>
 
-                <RadioButton x:Name="ThemeCardDefault" Grid.Column="4" Style="{StaticResource ZeroChoiceTile}" GroupName="Theme" Tag="Default" Checked="ThemeCard_Checked">
+                <RadioButton x:Name="ThemeCardDefault" Grid.Column="4" Style="{StaticResource ZeroChoiceTile}" GroupName="Theme" Tag="system" Checked="ThemeCard_Checked">
                     <StackPanel>
                         <Border Height="96" CornerRadius="8" ClipToBounds="True" BorderThickness="1" BorderBrush="#FF262626">
                             <Grid>

@@ -98,7 +98,7 @@
                                     <TextBlock Text="ROBLOX CLIENT" FontFamily="{StaticResource ZeroMonoFont}" FontSize="13.5" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextFillColorPrimaryBrush}" VerticalAlignment="Center" />
                                     <Border x:Name="ClientPill" Style="{StaticResource ZeroStatusPillStyle}" Margin="12,0,0,0">
-                                        <TextBlock x:Name="ClientPillText" Text="READY" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource ZeroStatusHealthyBrush}" />
+                                        <TextBlock x:Name="ClientPillText" Text="READY" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource ZeroStatusHealthyBrush}" />
                                     </Border>
                                 </StackPanel>
                                 <TextBlock Margin="0,10,0,0" FontSize="14" Foreground="{DynamicResource TextFillColorPrimaryBrush}">
@@ -184,7 +184,7 @@
                                 <TextBlock Text="Installation" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                                 <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                                     <TextBlock x:Name="InstallationStatusText" Text="Up to date" FontSize="14" FontWeight="SemiBold" />
-                                    <Ellipse x:Name="InstallationDot" Style="{StaticResource ZeroStatusDotStyle}" Fill="{StaticResource ZeroStatusHealthyBrush}" Margin="10,1,0,0" />
+                                    <Ellipse x:Name="InstallationDot" Style="{StaticResource ZeroStatusDotStyle}" Fill="{DynamicResource ZeroStatusHealthyBrush}" Margin="10,1,0,0" />
                                 </StackPanel>
                             </StackPanel>
                             <ui:SymbolIcon Grid.Column="2" Style="{StaticResource ZeroChevronStyle}" />
@@ -315,8 +315,8 @@
                     <StackPanel>
                         <TextBlock Text="System Status" Style="{StaticResource ZeroCardTitleStyle}" />
                         <StackPanel Orientation="Horizontal" Margin="0,10,0,10">
-                            <Ellipse x:Name="OverallDot" Style="{StaticResource ZeroStatusDotStyle}" Width="8" Height="8" Fill="{StaticResource ZeroStatusHealthyBrush}" Margin="2,0,10,0" />
-                            <TextBlock x:Name="OverallText" Text="All systems operational" FontSize="13" Foreground="{StaticResource ZeroStatusHealthyBrush}" />
+                            <Ellipse x:Name="OverallDot" Style="{StaticResource ZeroStatusDotStyle}" Width="8" Height="8" Fill="{DynamicResource ZeroStatusHealthyBrush}" Margin="2,0,10,0" />
+                            <TextBlock x:Name="OverallText" Text="All systems operational" FontSize="13" Foreground="{DynamicResource ZeroStatusHealthyBrush}" />
                         </StackPanel>
 
                         <Border Style="{StaticResource ZeroDividerStyle}" />
@@ -330,7 +330,7 @@
                             <ui:SymbolIcon Symbol="Info24" Style="{StaticResource StatusRowIcon}" />
                             <TextBlock Grid.Column="1" Text="Roblox Client" Style="{StaticResource ZeroInfoLabelStyle}" />
                             <TextBlock Grid.Column="2" x:Name="StatusClientText" Text="Ready" Style="{StaticResource ZeroInfoValueStyle}" Margin="0,0,10,0" />
-                            <Ellipse Grid.Column="3" x:Name="StatusClientDot" Style="{StaticResource ZeroStatusDotStyle}" Fill="{StaticResource ZeroStatusHealthyBrush}" />
+                            <Ellipse Grid.Column="3" x:Name="StatusClientDot" Style="{StaticResource ZeroStatusDotStyle}" Fill="{DynamicResource ZeroStatusHealthyBrush}" />
                         </Grid>
                         <Border Style="{StaticResource ZeroDividerStyle}" />
                         <Grid Style="{StaticResource StatusRowGrid}">
@@ -343,7 +343,7 @@
                             <ui:SymbolIcon Symbol="Settings24" Style="{StaticResource StatusRowIcon}" />
                             <TextBlock Grid.Column="1" Text="Configuration" Style="{StaticResource ZeroInfoLabelStyle}" />
                             <TextBlock Grid.Column="2" x:Name="StatusConfigText" Text="Loaded" Style="{StaticResource ZeroInfoValueStyle}" Margin="0,0,10,0" />
-                            <Ellipse Grid.Column="3" x:Name="StatusConfigDot" Style="{StaticResource ZeroStatusDotStyle}" Fill="{StaticResource ZeroStatusHealthyBrush}" />
+                            <Ellipse Grid.Column="3" x:Name="StatusConfigDot" Style="{StaticResource ZeroStatusDotStyle}" Fill="{DynamicResource ZeroStatusHealthyBrush}" />
                         </Grid>
                         <Border Style="{StaticResource ZeroDividerStyle}" />
                         <Grid Style="{StaticResource StatusRowGrid}">
@@ -356,7 +356,7 @@
                             <ui:SymbolIcon Symbol="Globe24" Style="{StaticResource StatusRowIcon}" />
                             <TextBlock Grid.Column="1" Text="Network" Style="{StaticResource ZeroInfoLabelStyle}" />
                             <TextBlock Grid.Column="2" x:Name="StatusNetworkText" Text="Online" Style="{StaticResource ZeroInfoValueStyle}" Margin="0,0,10,0" />
-                            <Ellipse Grid.Column="3" x:Name="StatusNetworkDot" Style="{StaticResource ZeroStatusDotStyle}" Fill="{StaticResource ZeroStatusHealthyBrush}" />
+                            <Ellipse Grid.Column="3" x:Name="StatusNetworkDot" Style="{StaticResource ZeroStatusDotStyle}" Fill="{DynamicResource ZeroStatusHealthyBrush}" />
                         </Grid>
                         <Border Style="{StaticResource ZeroDividerStyle}" />
                         <Grid Style="{StaticResource StatusRowGrid}">
@@ -369,7 +369,7 @@
                             <ui:SymbolIcon Symbol="HardDrive20" Style="{StaticResource StatusRowIcon}" />
                             <TextBlock Grid.Column="1" Text="Disk Space" Style="{StaticResource ZeroInfoLabelStyle}" />
                             <TextBlock Grid.Column="2" x:Name="StatusDiskText" Text="Healthy" Style="{StaticResource ZeroInfoValueStyle}" Margin="0,0,10,0" />
-                            <Ellipse Grid.Column="3" x:Name="StatusDiskDot" Style="{StaticResource ZeroStatusDotStyle}" Fill="{StaticResource ZeroStatusHealthyBrush}" />
+                            <Ellipse Grid.Column="3" x:Name="StatusDiskDot" Style="{StaticResource ZeroStatusDotStyle}" Fill="{DynamicResource ZeroStatusHealthyBrush}" />
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -436,11 +436,7 @@
                             <StackPanel Grid.Column="1" Margin="16,2,0,0">
                                 <TextBlock x:Name="ThemeNameText" Text="Obsidian" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                                 <TextBlock Text="Current theme" Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,0" />
-                                <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
-                                    <RadioButton x:Name="ThemeDotDark" GroupName="OverviewTheme" Tag="Dark" Checked="ThemeDot_Checked" ToolTip="Obsidian" Style="{StaticResource ThemeDotStyle}" />
-                                    <RadioButton x:Name="ThemeDotLight" GroupName="OverviewTheme" Tag="Light" Checked="ThemeDot_Checked" ToolTip="Light" Style="{StaticResource ThemeDotStyle}" Margin="8,0,0,0" />
-                                    <RadioButton x:Name="ThemeDotDefault" GroupName="OverviewTheme" Tag="Default" Checked="ThemeDot_Checked" ToolTip="Follow Windows" Style="{StaticResource ThemeDotStyle}" Margin="8,0,0,0" />
-                                </StackPanel>
+                                <TextBlock FontSize="12" Margin="0,12,0,0" TextWrapping="Wrap"><Hyperlink Click="OpenThemeStudio_Click">Open Theme Studio</Hyperlink></TextBlock>
                             </StackPanel>
                         </Grid>
                     </StackPanel>

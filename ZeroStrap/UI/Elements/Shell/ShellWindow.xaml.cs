@@ -10,6 +10,7 @@ using System.Windows.Media;
 using Wpf.Ui.Common;
 
 using ZeroStrap.UI.Elements.Shell.Pages;
+using ZeroStrap.UI.Theming;
 using ZeroStrap.UI.Utility;
 using ZeroStrap.UI.ViewModels.Shell;
 
@@ -230,7 +231,7 @@ namespace ZeroStrap.UI.Elements.Shell
             catch { online = true; }
 
             NetworkText.Text = online ? "Connected" : "Offline";
-            NetworkDot.Fill = (Brush)FindResource(online ? "ZeroStatusHealthyBrush" : "ZeroStatusErrorBrush");
+            NetworkDot.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, online ? "ZeroStatusHealthyBrush" : "ZeroStatusErrorBrush");
         }
 
         #endregion
@@ -278,11 +279,11 @@ namespace ZeroStrap.UI.Elements.Shell
                     Keywords = new[] { "system", "diagnostics", "logs", "backup", "backups", "repair", "uninstall", "updates" }, Run = () => NavigateTo(ShellSection.System) },
 
             new() { Title = "Theme: Obsidian", Hint = "Dark graphite surfaces", Group = "Theme", Icon = SymbolRegular.WeatherMoon24,
-                    Keywords = new[] { "theme dark", "dark", "obsidian" }, Run = () => SetTheme(Enums.Theme.Dark) },
+                    Keywords = new[] { "theme dark", "dark", "obsidian" }, Run = () => SetTheme(ThemeManager.ObsidianId) },
             new() { Title = "Theme: Light", Hint = "Light surfaces", Group = "Theme", Icon = SymbolRegular.WeatherSunny24,
-                    Keywords = new[] { "theme light", "light" }, Run = () => SetTheme(Enums.Theme.Light) },
+                    Keywords = new[] { "theme light", "light" }, Run = () => SetTheme(ThemeManager.LightId) },
             new() { Title = "Theme: System", Hint = "Follow Windows", Group = "Theme", Icon = SymbolRegular.Desktop24,
-                    Keywords = new[] { "theme system", "theme default", "system theme", "default" }, Run = () => SetTheme(Enums.Theme.Default) },
+                    Keywords = new[] { "theme system", "theme default", "system theme", "default" }, Run = () => SetTheme(ThemeManager.SystemId) },
 
             new() { Title = "Open logs folder", Hint = "ZeroStrap log files", Group = "System", Icon = SymbolRegular.DocumentText24,
                     Keywords = new[] { "logs", "log folder" }, Run = () => Utilities.ShellExecute(Paths.Logs) },
@@ -317,11 +318,10 @@ namespace ZeroStrap.UI.Elements.Shell
             }
         }
 
-        private void SetTheme(Enums.Theme theme)
+        private void SetTheme(string themeId)
         {
-            App.Settings.Prop.Theme = theme;
-            ApplyTheme();
-            ActivityLog.Record(ActivityType.Theme, "Theme changed", $"Switched to {(theme == Enums.Theme.Dark ? "Obsidian" : theme.ToString())} theme");
+            ThemeManager.SetActive(themeId);
+            ActivityLog.Record(ActivityType.Theme, "Theme changed", $"Switched to {ThemeManager.ActiveDisplayName} theme");
 
             if (ContentFrame.Content is AppearancePage appearance)
                 appearance.Refresh();

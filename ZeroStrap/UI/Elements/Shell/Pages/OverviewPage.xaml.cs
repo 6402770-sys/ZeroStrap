@@ -9,6 +9,7 @@ using System.Windows.Media;
 using Wpf.Ui.Common;
 
 using ZeroStrap.UI.Elements.Base;
+using ZeroStrap.UI.Theming;
 using ZeroStrap.UI.Utility;
 using ZeroStrap.UI.ViewModels.Shell;
 
@@ -20,8 +21,6 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
         public event EventHandler<ShellTarget>? NavigationRequested;
 
-        private bool _populating;
-
         private record ActivityRow(SymbolRegular Icon, string Title, string Detail, string When);
 
         public OverviewPage()
@@ -32,8 +31,6 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
         private void Populate()
         {
-            _populating = true;
-
             var now = DateTime.Now;
             GreetingText.Text = now.Hour switch
             {
@@ -50,7 +47,6 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             PopulateTheme();
             PopulateActivity();
 
-            _populating = false;
         }
 
         /// <summary>Letter-spaces an eyebrow label (WPF has no tracking property).</summary>
@@ -89,7 +85,7 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             InfoInstallPath.ToolTip = Paths.Base;
 
             InstallationStatusText.Text = installed ? "Up to date" : "Not installed";
-            InstallationDot.Fill = Brush(installed ? "ZeroStatusHealthyBrush" : "ZeroStatusWarningBrush");
+            InstallationDot.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, installed ? "ZeroStatusHealthyBrush" : "ZeroStatusWarningBrush");
         }
 
         private static string? GetRobloxFileVersion()
@@ -157,14 +153,15 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
             bool all = client && configOk && !unsaved && online && diskOk;
             OverallText.Text = all ? "All systems operational" : "Needs attention";
-            OverallText.Foreground = Brush(all ? "ZeroStatusHealthyBrush" : "ZeroStatusWarningBrush");
-            OverallDot.Fill = OverallText.Foreground;
+            string overallKey = all ? "ZeroStatusHealthyBrush" : "ZeroStatusWarningBrush";
+            OverallText.SetResourceReference(TextBlock.ForegroundProperty, overallKey);
+            OverallDot.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, overallKey);
         }
 
         private void SetRow(TextBlock text, System.Windows.Shapes.Ellipse dot, string value, bool healthy)
         {
             text.Text = value;
-            dot.Fill = Brush(healthy ? "ZeroStatusHealthyBrush" : "ZeroStatusWarningBrush");
+            dot.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, healthy ? "ZeroStatusHealthyBrush" : "ZeroStatusWarningBrush");
         }
 
         private void SetStatusColour(Border pill, TextBlock text, bool healthy)
@@ -178,18 +175,7 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
         private void PopulateTheme()
         {
-            var theme = App.Settings.Prop.Theme;
-
-            ThemeNameText.Text = theme switch
-            {
-                Enums.Theme.Light => "Light",
-                Enums.Theme.Dark => "Obsidian",
-                _ => "System"
-            };
-
-            ThemeDotDark.IsChecked = theme == Enums.Theme.Dark;
-            ThemeDotLight.IsChecked = theme == Enums.Theme.Light;
-            ThemeDotDefault.IsChecked = theme == Enums.Theme.Default;
+            ThemeNameText.Text = ThemeManager.ActiveDisplayName;
         }
 
         private void PopulateActivity()
@@ -233,29 +219,8 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             }
         }
 
-        private void ThemeDot_Checked(object sender, RoutedEventArgs e)
-        {
-            if (_populating || sender is not RadioButton { Tag: string tag } || !Enum.TryParse<Enums.Theme>(tag, out var theme))
-                return;
-
-            if (App.Settings.Prop.Theme == theme)
-                return;
-
-            App.Settings.Prop.Theme = theme;
-
-            try
-            {
-                if (Window.GetWindow(this) is WpfUiWindow window)
-                    window.ApplyTheme();
-            }
-            catch (Exception ex)
-            {
-                App.Logger.WriteException("OverviewPage::ThemeDot_Checked", ex);
-            }
-
-            ActivityLog.Record(ActivityType.Theme, "Theme changed", $"Switched to {(theme == Enums.Theme.Dark ? "Obsidian" : theme == Enums.Theme.Default ? "System" : "Light")} theme");
-            Populate();
-        }
+        private void OpenThemeStudio_Click(object sender, RoutedEventArgs e) =>
+            NavigationRequested?.Invoke(this, new ShellTarget(ShellSection.Appearance));
 
         private void Tile_Click(object sender, RoutedEventArgs e)
         {

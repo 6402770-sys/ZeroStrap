@@ -57,7 +57,7 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
         private void SetDiag(TextBlock text, System.Windows.Shapes.Ellipse dot, bool ok, string detail, bool idleWhenMissing = false)
         {
             text.Text = detail;
-            dot.Fill = (System.Windows.Media.Brush)FindResource(ok ? "ZeroStatusHealthyBrush" : idleWhenMissing ? "ZeroStatusIdleBrush" : "ZeroStatusWarningBrush");
+            dot.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, ok ? "ZeroStatusHealthyBrush" : idleWhenMissing ? "ZeroStatusIdleBrush" : "ZeroStatusWarningBrush");
         }
 
         private void Refresh_Click(object sender, RoutedEventArgs e)

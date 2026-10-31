@@ -2,15 +2,12 @@
 using System.Windows.Interop;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
-using Wpf.Ui.Mvvm.Contracts;
-using Wpf.Ui.Mvvm.Services;
+using ZeroStrap.UI.Theming;
 
 namespace ZeroStrap.UI.Elements.Base
 {
     public abstract class WpfUiWindow : UiWindow
     {
-        private readonly IThemeService _themeService = new ThemeService();
-
         public WpfUiWindow()
         {
             ApplyTheme();
@@ -38,34 +35,10 @@ namespace ZeroStrap.UI.Elements.Base
                 SetResourceReference(BackgroundProperty, "ApplicationBackgroundBrush");
         }
 
-        private static void ApplyMonochromeAccent(bool dark)
-        {
-            static System.Windows.Media.Color Grey(byte v) => System.Windows.Media.Color.FromRgb(v, v, v);
-
-            // ZeroStrap: explicit accent ramp. IThemeService.SetAccent always derives the ramp with
-            // light-theme maths (darker steps), which turns #D4D4D4 into a muddy #BBBBBB on dark.
-            // Order: system, primary, secondary (most used: primary buttons, toggles, nav pill), tertiary (hover).
-            if (dark)
-                Accent.Apply(Grey(0xD4), Grey(0xDC), Grey(0xE8), Grey(0xF4));
-            else
-                Accent.Apply(Grey(0x2A), Grey(0x26), Grey(0x1E), Grey(0x3A));
-        }
-
+        /// <summary>Applies the active interface theme (see <see cref="ThemeManager"/>); app-wide, so it covers every open window.</summary>
         public void ApplyTheme()
         {
-            const int customThemeIndex = 2; // index for CustomTheme merged dictionary
-
-            bool dark = App.Settings.Prop.Theme.GetFinal() == Enums.Theme.Dark;
-
-            _themeService.SetTheme(dark ? ThemeType.Dark : ThemeType.Light);
-
-            // ZeroStrap: monochrome accent. Light grey on dark; near-black on light so accent-filled
-            // controls (primary buttons, toggles) keep readable on-accent text.
-            ApplyMonochromeAccent(dark);
-
-            // there doesn't seem to be a way to query the name for merged dictionaries
-            var dict = new ResourceDictionary { Source = new Uri($"pack://application:,,,/UI/Style/{Enum.GetName(App.Settings.Prop.Theme.GetFinal())}.xaml") };
-            Application.Current.Resources.MergedDictionaries[customThemeIndex] = dict;
+            ThemeManager.Apply();
 
 #if QA_BUILD
             this.BorderBrush = System.Windows.Media.Brushes.Red;
