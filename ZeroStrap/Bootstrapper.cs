@@ -22,6 +22,7 @@ using Microsoft.Win32;
 using ZeroStrap.AppData;
 using ZeroStrap.RobloxInterfaces;
 using ZeroStrap.UI.Elements.Bootstrapper.Base;
+using ZeroStrap.Utility;
 
 using ICSharpCode.SharpZipLib.Zip;
 
@@ -853,22 +854,27 @@ namespace ZeroStrap
 #if !DEBUG_UPDATER
             var releaseInfo = await App.GetLatestRelease();
 
-            if (releaseInfo is null)
-                return false;
+            // build type deliberately doesn't matter here: only the numeric versions do
+            var check = UpdateChecker.Evaluate(App.Version, releaseInfo);
 
-            var versionComparison = Utilities.CompareVersions(App.Version, releaseInfo.TagName);
-
-            // check if we aren't using a deployed build, so we can update to one if a new version comes out
-            if (App.IsProductionBuild && versionComparison == VersionComparison.Equal || versionComparison == VersionComparison.GreaterThan)
+            if (check.State != UpdateState.UpdateAvailable)
             {
-                App.Logger.WriteLine(LOG_IDENT, "No updates found");
+                App.Logger.WriteLine(LOG_IDENT, $"No update to apply (state: {check.State}, local: {App.Version}, latest: {check.LatestTag ?? "unknown"})");
+                return false;
+            }
+
+            var asset = check.Asset;
+
+            if (asset is null)
+            {
+                App.Logger.WriteLine(LOG_IDENT, $"Update {check.LatestTag} is available, but the release has no usable ZeroStrap asset");
                 return false;
             }
 
             if (Dialog is not null)
                 Dialog.CancelEnabled = false;
 
-            string version = releaseInfo.TagName;
+            string version = check.LatestTag!;
 #else
             string version = App.Version;
 #endif
@@ -884,20 +890,14 @@ namespace ZeroStrap
 
                 File.Copy(Paths.Process, downloadLocation, true);
 #else
-                var asset = releaseInfo.Assets![0];
+                string? downloadLocation = await DownloadUpdate(asset, version);
 
-                string downloadLocation = Path.Combine(Paths.TempUpdates, asset.Name);
-
-                Directory.CreateDirectory(Paths.TempUpdates);
-
-                App.Logger.WriteLine(LOG_IDENT, $"Downloading {releaseInfo.TagName}...");
-                
-                if (!File.Exists(downloadLocation))
+                if (downloadLocation is null)
                 {
-                    var response = await App.HttpClient.GetAsync(asset.BrowserDownloadUrl);
+                    if (Dialog is not null)
+                        Dialog.CancelEnabled = true;
 
-                    await using var fileStream = new FileStream(downloadLocation, FileMode.OpenOrCreate, FileAccess.Write);
-                    await response.Content.CopyToAsync(fileStream);
+                    return false;
                 }
 #endif
 
@@ -940,6 +940,124 @@ namespace ZeroStrap
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Downloads (or reuses) the release asset and returns the path of the executable to launch,
+        /// or null if it could not be obtained. Failures are logged, not shown to the user.
+        /// </summary>
+        private static async Task<string?> DownloadUpdate(GithubReleaseAsset asset, string tag)
+        {
+            const string LOG_IDENT = "Bootstrapper::DownloadUpdate";
+
+            try
+            {
+                Directory.CreateDirectory(Paths.TempUpdates);
+
+                string assetName = Path.GetFileName(asset.Name);
+                string downloadPath = Path.Combine(Paths.TempUpdates, assetName);
+                string partialPath = downloadPath + ".partial";
+
+                if (File.Exists(downloadPath))
+                {
+                    if (asset.Size > 0 && new FileInfo(downloadPath).Length == asset.Size)
+                    {
+                        App.Logger.WriteLine(LOG_IDENT, $"Reusing previously downloaded {assetName}");
+                    }
+                    else
+                    {
+                        App.Logger.WriteLine(LOG_IDENT, $"Discarding previously downloaded {assetName} (size mismatch)");
+                        File.Delete(downloadPath);
+                    }
+                }
+
+                if (!File.Exists(downloadPath))
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Downloading {tag}...");
+
+                    using var response = await App.HttpClient.GetAsync(asset.BrowserDownloadUrl, HttpCompletionOption.ResponseHeadersRead);
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        App.Logger.WriteLine(LOG_IDENT, $"Download failed with status {(int)response.StatusCode}");
+                        return null;
+                    }
+
+                    try
+                    {
+                        await using (var fileStream = new FileStream(partialPath, FileMode.Create, FileAccess.Write))
+                            await response.Content.CopyToAsync(fileStream);
+
+                        long written = new FileInfo(partialPath).Length;
+
+                        if (asset.Size > 0 && written != asset.Size)
+                        {
+                            App.Logger.WriteLine(LOG_IDENT, $"Downloaded size mismatch (expected {asset.Size}, got {written})");
+                            File.Delete(partialPath);
+                            return null;
+                        }
+
+                        File.Move(partialPath, downloadPath, true);
+                    }
+                    catch
+                    {
+                        try { File.Delete(partialPath); } catch (Exception) { }
+                        throw;
+                    }
+                }
+
+                if (!assetName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                    return downloadPath;
+
+                // the asset is an archive: pull out only ZeroStrap.exe
+                using var archive = System.IO.Compression.ZipFile.OpenRead(downloadPath);
+
+                var selection = UpdateChecker.SelectZipEntry(archive.Entries.Select(x => new ZipEntryInfo(x.FullName, x.Length)));
+
+                if (selection.Entry is null)
+                {
+                    App.Logger.WriteLine(LOG_IDENT, $"Not using {assetName}: {selection.Reason}");
+                    return null;
+                }
+
+                var zipEntry = archive.Entries.First(x => x.FullName == selection.Entry.Value.FullName && x.Length == selection.Entry.Value.Length);
+
+                string extractDir = Path.Combine(Paths.TempUpdates, UpdateChecker.SanitizeForPath(tag));
+                string exePath = Path.Combine(extractDir, UpdateChecker.ExecutableName);
+
+                Directory.CreateDirectory(extractDir);
+
+                if (File.Exists(exePath))
+                    File.Delete(exePath);
+
+                await using (var input = zipEntry.Open())
+                await using (var output = new FileStream(exePath, FileMode.CreateNew, FileAccess.Write))
+                {
+                    // don't trust the declared length: cap what we actually write
+                    var buffer = new byte[81920];
+                    long total = 0;
+                    int read;
+
+                    while ((read = await input.ReadAsync(buffer)) > 0)
+                    {
+                        total += read;
+
+                        if (total > UpdateChecker.MaxExtractedLength)
+                            throw new InvalidDataException("Archive entry exceeds the maximum allowed size");
+
+                        await output.WriteAsync(buffer.AsMemory(0, read));
+                    }
+                }
+
+                return exePath;
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteLine(LOG_IDENT, "An exception occurred when preparing the update");
+                App.Logger.WriteException(LOG_IDENT, ex);
+            }
+
+            return null;
         }
         #endregion
 

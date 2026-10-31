@@ -5,4 +5,7 @@
 
     [JsonPropertyName("name")]
     public string Name { get; set; } = null!;
+
+    [JsonPropertyName("size")]
+    public long Size { get; set; }
 }

@@ -5,6 +5,8 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
+using ZeroStrap.Utility;
+
 namespace ZeroStrap.UI.Elements.Shell.Pages
 {
     public partial class SystemPage : Page
@@ -116,19 +118,56 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             }
         }
 
+        // once an update has been found, the button turns into a link to the release page for this session
+        private bool _showReleasePage;
+
         private async void CheckUpdates_Click(object sender, RoutedEventArgs e)
         {
+            if (_showReleasePage)
+            {
+                Utilities.ShellExecute(App.ProjectDownloadLink);
+                return;
+            }
+
+            CheckUpdatesButton.IsEnabled = false;
+            UpdatesDescription.Text = "Checking for updates…";
+
             try
             {
                 var release = await App.GetLatestRelease();
-                var msg = release?.TagName is null
-                    ? "Could not reach the update server."
-                    : $"Latest release: {release.TagName}\nThis build: v{App.Version}";
-                Frontend.ShowMessageBox(msg, MessageBoxImage.Information);
+                var result = UpdateChecker.Evaluate(App.Version, release);
+
+                switch (result.State)
+                {
+                    case UpdateState.UpToDate:
+                        UpdatesDescription.Text = $"Up to date · v{App.Version}";
+                        break;
+
+                    case UpdateState.UpdateAvailable:
+                        UpdatesDescription.Text = App.Settings.Prop.CheckForUpdates
+                            ? $"Update available · {result.LatestTag} (this build: v{App.Version}). It installs the next time ZeroStrap launches Roblox."
+                            : $"Update available · {result.LatestTag}. Automatic updates are off; download it from the release page.";
+                        CheckUpdatesButton.Content = "Open release page";
+                        _showReleasePage = true;
+                        break;
+
+                    case UpdateState.UnknownVersion:
+                        UpdatesDescription.Text = "This build's version couldn't be read, so updates can't be compared.";
+                        break;
+
+                    default:
+                        UpdatesDescription.Text = "Couldn't check for updates. Check your connection and try again.";
+                        break;
+                }
             }
             catch (Exception ex)
             {
                 App.Logger.WriteException("SystemPage::CheckUpdates_Click", ex);
+                UpdatesDescription.Text = "Couldn't check for updates. Check your connection and try again.";
+            }
+            finally
+            {
+                CheckUpdatesButton.IsEnabled = true;
             }
         }
 
