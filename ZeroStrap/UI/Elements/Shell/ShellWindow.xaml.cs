@@ -253,7 +253,9 @@ namespace ZeroStrap.UI.Elements.Shell
                     Keywords = new[] { "overview", "home", "dashboard" }, Run = () => NavigateTo(ShellSection.Overview) },
             new() { Title = "Fast Flags", Hint = "Configure › Fast Flags", Group = "Go to", Icon = SymbolRegular.Flag24,
                     Keywords = new[] { "fast flags", "fflags", "flags", "editor", "configure" }, Run = () => NavigateTo(ShellSection.Configure, ConfigureTab.FastFlags) },
-            new() { Title = "Mods", Hint = "Configure › Mods", Group = "Go to", Icon = SymbolRegular.PuzzlePiece24,
+            new() { Title = "Fast Flag Editor", Hint = "Configure › Fast Flags › Editor", Group = "Go to", Icon = SymbolRegular.EditSettings24,
+                    Keywords = new[] { "fast flag editor", "flag editor", "edit flags" }, Run = OpenFastFlagEditor },
+            new() { Title = "Mods",Hint = "Configure › Mods", Group = "Go to", Icon = SymbolRegular.PuzzlePiece24,
                     Keywords = new[] { "mods", "modifications", "fonts", "cursor" }, Run = () => NavigateTo(ShellSection.Configure, ConfigureTab.Mods) },
             new() { Title = "Mods Studio", Hint = "Install and manage mod packages", Group = "Go to", Icon = SymbolRegular.PuzzlePiece24,
                     Keywords = new[] { "mods studio", "mod packages", "import mod", "conflicts" }, Run = () => NavigateTo(ShellSection.ModsStudio) },
@@ -284,6 +286,18 @@ namespace ZeroStrap.UI.Elements.Shell
             new() { Title = "About ZeroStrap", Hint = "Version, licenses and links", Group = "Help", Icon = SymbolRegular.Info24,
                     Keywords = new[] { "about", "version", "license", "credits" }, Run = () => _viewModel.OpenAboutCommand.Execute(null) },
         };
+
+        private void OpenFastFlagEditor()
+        {
+            NavigateTo(ShellSection.Configure, ConfigureTab.FastFlags);
+
+            // a fresh ConfigurePage becomes the frame's content asynchronously; wait until it is there
+            Dispatcher.BeginInvoke(() =>
+            {
+                if (ContentFrame.Content is ConfigurePage configure)
+                    configure.OpenFastFlagEditor();
+            }, System.Windows.Threading.DispatcherPriority.Loaded);
+        }
 
         private void LaunchRoblox()
         {

@@ -22,7 +22,9 @@
         </Style>
     </Page.Resources>
 
-    <Grid Margin="40,30,40,20">
+    <Grid>
+        <!-- Normal Configure content. Swapped out (not removed) while a workspace is open, so tab state survives. -->
+        <Grid x:Name="MainContent" Margin="40,30,40,20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -54,7 +56,7 @@
                     <Border Style="{StaticResource ZeroIconTileStyle}"><ui:SymbolIcon Symbol="Flag24" Style="{StaticResource ZeroIconTileGlyphStyle}" /></Border>
                     <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
                         <TextBlock x:Name="StatFlagsCount" Text="0" Style="{StaticResource StatValue}" />
-                        <TextBlock Text="Fast Flags configured" Style="{StaticResource StatLabel}" />
+                        <TextBlock Text="Flags configured" Style="{StaticResource StatLabel}" />
                     </StackPanel>
                 </StackPanel>
                 <Border Grid.Column="1" Width="1" Background="{DynamicResource DividerStrokeColorDefaultBrush}" />
@@ -72,7 +74,7 @@
                     <Border Style="{StaticResource ZeroIconTileStyle}"><ui:SymbolIcon Symbol="PlugConnected24" Style="{StaticResource ZeroIconTileGlyphStyle}" /></Border>
                     <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
                         <TextBlock x:Name="StatIntegrationsCount" Text="0" Style="{StaticResource StatValue}" />
-                        <TextBlock Text="Custom integrations" Style="{StaticResource StatLabel}" />
+                        <TextBlock Text="Integrations" Style="{StaticResource StatLabel}" />
                     </StackPanel>
                 </StackPanel>
                 <Border Grid.Column="5" Width="1" Background="{DynamicResource DividerStrokeColorDefaultBrush}" />
@@ -106,5 +108,12 @@
                 <Frame NavigationUIVisibility="Hidden" Loaded="BehaviourHost_Loaded" />
             </TabItem>
         </TabControl>
+        </Grid>
+
+        <!-- ============================== WORKSPACE ============================== -->
+        <!-- Full-section workspace (the Fast Flag Editor). Collapsed until opened; swapped with MainContent by Motion.WorkspaceSwap. -->
+        <Frame x:Name="WorkspaceHost" Margin="40,24,40,20" Visibility="Collapsed" IsTabStop="False" NavigationUIVisibility="Hidden"
+                        HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+                        PreviewKeyDown="WorkspaceHost_PreviewKeyDown" PreviewMouseDown="WorkspaceHost_PreviewMouseDown" />
     </Grid>
 </Page>

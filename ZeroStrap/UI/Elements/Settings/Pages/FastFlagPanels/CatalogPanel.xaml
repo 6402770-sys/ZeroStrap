@@ -9,15 +9,14 @@
              d:DesignHeight="420" d:DesignWidth="720"
              Loaded="UserControl_Loaded"
              Unloaded="UserControl_Unloaded">
+    <!--  The catalog tab is a status + preferences panel (it has no list of its own); it scrolls internally when the window is short.  -->
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="0,0,8,8">
-            <Border Style="{StaticResource ZeroNoticeStyle}">
-                <TextBlock Style="{StaticResource ZeroCaptionStyle}"
-                           Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Notice}" />
-            </Border>
+        <StackPanel Margin="0,0,10,8">
+            <TextBlock Style="{StaticResource ZeroCaptionStyle}" Margin="0,0,0,12"
+                       Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Notice}" />
 
             <!--  Current catalog  -->
-            <Border Style="{StaticResource ZeroPanelStyle}" Margin="0,12,0,0">
+            <Border Style="{StaticResource ZeroSettingCardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="140" />
@@ -32,21 +31,21 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Style="{StaticResource ZeroEyebrowStyle}" Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Title}" />
+                    <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Style="{StaticResource ZeroEyebrowStyle}" Margin="0,0,0,10" Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Title}" />
 
-                    <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource ZeroCaptionStyle}" Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Source}" Margin="0,0,0,6" />
-                    <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,0,0,6" TextWrapping="Wrap">
+                    <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource ZeroCaptionStyle}" Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Source}" Margin="0,0,0,8" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,0,0,8" TextWrapping="Wrap">
                         <Hyperlink x:Name="SourceLink" Click="SourceLink_Click"><Run x:Name="SourceText" /></Hyperlink>
                     </TextBlock>
 
-                    <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource ZeroCaptionStyle}" Text="{x:Static resources:Strings.Menu_FastFlagEditor_Tab_Flags}" Margin="0,0,0,6" />
-                    <TextBlock x:Name="CountText" Grid.Row="2" Grid.Column="1" Margin="0,0,0,6" />
+                    <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource ZeroCaptionStyle}" Text="{x:Static resources:Strings.Menu_FastFlagEditor_Tab_Flags}" Margin="0,0,0,8" />
+                    <TextBlock x:Name="CountText" Grid.Row="2" Grid.Column="1" Margin="0,0,0,8" />
 
-                    <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource ZeroCaptionStyle}" Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Version}" Margin="0,0,0,6" />
-                    <TextBlock x:Name="VersionText" Grid.Row="3" Grid.Column="1" Margin="0,0,0,6" FontFamily="{StaticResource ZeroMonoFont}" />
+                    <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource ZeroCaptionStyle}" Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Version}" Margin="0,0,0,8" />
+                    <TextBlock x:Name="VersionText" Grid.Row="3" Grid.Column="1" Margin="0,0,0,8" FontFamily="{StaticResource ZeroMonoFont}" />
 
-                    <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource ZeroCaptionStyle}" Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_LastUpdated}" Margin="0,0,0,6" />
-                    <TextBlock x:Name="UpdatedText" Grid.Row="4" Grid.Column="1" Margin="0,0,0,6" />
+                    <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource ZeroCaptionStyle}" Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_LastUpdated}" Margin="0,0,0,8" />
+                    <TextBlock x:Name="UpdatedText" Grid.Row="4" Grid.Column="1" Margin="0,0,0,8" />
 
                     <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource ZeroCaptionStyle}" Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_LastCheck}" />
                     <TextBlock x:Name="CheckedText" Grid.Row="5" Grid.Column="1" TextWrapping="Wrap" />
@@ -54,40 +53,39 @@
             </Border>
 
             <!--  Check now  -->
-            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                <ui:Button x:Name="CheckButton" Appearance="Primary" Icon="ArrowSync24" Content="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Check}" Click="CheckButton_Click" />
-                <ui:Button x:Name="CancelButton" Content="{x:Static resources:Strings.Common_Cancel}" Margin="8,0,0,0" Click="CancelButton_Click" Visibility="Collapsed" />
+            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                <ui:Button x:Name="CheckButton" Style="{StaticResource ZeroButtonPrimary}" Icon="ArrowSync24" Content="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Check}" Click="CheckButton_Click" />
+                <ui:Button x:Name="CancelButton" Style="{StaticResource ZeroButtonSecondary}" Content="{x:Static resources:Strings.Common_Cancel}" Margin="8,0,0,0" Click="CancelButton_Click" Visibility="Collapsed" />
                 <ui:ProgressRing x:Name="Progress" IsIndeterminate="True" Width="16" Height="16" Margin="12,0,0,0" Visibility="Collapsed" />
                 <TextBlock x:Name="ResultText" Margin="12,0,0,0" VerticalAlignment="Center" Style="{StaticResource ZeroCaptionStyle}" />
             </StackPanel>
 
             <!--  Update preferences  -->
-            <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Updates}" Style="{StaticResource ZeroSubsectionTitleStyle}" Margin="0,24,0,0" />
-            <!--  ui:Card instead of OptionControl: OptionControl content cannot carry x:Name  -->
-            <ui:Card Margin="0,8,0,0">
+            <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Updates}" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{StaticResource ZeroSectionMargin}" />
+            <Border Style="{StaticResource ZeroSettingCardStyle}" Margin="0,14,0,8">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Auto}" FontSize="14" FontWeight="Medium" />
-                        <TextBlock Margin="0,2,0,0" Style="{StaticResource ZeroCaptionStyle}" Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_AutoDescription}" />
+                        <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Auto}" Style="{StaticResource ZeroCardTitleStyle}" />
+                        <TextBlock Margin="0,3,0,0" Style="{StaticResource ZeroCaptionStyle}" Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_AutoDescription}" />
                     </StackPanel>
-                    <ui:ToggleSwitch x:Name="AutoToggle" Grid.Column="1" Margin="16,0,0,0" Click="AutoToggle_Click" />
+                    <ui:ToggleSwitch x:Name="AutoToggle" Grid.Column="1" Style="{StaticResource ZeroToggle}" Margin="16,0,0,0" VerticalAlignment="Center" Click="AutoToggle_Click" />
                 </Grid>
-            </ui:Card>
-            <ui:Card Margin="0,8,0,0">
+            </Border>
+            <Border Style="{StaticResource ZeroSettingCardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Interval}" FontSize="14" FontWeight="Medium" />
-                        <TextBlock Margin="0,2,0,0" Style="{StaticResource ZeroCaptionStyle}" Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_IntervalDescription}" />
+                        <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Interval}" Style="{StaticResource ZeroCardTitleStyle}" />
+                        <TextBlock Margin="0,3,0,0" Style="{StaticResource ZeroCaptionStyle}" Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_IntervalDescription}" />
                     </StackPanel>
-                    <ComboBox x:Name="IntervalBox" Grid.Column="1" Margin="16,0,0,0" Width="160" SelectionChanged="IntervalBox_SelectionChanged">
+                    <ComboBox x:Name="IntervalBox" Grid.Column="1" Style="{StaticResource ZeroDropdown}" Margin="16,0,0,0" Width="160" VerticalAlignment="Center" SelectionChanged="IntervalBox_SelectionChanged">
                         <ComboBoxItem Content="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Interval_6Hours}" Tag="6" />
                         <ComboBoxItem Content="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Interval_12Hours}" Tag="12" />
                         <ComboBoxItem Content="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Interval_Day}" Tag="24" />
@@ -95,7 +93,7 @@
                         <ComboBoxItem Content="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Interval_Week}" Tag="168" />
                     </ComboBox>
                 </Grid>
-            </ui:Card>
+            </Border>
         </StackPanel>
     </ScrollViewer>
 </UserControl>
