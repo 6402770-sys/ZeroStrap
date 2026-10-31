@@ -87,6 +87,65 @@ namespace ZeroStrap.UI.Theming
             return new Rgb(Ch(Hue(p, q, h + 1.0 / 3)), Ch(Hue(p, q, h)), Ch(Hue(p, q, h - 1.0 / 3)));
         }
 
+        /// <summary>
+        /// Lenient hex input for text fields: surrounding spaces are ignored and the leading '#' is optional.
+        /// Exactly six hex digits are required.
+        /// </summary>
+        public static bool TryParseLooseHex(string? input, out Rgb rgb)
+        {
+            rgb = default;
+
+            string text = (input ?? "").Trim();
+            if (text.Length == 6)
+                text = "#" + text;
+
+            return TryParseHex(text, out rgb);
+        }
+
+        /// <summary>HSV with H, S and V all in 0..1 (hue wraps).</summary>
+        public static (double H, double S, double V) ToHsv(Rgb c)
+        {
+            double r = c.R / 255.0, g = c.G / 255.0, b = c.B / 255.0;
+            double max = Math.Max(r, Math.Max(g, b)), min = Math.Min(r, Math.Min(g, b));
+            double d = max - min, h = 0;
+
+            if (d > 1e-9)
+            {
+                if (max == r) h = (g - b) / d + (g < b ? 6 : 0);
+                else if (max == g) h = (b - r) / d + 2;
+                else h = (r - g) / d + 4;
+
+                h /= 6;
+            }
+
+            return (h, max <= 1e-9 ? 0 : d / max, max);
+        }
+
+        public static Rgb FromHsv(double h, double s, double v)
+        {
+            h -= Math.Floor(h);
+            s = Math.Clamp(s, 0, 1);
+            v = Math.Clamp(v, 0, 1);
+
+            double scaled = h * 6;
+            int sector = (int)Math.Floor(scaled) % 6;
+            double f = scaled - Math.Floor(scaled);
+            double p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s);
+
+            (double r, double g, double b) = sector switch
+            {
+                0 => (v, t, p),
+                1 => (q, v, p),
+                2 => (p, v, t),
+                3 => (p, q, v),
+                4 => (t, p, v),
+                _ => (v, p, q)
+            };
+
+            static byte Ch(double x) => (byte)Math.Round(Math.Clamp(x, 0, 1) * 255);
+            return new Rgb(Ch(r), Ch(g), Ch(b));
+        }
+
         /// <summary>Moves HSL lightness by delta (positive lighter, negative darker), keeping hue and saturation.</summary>
         public static Rgb ShiftLightness(Rgb c, double delta)
         {

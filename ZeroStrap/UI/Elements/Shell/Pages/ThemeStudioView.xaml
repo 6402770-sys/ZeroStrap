@@ -1,0 +1,253 @@
+<UserControl x:Class="ZeroStrap.UI.Elements.Shell.Pages.ThemeStudioView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:local="clr-namespace:ZeroStrap.UI.Elements.Shell.Pages"
+             xmlns:controls="clr-namespace:ZeroStrap.UI.Elements.Controls"
+             mc:Ignorable="d"
+             d:DesignHeight="520" d:DesignWidth="800">
+    <UserControl.Resources>
+
+        <!-- Rail list: no inner ScrollViewer (the rail scrolls as a whole and the wheel must reach it). -->
+        <Style x:Key="RailItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Grid Background="Transparent" Margin="0,1">
+                            <Border x:Name="Hover" CornerRadius="8" Background="{DynamicResource ControlFillColorSecondaryBrush}" Opacity="0" />
+                            <Border x:Name="Pill" CornerRadius="8" Background="{DynamicResource ControlFillColorTertiaryBrush}"
+                                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" Opacity="0" />
+                            <ContentPresenter Margin="10,6" VerticalAlignment="Center" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Hover" Property="Opacity" Value="1" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Pill" Property="Opacity" Value="1" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="RailListStyle" TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="SelectionMode" Value="Single" />
+            <Setter Property="KeyboardNavigation.TabNavigation" Value="Once" />
+            <Setter Property="ItemContainerStyle" Value="{StaticResource RailItemStyle}" />
+            <Setter Property="ItemsPanel">
+                <Setter.Value>
+                    <ItemsPanelTemplate>
+                        <StackPanel />
+                    </ItemsPanelTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBox">
+                        <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SwatchDotStyle" TargetType="Ellipse">
+            <Setter Property="Width" Value="14" />
+            <Setter Property="Height" Value="14" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="Stroke" Value="{DynamicResource ControlStrokeColorSecondaryBrush}" />
+        </Style>
+
+        <DataTemplate DataType="{x:Type local:ThemeRailItem}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                    <Ellipse Style="{StaticResource SwatchDotStyle}" Fill="{Binding Background}" />
+                    <Ellipse Style="{StaticResource SwatchDotStyle}" Fill="{Binding Surface}" Margin="-5,0,0,0" />
+                    <Ellipse Style="{StaticResource SwatchDotStyle}" Fill="{Binding Text}" Margin="-5,0,0,0" />
+                    <Ellipse Style="{StaticResource SwatchDotStyle}" Fill="{Binding Accent}" Margin="-5,0,0,0" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Name}" FontSize="13" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0" Visibility="{Binding StatusVisibility}">
+                        <ui:SymbolIcon Symbol="Checkmark12" FontSize="11" Margin="0,1,5,0" Foreground="{DynamicResource ZeroStatusHealthyBrush}" />
+                        <TextBlock Text="{Binding Status}" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+        <Style x:Key="GroupLabelStyle" TargetType="TextBlock" BasedOn="{StaticResource ZeroEyebrowStyle}">
+            <Setter Property="Margin" Value="4,0,0,6" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250" />
+            <ColumnDefinition Width="20" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ============================== RAIL ============================== -->
+        <Border Grid.Column="0" Style="{StaticResource ZeroCardStyle}" Padding="0">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="10,14,10,12">
+                    <TextBlock Text="BUILT-IN" Style="{StaticResource GroupLabelStyle}" />
+                    <ListBox x:Name="BuiltinList" Style="{StaticResource RailListStyle}" SelectionChanged="BuiltinList_SelectionChanged"
+                             AutomationProperties.Name="Built-in themes" />
+
+                    <TextBlock Text="YOUR THEMES" Style="{StaticResource GroupLabelStyle}" Margin="4,16,0,6" />
+                    <ListBox x:Name="CustomList" Style="{StaticResource RailListStyle}" SelectionChanged="CustomList_SelectionChanged"
+                             AutomationProperties.Name="Your themes" />
+                    <TextBlock x:Name="CustomEmptyHint" Text="None yet. Duplicate a built-in theme or create a new one."
+                               Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="6,2,6,0" />
+
+                    <Grid Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <ui:Button Content="+ New theme" HorizontalAlignment="Stretch" Style="{StaticResource ZeroButtonSecondary}" Click="NewTheme_Click" />
+                        <ui:Button Grid.Column="2" Content="Import…" HorizontalAlignment="Stretch" Style="{StaticResource ZeroButtonGhost}" Click="Import_Click" />
+                    </Grid>
+
+                    <Border Style="{StaticResource ZeroDividerStyle}" Margin="0,16,0,14" />
+
+                    <Grid Margin="4,0,2,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
+                            <TextBlock Text="Match Windows" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                            <TextBlock Text="Switches between Obsidian and Light with your Windows setting"
+                                       Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="0,3,0,0" />
+                        </StackPanel>
+                        <ui:ToggleSwitch x:Name="MatchWindowsToggle" Grid.Column="1" Style="{StaticResource ZeroToggle}" VerticalAlignment="Center"
+                                         Click="MatchWindows_Click" AutomationProperties.Name="Match Windows" />
+                    </Grid>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- ============================== DETAIL ============================== -->
+        <ScrollViewer x:Name="DetailScroll" Grid.Column="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="0,0,14,24">
+
+                <!-- Header -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock x:Name="NameText" Text="Obsidian" FontSize="22" FontWeight="SemiBold" MaxWidth="300"
+                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <Border x:Name="KindTag" Grid.Column="1" Style="{StaticResource ZeroTagOutlineStyle}" Margin="12,3,0,0">
+                        <TextBlock x:Name="KindTagText" Text="Built-in" Style="{StaticResource ZeroTagTextStyle}" />
+                    </Border>
+
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:Button x:Name="UseButton" Content="Use this theme" ToolTipService.ShowOnDisabled="True" Style="{StaticResource ZeroButtonPrimary}" Click="UseTheme_Click" />
+                        <ui:Button x:Name="MoreButton" Icon="MoreHorizontal24" Margin="6,0,0,0" Style="{StaticResource ZeroIconButton}"
+                                   BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" ToolTip="More"
+                                   AutomationProperties.Name="More actions" Click="MoreButton_Click">
+                            <ui:Button.ContextMenu>
+                                <ContextMenu x:Name="MoreMenu" Placement="Bottom" MinWidth="176">
+                                    <MenuItem x:Name="MenuRename" Header="Rename" Click="Rename_Click" />
+                                    <MenuItem x:Name="MenuDuplicate" Header="Duplicate" Click="Duplicate_Click" />
+                                    <MenuItem x:Name="MenuExport" Header="Export…" Click="Export_Click" />
+                                    <MenuItem x:Name="MenuRestore" Header="Restore defaults" Click="Restore_Click" />
+                                    <Separator x:Name="MenuSeparator" />
+                                    <MenuItem x:Name="MenuDelete" Header="Delete" Click="Delete_Click" />
+                                </ContextMenu>
+                            </ui:Button.ContextMenu>
+                        </ui:Button>
+                    </StackPanel>
+                </Grid>
+
+                <TextBlock x:Name="NoteText" Margin="0,8,0,0" TextWrapping="Wrap" FontSize="12" Visibility="Collapsed"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+                <!-- Preview -->
+                <controls:ThemePreview x:Name="Preview" Margin="0,16,0,0" />
+
+                <!-- Built-in: read-only -->
+                <Border x:Name="BuiltinPanel" Style="{StaticResource ZeroCardStyle}" Margin="0,16,0,0" Padding="18,14">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Built-in themes can't be edited." VerticalAlignment="Center" FontSize="13" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,12,0" />
+                        <ui:Button Grid.Column="1" Content="Duplicate to customize" Style="{StaticResource ZeroButtonSecondary}" Click="Duplicate_Click" />
+                    </Grid>
+                </Border>
+
+                <!-- Custom: editor -->
+                <Border x:Name="EditorPanel" Style="{StaticResource ZeroCardStyle}" Margin="0,16,0,0" Padding="18,16,18,10">
+                    <StackPanel>
+                        <TextBlock Text="Colors" Style="{StaticResource ZeroCardTitleStyle}" />
+                        <ItemsControl x:Name="ColorsList" Margin="0,6,0,0" IsTabStop="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <controls:ThemeColorRow />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                            <ItemsControl.GroupStyle>
+                                <GroupStyle>
+                                    <GroupStyle.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Name}" Style="{StaticResource ZeroEyebrowStyle}" Margin="0,14,0,4" />
+                                        </DataTemplate>
+                                    </GroupStyle.HeaderTemplate>
+                                </GroupStyle>
+                            </ItemsControl.GroupStyle>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- Motion -->
+                <TextBlock Text="Motion · applies to every theme" Style="{StaticResource ZeroCardTitleStyle}" Margin="0,28,0,10" />
+                <Border Style="{StaticResource ZeroCardStyle}" Padding="20,4">
+                    <Grid Margin="0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource ZeroIconTileStyle}"><ui:SymbolIcon Symbol="Sparkle24" Style="{StaticResource ZeroIconTileGlyphStyle}" /></Border>
+                        <StackPanel Grid.Column="1" Margin="14,0,16,0" VerticalAlignment="Center">
+                            <TextBlock Text="Smooth animations" FontSize="14" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                            <TextBlock Text="Page transitions and staggered entrances. Turn off to reduce motion; hover feedback stays."
+                                       Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="0,3,0,0" />
+                        </StackPanel>
+                        <ui:ToggleSwitch x:Name="AnimationsToggle" Grid.Column="2" Style="{StaticResource ZeroToggle}" Click="AnimationsToggle_Click"
+                                         AutomationProperties.Name="Smooth animations" />
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

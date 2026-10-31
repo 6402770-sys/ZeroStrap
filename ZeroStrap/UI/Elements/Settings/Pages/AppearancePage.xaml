@@ -12,7 +12,6 @@
       Title="AppearancePage"
       Scrollable="True">
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Text="{x:Static resources:Strings.Menu_Appearance_Description}" FontSize="14" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,8" />
 
         <controls:OptionControl
             Header="{x:Static resources:Strings.Menu_Appearance_Language_Title}"
@@ -41,7 +40,7 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
-                            <TextBlock FontSize="14" Text="{x:Static resources:Strings.Menu_Appearance_Style_Title}" />
+                            <TextBlock FontSize="14" Text="Launcher styles" />
                             <TextBlock FontSize="12" Text="{x:Static resources:Strings.Menu_Appearance_Style_Description}" Foreground="{DynamicResource TextFillColorTertiaryBrush}"  />
                         </StackPanel>
                         <ComboBox Width="200" Padding="10,5,10,5" ItemsSource="{Binding Dialogs, Mode=OneTime}" Text="{Binding Dialog, Mode=TwoWay}" Grid.Column="1">
