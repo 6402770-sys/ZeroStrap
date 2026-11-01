@@ -513,6 +513,7 @@ namespace ZeroStrap.UI.Elements.Shell
         private void WpfUiWindow_Closed(object sender, EventArgs e)
         {
             // Macro Studio creates its runtime lazily; this is a no-op if it was never opened. Dispose also lets a later Instance start fresh.
+            UI.Utility.MacroOverlayHost.Shutdown();
             Macros.MacroRuntime.TryDispose();
 
             if (App.LaunchSettings.TestModeFlag.Active)

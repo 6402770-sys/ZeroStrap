@@ -66,8 +66,16 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Name}" ToolTip="{Binding Name}" TextTrimming="CharacterEllipsis"
-                               FontSize="{DynamicResource ZeroFontSize13}" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Ellipse Width="7" Height="7" Margin="0,1,6,0" VerticalAlignment="Center" Fill="{DynamicResource ZeroStatusHealthyBrush}"
+                                 Visibility="{Binding RunningVisibility}" ToolTip="Running" />
+                        <TextBlock Grid.Column="1" Text="{Binding Name}" ToolTip="{Binding Name}" TextTrimming="CharacterEllipsis"
+                                   FontSize="{DynamicResource ZeroFontSize13}" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    </Grid>
                     <TextBlock Text="{Binding Meta}" ToolTip="{Binding Meta}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"
                                FontSize="{DynamicResource ZeroFontSize11}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                     <ContentControl Style="{StaticResource ZeroStatusChip}" Content="{Binding StatusText}" Tag="Conflict" Margin="0,4,0,0"
@@ -135,6 +143,8 @@
                            AutomationProperties.Name="Run macro" />
                 <ui:Button x:Name="StopButton" Content="Stop" Icon="Stop24" Style="{StaticResource ZeroButtonSecondary}" Margin="8,0,0,0" Click="Stop_Click"
                            IsEnabled="False" AutomationProperties.Name="Stop" />
+                <ui:Button x:Name="StopAllButton" Content="Stop all" Icon="RecordStop24" Style="{StaticResource ZeroButtonSecondary}" Margin="8,0,0,0" Click="StopAll_Click"
+                           IsEnabled="False" AutomationProperties.Name="Stop all macros" />
             </StackPanel>
         </Grid>
 
@@ -209,6 +219,21 @@
                                        Foreground="{DynamicResource ZeroStatusErrorBrush}" />
                             <ui:Button x:Name="ChangeEmergencyButton" Content="Change" Style="{StaticResource ZeroButtonGhostSmall}" HorizontalAlignment="Left" Margin="0,4,0,0"
                                        Click="ChangeEmergency_Click" AutomationProperties.Name="Change emergency stop shortcut" />
+
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="In-game overlay" FontSize="{DynamicResource ZeroFontSize12}" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <ui:ToggleSwitch x:Name="OverlayToggle" Grid.Column="1" Style="{StaticResource ZeroToggle}" Click="OverlayToggle_Click"
+                                                 AutomationProperties.Name="Show in-game overlay" />
+                            </Grid>
+                            <ComboBox x:Name="OverlayCornerCombo" Style="{StaticResource ZeroDropdown}" Margin="0,6,0,0" HorizontalAlignment="Stretch"
+                                      SelectionChanged="OverlayCornerCombo_SelectionChanged" AutomationProperties.Name="Overlay corner" />
+                            <CheckBox x:Name="OverlayRunningOnlyCheck" Content="Only show running macros" Margin="0,6,0,0" FontSize="{DynamicResource ZeroFontSize12}"
+                                      Click="OverlayRunningOnly_Click" AutomationProperties.Name="Only show running macros in the overlay" />
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -263,6 +288,8 @@
                                 </StackPanel>
                                 <TextBlock x:Name="ShortcutStatusText" Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="2,4,0,0"
                                            AutomationProperties.Name="Shortcut status" />
+                                <TextBlock x:Name="ShortcutSharedText" Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="2,2,0,0" Visibility="Collapsed"
+                                           Foreground="{DynamicResource ZeroStatusWarningBrush}" AutomationProperties.Name="Shared shortcut note" />
 
                                 <WrapPanel Margin="0,12,0,0">
                                     <StackPanel Margin="0,0,16,8">

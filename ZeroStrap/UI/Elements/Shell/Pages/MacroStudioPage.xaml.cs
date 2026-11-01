@@ -51,6 +51,11 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
             public bool Enabled => Macro.Enabled;
 
+            /// <summary>True while this macro is playing; set from the runtime, never persisted.</summary>
+            public bool Running { get; set; }
+
+            public Visibility RunningVisibility => Running ? Visibility.Visible : Visibility.Collapsed;
+
             public string StatusText => Problem ?? "";
 
             public Visibility StatusVisibility => Problem is null ? Visibility.Collapsed : Visibility.Visible;
@@ -158,6 +163,8 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
                 return;
             }
 
+            MacroOverlayHost.EnsureStarted(_runtime);
+
             Subscribe(_runtime);
             _state = _runtime.State;
             _paused = _runtime.IsPaused;
@@ -178,6 +185,7 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
                 _settings = settings;
                 EmergencyText.Text = "Emergency stop: " + _settings.EmergencyStop;
+                LoadOverlayControls();
                 AutomationNotice.Visibility = _settings.NoticeAcknowledged ? Visibility.Collapsed : Visibility.Visible;
 
                 foreach (var macro in macros)
@@ -352,17 +360,26 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
         private void UpdateState()
         {
             bool idle = _state == MacroRuntimeState.Idle;
+            bool recording = _state == MacroRuntimeState.Recording;
             var runningNames = new List<string>();
+            IReadOnlyList<string> runningIds = _state == MacroRuntimeState.Running && _runtime is not null ? _runtime.RunningMacroIds : Array.Empty<string>();
 
-            if (_state == MacroRuntimeState.Running && _runtime is not null)
+            foreach (string id in runningIds)
+                runningNames.Add(_rows.FirstOrDefault(r => r.Macro.Id == id)?.Macro.Name ?? "");
+
+            foreach (var row in _rows)
             {
-                foreach (string id in _runtime.RunningMacroIds)
-                    runningNames.Add(_rows.FirstOrDefault(r => r.Macro.Id == id)?.Macro.Name ?? "");
+                bool running = runningIds.Contains(row.Macro.Id);
+
+                if (row.Running != running)
+                {
+                    row.Running = running;
+                    row.Refresh();
+                }
             }
 
             StateText.Text = MacroStudioLogic.StateLine(_state, runningNames, _paused, _settings.RecordStopKey);
 
-            bool recording = _state == MacroRuntimeState.Recording;
             RecDot.Visibility = recording ? Visibility.Visible : Visibility.Collapsed;
 
             if (recording && SystemParameters.ClientAreaAnimation)
@@ -380,8 +397,11 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             }
 
             RecordButton.IsEnabled = idle && _runtime is not null;
-            RunButton.IsEnabled = idle && _current is not null;
-            StopButton.IsEnabled = !idle;
+
+            bool currentRunning = _current is not null && runningIds.Contains(_current.Id);
+            RunButton.IsEnabled = !recording && _current is not null && !currentRunning;
+            StopButton.IsEnabled = recording || currentRunning;
+            StopAllButton.IsEnabled = runningIds.Count > 0;
         }
 
         private void UpdateEmptyStates()
@@ -458,6 +478,8 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
             _rows.FirstOrDefault(r => ReferenceEquals(r.Macro, macro))?.Refresh();
 
+            UpdateShortcutStatus();
+
             if (ReferenceEquals(macro, _current))
             {
                 EstimateText.Text = MacroStudioLogic.EstimateText(macro);
@@ -512,6 +534,9 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
                     AddMessage($"Couldn't save \"{macro.Name}\": {ex.Message}");
                 }
             }
+
+            if (saved)
+                MacroOverlayHost.Current?.RefreshMacros();
 
             if (saved && _hotkeysDirty)
             {
@@ -600,15 +625,29 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             }
 
             UpdateShortcutStatus();
+            MacroOverlayHost.Current?.RefreshMacros();
         }
 
         private void UpdateShortcutStatus()
         {
             if (_current is null)
+            {
+                ShortcutSharedText.Visibility = Visibility.Collapsed;
                 return;
+            }
 
             _registrations.TryGetValue(_current.Id, out var reg);
-            ShortcutStatusText.Text = MacroStudioLogic.HotkeyStatusText(_current, _registrations.ContainsKey(_current.Id) ? reg : null, _settings.EmergencyStop);
+            string status = MacroStudioLogic.HotkeyStatusText(_current, _registrations.ContainsKey(_current.Id) ? reg : null, _settings.EmergencyStop);
+
+            // A game key explains itself only when there is nothing more important to say.
+            if (string.IsNullOrEmpty(status))
+                status = MacroStudioLogic.ShortcutHint(_current.Hotkey) ?? "";
+
+            ShortcutStatusText.Text = status;
+
+            string? shared = MacroStudioLogic.SharedShortcutText(_current, _rows.Select(r => r.Macro));
+            ShortcutSharedText.Text = shared ?? "";
+            ShortcutSharedText.Visibility = shared is null ? Visibility.Collapsed : Visibility.Visible;
         }
 
         // ---------------------------------------------------------------- macro list
@@ -1026,9 +1065,6 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
         private void ShortcutBox_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             var key = MacroStudioService.RealKey(e);
-
-            if (key == Key.Tab)
-                return;
 
             e.Handled = true;
 
@@ -1904,14 +1940,93 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             {
                 if (_runtime.State == MacroRuntimeState.Recording)
                     await MacroStudioService.StopRecordingAsync(_runtime);
-                else
-                    await MacroStudioService.StopAsync(_runtime);
+                else if (_current is not null)
+                {
+                    var runtime = _runtime;
+                    string id = _current.Id;
+                    await Task.Run(() => runtime.Stop(id));
+                }
             }
             catch (Exception ex)
             {
                 App.Logger.WriteException(LOG_IDENT, ex);
                 SetMessage("Stop failed: " + ex.Message);
             }
+        }
+
+        private async void StopAll_Click(object sender, RoutedEventArgs e)
+        {
+            if (_runtime is null)
+                return;
+
+            try
+            {
+                await MacroStudioService.StopAsync(_runtime);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteException(LOG_IDENT, ex);
+                SetMessage("Stop failed: " + ex.Message);
+            }
+        }
+
+        // ---------------------------------------------------------------- in-game overlay settings
+
+        private void LoadOverlayControls()
+        {
+            _loading = true;
+
+            try
+            {
+                if (OverlayCornerCombo.Items.Count == 0)
+                {
+                    foreach (OverlayCorner corner in Enum.GetValues(typeof(OverlayCorner)))
+                        OverlayCornerCombo.Items.Add(MacroOverlayLogic.CornerLabel(corner));
+                }
+
+                OverlayToggle.IsChecked = _settings.OverlayEnabled;
+                OverlayCornerCombo.SelectedIndex = (int)_settings.OverlayCorner;
+                OverlayRunningOnlyCheck.IsChecked = _settings.OverlayRunningOnly;
+                OverlayCornerCombo.IsEnabled = OverlayRunningOnlyCheck.IsEnabled = _settings.OverlayEnabled;
+            }
+            finally
+            {
+                _loading = false;
+            }
+        }
+
+        private void ApplyOverlaySettings()
+        {
+            OverlayCornerCombo.IsEnabled = OverlayRunningOnlyCheck.IsEnabled = _settings.OverlayEnabled;
+            SaveSettings();
+            MacroOverlayHost.Current?.ApplySettings(_settings);
+        }
+
+        private void OverlayToggle_Click(object sender, RoutedEventArgs e)
+        {
+            if (_loading)
+                return;
+
+            _settings.OverlayEnabled = OverlayToggle.IsChecked == true;
+            ApplyOverlaySettings();
+        }
+
+        private void OverlayCornerCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_loading || OverlayCornerCombo.SelectedIndex < 0)
+                return;
+
+            _settings.OverlayCorner = (OverlayCorner)OverlayCornerCombo.SelectedIndex;
+            ApplyOverlaySettings();
+        }
+
+        private void OverlayRunningOnly_Click(object sender, RoutedEventArgs e)
+        {
+            if (_loading)
+                return;
+
+            _settings.OverlayRunningOnly = OverlayRunningOnlyCheck.IsChecked == true;
+            ApplyOverlaySettings();
         }
 
         // ---------------------------------------------------------------- recording result
