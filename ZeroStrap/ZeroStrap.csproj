@@ -12,9 +12,9 @@
     <Product>ZeroStrap</Product>
     <AssemblyTitle>ZeroStrap</AssemblyTitle>
     <Company>ZeroStrap</Company>
-    <Version>3.0.0</Version>
-    <FileVersion>3.0.0</FileVersion>
-    <InformationalVersion>3.0.0-obsidian</InformationalVersion>
+    <Version>3.1.0</Version>
+    <FileVersion>3.1.0</FileVersion>
+    <InformationalVersion>3.1.0</InformationalVersion>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
