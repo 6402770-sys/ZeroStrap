@@ -1,0 +1,18 @@
+<UserControl x:Class="ZeroStrap.UI.Elements.Controls.BackgroundHost"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Focusable="False" IsTabStop="False" IsHitTestVisible="False" Visibility="Collapsed"
+             AutomationProperties.AutomationId="BackgroundHost">
+    <!--
+        Window backdrop for a theme's image or video background. Sits at the very back of the shell; the media is
+        built in code-behind (see BackgroundHost.xaml.cs). The scrim keeps text contrast predictable.
+    -->
+    <Grid x:Name="Layers" ClipToBounds="True">
+        <Border x:Name="MediaBox" HorizontalAlignment="Left" VerticalAlignment="Top" RenderTransformOrigin="0,0">
+            <Grid x:Name="MediaHost">
+                <Image x:Name="Still" Stretch="UniformToFill" Visibility="Collapsed" RenderOptions.BitmapScalingMode="HighQuality" />
+            </Grid>
+        </Border>
+        <Rectangle x:Name="Scrim" />
+    </Grid>
+</UserControl>

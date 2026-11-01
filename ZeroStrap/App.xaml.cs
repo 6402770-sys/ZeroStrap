@@ -62,6 +62,8 @@ namespace ZeroStrap
 
         public static readonly FastFlagManager FastFlags = new();
 
+        public static readonly JsonManager<FastFlagCollections.FastFlagCollectionsState> FastFlagCollections = new("FastFlagCollections");
+
         public static readonly HttpClient HttpClient = new(
             new HttpClientLoggingHandler(
                 new HttpClientHandler { AutomaticDecompression = DecompressionMethods.All }
@@ -104,6 +106,9 @@ namespace ZeroStrap
 
         void GlobalExceptionHandler(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
+            // Macro input must never stay held down because the UI crashed, so this comes before anything else.
+            Macros.MacroRuntime.TryShutdown();
+
             e.Handled = true;
 
             Logger.WriteLine("App::GlobalExceptionHandler", "An exception occurred");
@@ -240,6 +245,13 @@ namespace ZeroStrap
         {
             const string LOG_IDENT = "App::OnStartup";
 
+            // Macro Studio safety net: whichever way the process ends, held macro input is released first.
+            // (ProcessExit also covers Environment.Exit, which App::Terminate uses and which skips Application.Exit.)
+            Exit += (_, _) => Macros.MacroRuntime.TryShutdown();
+            SessionEnding += (_, _) => Macros.MacroRuntime.TryStopAll(); // may be cancelled by the user, so only stop and release
+            AppDomain.CurrentDomain.UnhandledException += (_, _) => Macros.MacroRuntime.TryShutdown();
+            AppDomain.CurrentDomain.ProcessExit += (_, _) => Macros.MacroRuntime.TryShutdown();
+
             Locale.Initialize();
 
             base.OnStartup(e);
@@ -367,6 +379,14 @@ namespace ZeroStrap
 
                 Logger.Initialize(LaunchSettings.UninstallFlag.Active);
 
+                // The bootstrapper starts the watcher and the background macro host back to back, so they can land on the same
+                // per-second log file name; the macro host then takes the next second's name instead of quitting.
+                if (!Logger.Initialized && !Logger.NoWriteMode && LaunchSettings.MacroHostFlag.Active)
+                {
+                    Thread.Sleep(1100);
+                    Logger.Initialize(LaunchSettings.UninstallFlag.Active);
+                }
+
                 if (!Logger.Initialized && !Logger.NoWriteMode)
                 {
                     Logger.WriteLine(LOG_IDENT, "Possible duplicate launch detected, terminating.");
@@ -376,6 +396,7 @@ namespace ZeroStrap
                 Settings.Load();
                 State.Load();
                 FastFlags.Load();
+                FastFlagCollections.Load();
 
                 if (!Locale.SupportedLocales.ContainsKey(Settings.Prop.Locale))
                 {

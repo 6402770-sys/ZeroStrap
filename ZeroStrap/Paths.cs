@@ -23,6 +23,9 @@
         public static string Versions { get; private set; } = "";
         public static string Modifications { get; private set; } = "";
         public static string CustomThemes { get; private set; } = "";
+        public static string Themes { get; private set; } = "";
+        public static string ThemeMedia { get; private set; } = "";
+        public static string Macros { get; private set; } = "";
 
         public static string Application { get; private set; } = "";
 
@@ -39,6 +42,9 @@
             Versions = Path.Combine(Base, "Versions");
             Modifications = Path.Combine(Base, "Modifications");
             CustomThemes = Path.Combine(Base, "CustomThemes");
+            Themes = Path.Combine(Base, "Themes"); // interface themes (Theme Studio); created on demand by ThemeStore
+            ThemeMedia = Path.Combine(Themes, "Media");
+            Macros = Path.Combine(Base, "Macros"); // Macro Studio; created on demand by MacroStore
 
             Application = Path.Combine(Base, $"{App.ProjectName}.exe");
         }

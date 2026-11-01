@@ -3,3 +3,4 @@ FlashWindow
 GetWindowLong
 SetWindowLong
 SHObjectProperties
+GetActiveProcessorCount

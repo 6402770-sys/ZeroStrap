@@ -1,132 +1,46 @@
-<Page x:Class="ZeroStrap.UI.Elements.Shell.Pages.AppearancePage"
+﻿<Page x:Class="ZeroStrap.UI.Elements.Shell.Pages.AppearancePage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:local="clr-namespace:ZeroStrap.UI.Elements.Shell.Pages"
       xmlns:motion="clr-namespace:ZeroStrap.UI.Utility"
       mc:Ignorable="d"
       d:DesignHeight="720" d:DesignWidth="1030"
       Title="Appearance">
 
-    <ScrollViewer x:Name="PageScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="40,30,40,40" MaxWidth="1080" HorizontalAlignment="Stretch">
+    <Grid Margin="{DynamicResource ZeroPageMarginTabbed}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-            <!-- ============================== HEADER ============================== -->
-            <StackPanel motion:Motion.Enter="0">
-                <TextBlock Text="A P P E A R A N C E" Style="{StaticResource ZeroEyebrowStyle}" Margin="0,4,0,8" />
-                <TextBlock Text="Make it yours" FontSize="30" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                <TextBlock Text="Interface theme, motion, and the window Roblox launches with." FontSize="14" Margin="0,6,0,0"
-                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-            </StackPanel>
-
-            <!-- ============================== THEME ============================== -->
-            <TextBlock Text="Interface theme" Style="{StaticResource ZeroCardTitleStyle}" Margin="0,30,0,4" motion:Motion.Enter="1" />
-            <TextBlock Text="Applies instantly to every ZeroStrap window." Style="{StaticResource ZeroCaptionStyle}" Margin="0,0,0,12" motion:Motion.Enter="1" />
-            <Grid motion:Motion.Enter="2">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="14" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="14" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-
-                <RadioButton x:Name="ThemeCardDark" Grid.Column="0" Style="{StaticResource ZeroChoiceTile}" GroupName="Theme" Tag="Dark" Checked="ThemeCard_Checked">
-                    <StackPanel>
-                        <Border Height="96" CornerRadius="8" ClipToBounds="True" BorderThickness="1" BorderBrush="#FF262626" Background="#FF0E0E0E">
-                            <Grid>
-                                <Canvas ClipToBounds="True">
-                                    <Path Data="M120,0 L170,0 L110,96 L60,96 Z" Fill="#14FFFFFF" />
-                                    <Path Data="M190,0 L215,0 L155,96 L130,96 Z" Fill="#0AFFFFFF" />
-                                </Canvas>
-                                <StackPanel Margin="12" VerticalAlignment="Bottom">
-                                    <Border Width="64" Height="6" CornerRadius="3" Background="#FFF2F2F2" HorizontalAlignment="Left" />
-                                    <Border Width="96" Height="5" CornerRadius="3" Background="#FF3A3A3A" HorizontalAlignment="Left" Margin="0,6,0,0" />
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-                        <TextBlock Text="Obsidian" FontSize="14" FontWeight="SemiBold" Margin="2,12,0,2" />
-                        <TextBlock Text="Graphite surfaces, neutral accents." Style="{StaticResource ZeroCaptionStyle}" Margin="2,0,0,0" />
-                    </StackPanel>
-                </RadioButton>
-
-                <RadioButton x:Name="ThemeCardLight" Grid.Column="2" Style="{StaticResource ZeroChoiceTile}" GroupName="Theme" Tag="Light" Checked="ThemeCard_Checked">
-                    <StackPanel>
-                        <Border Height="96" CornerRadius="8" ClipToBounds="True" BorderThickness="1" BorderBrush="#FFD8D8D8" Background="#FFF4F4F4">
-                            <StackPanel Margin="12" VerticalAlignment="Bottom">
-                                <Border Width="64" Height="6" CornerRadius="3" Background="#FF161616" HorizontalAlignment="Left" />
-                                <Border Width="96" Height="5" CornerRadius="3" Background="#FFC8C8C8" HorizontalAlignment="Left" Margin="0,6,0,0" />
-                            </StackPanel>
-                        </Border>
-                        <TextBlock Text="Light" FontSize="14" FontWeight="SemiBold" Margin="2,12,0,2" />
-                        <TextBlock Text="Bright surfaces, high contrast." Style="{StaticResource ZeroCaptionStyle}" Margin="2,0,0,0" />
-                    </StackPanel>
-                </RadioButton>
-
-                <RadioButton x:Name="ThemeCardDefault" Grid.Column="4" Style="{StaticResource ZeroChoiceTile}" GroupName="Theme" Tag="Default" Checked="ThemeCard_Checked">
-                    <StackPanel>
-                        <Border Height="96" CornerRadius="8" ClipToBounds="True" BorderThickness="1" BorderBrush="#FF262626">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Border Grid.Column="0" Background="#FF0E0E0E" />
-                                <Border Grid.Column="1" Background="#FFF4F4F4" />
-                                <StackPanel Grid.ColumnSpan="2" Margin="12" VerticalAlignment="Bottom">
-                                    <Border Width="64" Height="6" CornerRadius="3" Background="#FF7A7A7A" HorizontalAlignment="Left" />
-                                    <Border Width="96" Height="5" CornerRadius="3" Background="#FF7A7A7A" Opacity="0.5" HorizontalAlignment="Left" Margin="0,6,0,0" />
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-                        <TextBlock Text="System" FontSize="14" FontWeight="SemiBold" Margin="2,12,0,2" />
-                        <TextBlock Text="Follows your Windows setting." Style="{StaticResource ZeroCaptionStyle}" Margin="2,0,0,0" />
-                    </StackPanel>
-                </RadioButton>
-            </Grid>
-
-            <!-- ============================== MOTION ============================== -->
-            <TextBlock Text="Motion" Style="{StaticResource ZeroCardTitleStyle}" Margin="0,30,0,12" motion:Motion.Enter="3" />
-            <Border Style="{StaticResource ZeroCardStyle}" Padding="20,4" motion:Motion.Enter="3">
-                <Grid Margin="0,14">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <Border Style="{StaticResource ZeroIconTileStyle}"><ui:SymbolIcon Symbol="Sparkle24" Style="{StaticResource ZeroIconTileGlyphStyle}" /></Border>
-                    <StackPanel Grid.Column="1" Margin="14,0,16,0" VerticalAlignment="Center">
-                        <TextBlock Text="Smooth animations" FontSize="14" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                        <TextBlock Text="Page transitions and staggered entrances. Turn off to reduce motion; hover feedback stays." Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,0" />
-                    </StackPanel>
-                    <ui:ToggleSwitch x:Name="AnimationsToggle" Grid.Column="2" Style="{StaticResource ZeroToggle}" Click="AnimationsToggle_Click" />
-                </Grid>
-            </Border>
-
-            <!-- ============================== LAUNCHER WINDOW ============================== -->
-            <Grid Margin="0,30,0,12" motion:Motion.Enter="4">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <StackPanel>
-                    <TextBlock Text="Launcher window" Style="{StaticResource ZeroCardTitleStyle}" />
-                    <TextBlock Style="{StaticResource ZeroCaptionStyle}" Margin="0,4,0,0">
-                        <Run Text="The window shown while Roblox starts: style, icon, title and custom themes. Custom theme:" />
-                        <Run x:Name="CustomThemeRun" Text="none" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                    </TextBlock>
-                    <TextBlock x:Name="CustomThemeHint" Visibility="Collapsed" Style="{StaticResource ZeroCaptionStyle}" Margin="0,4,0,0"
-                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"
-                               Text="Set the bootstrapper Style below to “Custom” to create, edit, import or export themes." />
-                </StackPanel>
-                <ui:Button Grid.Column="1" Content="Manage custom themes" Icon="PaintBrush24" VerticalAlignment="Bottom"
-                           Style="{StaticResource ZeroButtonGhost}" Click="ManageCustomThemes_Click" />
-            </Grid>
-
-            <Border x:Name="LauncherCard" Style="{StaticResource ZeroCardStyle}" Padding="8,4" motion:Motion.Enter="5">
-                <Frame x:Name="AppearanceHost" NavigationUIVisibility="Hidden" Loaded="AppearanceHost_Loaded" />
-            </Border>
+        <!-- ============================== HEADER ============================== -->
+        <StackPanel Grid.Row="0" motion:Motion.Enter="0">
+            <TextBlock Text="A P P E A R A N C E" Style="{StaticResource ZeroEyebrowStyle}" Margin="0,4,0,8" />
+            <TextBlock Text="Make it yours" FontSize="{DynamicResource ZeroFontSize30}" FontWeight="{DynamicResource ZeroFontWeightHeading}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+            <TextBlock Text="Interface themes, motion, and the window Roblox launches with." FontSize="{DynamicResource ZeroFontSize14}" Margin="0,6,0,0"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
         </StackPanel>
-    </ScrollViewer>
+
+        <!-- ============================== TABS ============================== -->
+        <TabControl x:Name="AppearanceTabs" Grid.Row="1" Style="{StaticResource ZeroSegmentedTabControlStyle}" Margin="0,22,0,0"
+                    motion:Motion.Enter="1">
+            <TabItem x:Name="TabThemes" Header="Themes">
+                <local:ThemeStudioView x:Name="Studio" />
+            </TabItem>
+
+            <TabItem x:Name="TabLauncher" Header="Launcher window">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="The window shown while Roblox starts: language, style, icon and title."
+                               Style="{StaticResource ZeroCaptionStyle}" Margin="2,0,0,12" />
+                    <Frame x:Name="AppearanceHost" Grid.Row="1" NavigationUIVisibility="Hidden" Loaded="AppearanceHost_Loaded" />
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
 </Page>

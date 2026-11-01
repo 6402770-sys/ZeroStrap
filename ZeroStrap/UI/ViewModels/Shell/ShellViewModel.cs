@@ -4,14 +4,26 @@ using CommunityToolkit.Mvvm.Input;
 namespace ZeroStrap.UI.ViewModels.Shell
 {
     /// <summary>A section plus, for Configure, which tab to open.</summary>
-    public readonly record struct ShellTarget(ShellSection Section, int Tab = 0);
+    public readonly record struct ShellTarget(ShellSection Section, ConfigureTab Tab = ConfigureTab.FastFlags);
 
     public enum ShellSection
     {
         Overview,
         Configure,
+        ModsStudio,
+        MacroStudio,
         Appearance,
-        System
+        System,
+        About
+    }
+
+    /// <summary>Tabs of the Configure page, addressed by name rather than position.</summary>
+    public enum ConfigureTab
+    {
+        FastFlags,
+        Integrations,
+        Shortcuts,
+        Behaviour
     }
 
     public partial class ShellViewModel : ObservableObject

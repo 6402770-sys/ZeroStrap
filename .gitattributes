@@ -1,0 +1,3 @@
+
+# Official Zero FastFlags collections must stay byte-identical
+ZeroStrap/Resources/FastFlags/ZeroCollections/*.json -text

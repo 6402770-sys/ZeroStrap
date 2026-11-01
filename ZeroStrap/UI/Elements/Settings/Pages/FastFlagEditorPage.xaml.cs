@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
@@ -74,12 +74,6 @@ namespace ZeroStrap.UI.Elements.Settings.Pages
                 2 => FlagValueType.Int,
                 3 => FlagValueType.String,
                 4 => FlagValueType.Log,
-                _ => null
-            },
-            Effect = EffectFilter.SelectedIndex switch
-            {
-                1 => FlagEffect.Allowlisted,
-                2 => FlagEffect.Experimental,
                 _ => null
             },
             // "show preset flags" only declutters the configured list; catalog searches always find them
@@ -162,6 +156,7 @@ namespace ZeroStrap.UI.Elements.Settings.Pages
             {
                 App.Logger.WriteException("FastFlagEditorPage::RunSearch", ex);
                 StatusText.Text = String.Format(Strings.Menu_FastFlagEditor_Status_SearchFailed, ex.Message);
+                StatusText.SetResourceReference(TextBlock.ForegroundProperty, "ZeroStatusErrorBrush");
             }
             finally
             {
@@ -185,18 +180,22 @@ namespace ZeroStrap.UI.Elements.Settings.Pages
                 text += String.Format(Strings.Menu_FastFlagEditor_Status_Catalog, _workspace.Catalog.Entries.Count, fetched.ToLocalTime());
 
             StatusText.Text = text;
+            StatusText.ClearValue(TextBlock.ForegroundProperty); // back to the caption colour after an error
 
             if (result.TotalMatches > 0)
             {
-                EmptyStateText.Visibility = Visibility.Collapsed;
+                EmptyState.Visibility = Visibility.Collapsed;
                 return;
             }
 
-            EmptyStateText.Text = query.Scope == FlagScope.Configured && String.IsNullOrWhiteSpace(query.Text)
-                ? Strings.Menu_FastFlagEditor_Empty_NoFlags
-                : String.Format(Strings.Menu_FastFlagEditor_Empty_NoMatches, query.Text.Trim());
+            bool noFlagsAtAll = query.Scope == FlagScope.Configured && String.IsNullOrWhiteSpace(query.Text) && query.Type is null;
 
-            EmptyStateText.Visibility = Visibility.Visible;
+            EmptyTitle.Text = noFlagsAtAll ? "No flags configured yet" : "No flags match your search";
+            EmptyBody.Text = noFlagsAtAll
+                ? "Add a flag, or apply a collection from the Fast Flags page."
+                : "Try a different name or clear the filters.";
+            EmptyAddButton.Visibility = noFlagsAtAll ? Visibility.Visible : Visibility.Collapsed;
+            EmptyState.Visibility = Visibility.Visible;
         }
 
         private void ClearSearch(bool refresh = true)
@@ -315,7 +314,6 @@ namespace ZeroStrap.UI.Elements.Settings.Pages
                 ScopeFilter.SelectedIndex = 0;
 
             TypeFilter.SelectedIndex = 0;
-            EffectFilter.SelectedIndex = 0;
 
             SearchTextBox.Text = name;
             _searchFilter = name;
@@ -535,7 +533,17 @@ namespace ZeroStrap.UI.Elements.Settings.Pages
 
         #region Details panel
 
-        private void DataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdateDetails();
+        private void DataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            UpdateDetails();
+            UpdateDetailsVisibility();
+        }
+
+        private bool _detailsDocked;
+
+        /// <summary>Docked below the grid, the details panel only shows while a flag is selected so the grid keeps its rows.</summary>
+        private void UpdateDetailsVisibility() =>
+            DetailsPanel.Visibility = _detailsDocked && DataGrid.SelectedItem is null ? Visibility.Collapsed : Visibility.Visible;
 
         private void UpdateDetails()
         {
@@ -545,7 +553,6 @@ namespace ZeroStrap.UI.Elements.Settings.Pages
             if (DataGrid.SelectedItems.Count != 1 || DataGrid.SelectedItem is not FastFlagRow row)
             {
                 DetailName.Text = DataGrid.SelectedItems.Count > 1 ? String.Format(Strings.Menu_FastFlagEditor_Details_MultipleSelected, DataGrid.SelectedItems.Count) : Strings.Menu_FastFlagEditor_Details_NothingSelected;
-                DetailEffect.Text = "";
                 DetailValue.Text = "";
                 DetailValue.IsEnabled = DetailSetButton.IsEnabled = DetailRemoveButton.IsEnabled = false;
                 return;
@@ -553,16 +560,12 @@ namespace ZeroStrap.UI.Elements.Settings.Pages
 
             DetailName.Text = row.Name;
 
-            AddTag(row.EffectLabel, outline: row.IsExperimental);
             AddTag(row.TypeLabel.ToUpperInvariant(), outline: true);
             AddTag(row.IsConfigured ? Strings.Menu_FastFlagEditor_Details_TagSet : Strings.Menu_FastFlagEditor_Details_TagNotSet, outline: !row.IsConfigured);
 
             if (row.InCatalog && row.Layer is not null)
                 AddTag(row.Layer.ToUpperInvariant(), outline: true);
 
-            DetailEffect.Text = row.IsExperimental
-                ? Strings.Menu_FastFlagEditor_Details_ExperimentalEffect
-                : Strings.Menu_FastFlagEditor_Details_PlayerEffect;
 
             DetailValue.Text = row.Value;
             DetailValue.IsEnabled = DetailSetButton.IsEnabled = true;
@@ -673,12 +676,58 @@ namespace ZeroStrap.UI.Elements.Settings.Pages
             ReloadList();
         }
 
+        /// <summary>Raised when the editor is hosted in the shell and wants to go back; the Configure page closes the workspace.</summary>
+        public event EventHandler? CloseRequested;
+
+        /// <summary>Puts keyboard focus on Back (used when the workspace opens).</summary>
+        public void FocusBackButton() => BackButton.Focus();
+
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
             if (Window.GetWindow(this) is INavigationWindow window)
                 window.Navigate(typeof(FastFlagsPage));
             else
-                NavigationService?.Navigate(new FastFlagsPage()); // hosted in a Frame (Obsidian shell)
+                CloseRequested?.Invoke(this, EventArgs.Empty); // hosted in the Obsidian shell
+        }
+
+        /// <summary>Details sit beside the grid when there is room, and dock below it (scrolling) when there is not.</summary>
+        private void Page_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            bool wide = e.NewSize.Width >= 1000;
+
+            if (wide)
+            {
+                Grid.SetRow(DetailsPanel, 0);
+                Grid.SetColumn(DetailsPanel, 1);
+                Grid.SetColumnSpan(DetailsPanel, 1);
+                DetailsPanel.Width = 280;
+                DetailsPanel.MaxHeight = Double.PositiveInfinity;
+                DetailsPanel.Margin = new Thickness(12, 0, 0, 0);
+
+                // stacked: identity above the value editor
+                DetailsSecondColumn.Width = new GridLength(0);
+                Grid.SetRow(DetailsEditor, 1);
+                Grid.SetColumn(DetailsEditor, 0);
+                DetailsEditor.Margin = new Thickness(0, 10, 0, 0);
+            }
+            else
+            {
+                Grid.SetRow(DetailsPanel, 1);
+                Grid.SetColumn(DetailsPanel, 0);
+                Grid.SetColumnSpan(DetailsPanel, 2);
+                DetailsPanel.Width = Double.NaN;
+                DetailsPanel.MaxHeight = 200;
+                DetailsPanel.Margin = new Thickness(0, 12, 0, 0);
+
+                // side by side: keeps the docked panel short so the grid keeps its rows
+                DetailsSecondColumn.Width = new GridLength(1, GridUnitType.Star);
+                Grid.SetRow(DetailsEditor, 0);
+                Grid.SetColumn(DetailsEditor, 1);
+                DetailsEditor.Margin = new Thickness(24, 0, 0, 0);
+            }
+
+            _detailsDocked = !wide;
+            UpdateDetailsVisibility();
         }
 
         private void AddButton_Click(object sender, RoutedEventArgs e) => ShowAddDialog();

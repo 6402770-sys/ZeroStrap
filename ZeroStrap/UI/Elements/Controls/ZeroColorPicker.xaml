@@ -1,0 +1,96 @@
+<UserControl x:Class="ZeroStrap.UI.Elements.Controls.ZeroColorPicker"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             PreviewKeyDown="Root_PreviewKeyDown">
+    <!--
+        Saturation/value square + hue strip + hex field + quick swatches. The square and strip are drawn with
+        fixed colours on purpose (they depict colour space, not a theme).
+    -->
+    <StackPanel Width="236">
+        <!-- Saturation (x) / value (y) -->
+        <Border CornerRadius="{DynamicResource ZeroRadius8}" ClipToBounds="True" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+            <Grid x:Name="SvArea" Height="140" Background="Transparent" Cursor="Cross" Focusable="True"
+                  AutomationProperties.Name="Saturation and brightness"
+                  SizeChanged="SvArea_SizeChanged"
+                  MouseLeftButtonDown="SvArea_MouseLeftButtonDown" MouseMove="SvArea_MouseMove" MouseLeftButtonUp="SvArea_MouseLeftButtonUp"
+                  KeyDown="SvArea_KeyDown">
+                <Rectangle x:Name="HueLayer" />
+                <Rectangle>
+                    <Rectangle.Fill>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="#FFFFFFFF" Offset="0" />
+                            <GradientStop Color="#00FFFFFF" Offset="1" />
+                        </LinearGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Rectangle>
+                    <Rectangle.Fill>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#00000000" Offset="0" />
+                            <GradientStop Color="#FF000000" Offset="1" />
+                        </LinearGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Canvas IsHitTestVisible="False">
+                    <Ellipse x:Name="SvThumb" Width="14" Height="14" Stroke="#FFFFFFFF" StrokeThickness="2" Fill="Transparent">
+                        <Ellipse.Effect>
+                            <DropShadowEffect ShadowDepth="0" BlurRadius="3" Opacity="0.8" Color="#FF000000" />
+                        </Ellipse.Effect>
+                    </Ellipse>
+                </Canvas>
+            </Grid>
+        </Border>
+
+        <!-- Hue -->
+        <Grid x:Name="HueArea" Height="16" Margin="0,12,0,0" Background="Transparent" Cursor="Hand" Focusable="True"
+              AutomationProperties.Name="Hue"
+              SizeChanged="HueArea_SizeChanged"
+              MouseLeftButtonDown="HueArea_MouseLeftButtonDown" MouseMove="HueArea_MouseMove" MouseLeftButtonUp="HueArea_MouseLeftButtonUp"
+              KeyDown="HueArea_KeyDown">
+            <Border CornerRadius="{DynamicResource ZeroRadius5}" Height="10" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="#FFFF0000" Offset="0" />
+                        <GradientStop Color="#FFFFFF00" Offset="0.1667" />
+                        <GradientStop Color="#FF00FF00" Offset="0.3333" />
+                        <GradientStop Color="#FF00FFFF" Offset="0.5" />
+                        <GradientStop Color="#FF0000FF" Offset="0.6667" />
+                        <GradientStop Color="#FFFF00FF" Offset="0.8333" />
+                        <GradientStop Color="#FFFF0000" Offset="1" />
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
+            <Canvas IsHitTestVisible="False">
+                <Ellipse x:Name="HueThumb" Width="16" Height="16" Stroke="#FFFFFFFF" StrokeThickness="2" Fill="Transparent" Canvas.Top="0">
+                    <Ellipse.Effect>
+                        <DropShadowEffect ShadowDepth="0" BlurRadius="3" Opacity="0.8" Color="#FF000000" />
+                    </Ellipse.Effect>
+                </Ellipse>
+            </Canvas>
+        </Grid>
+
+        <!-- Hex -->
+        <Grid Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border x:Name="CurrentSwatch" Width="34" Height="34" CornerRadius="{DynamicResource ControlCornerRadius}" BorderThickness="1"
+                    BorderBrush="{DynamicResource ControlStrokeColorSecondaryBrush}" />
+            <ui:TextBox x:Name="HexBox" ClearButtonEnabled="False" Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource ZeroTextField}"
+                        FontFamily="{StaticResource ZeroMonoFont}" MaxLength="9" AutomationProperties.Name="Hex colour"
+                        GotKeyboardFocus="HexBox_GotKeyboardFocus"
+                        LostKeyboardFocus="HexBox_LostKeyboardFocus" PreviewKeyDown="HexBox_PreviewKeyDown" />
+        </Grid>
+
+        <!-- Quick swatches -->
+        <ItemsControl x:Name="QuickHost" Margin="0,12,0,0">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+        </ItemsControl>
+    </StackPanel>
+</UserControl>

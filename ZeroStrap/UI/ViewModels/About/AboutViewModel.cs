@@ -6,6 +6,8 @@ namespace ZeroStrap.UI.ViewModels.About
     {
         public string Version => string.Format(Strings.Menu_About_Version, App.Version);
 
+        public string VersionNumber => App.Version;
+
         public BuildMetadataAttribute BuildMetadata => App.BuildMetadata;
 
         public string BuildTimestamp => BuildMetadata.Timestamp.ToFriendlyString();

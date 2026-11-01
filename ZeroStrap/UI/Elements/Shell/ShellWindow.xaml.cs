@@ -10,6 +10,7 @@ using System.Windows.Media;
 using Wpf.Ui.Common;
 
 using ZeroStrap.UI.Elements.Shell.Pages;
+using ZeroStrap.UI.Theming;
 using ZeroStrap.UI.Utility;
 using ZeroStrap.UI.ViewModels.Shell;
 
@@ -54,6 +55,9 @@ namespace ZeroStrap.UI.Elements.Shell
             VersionLabel.Text = $"ZeroStrap v{App.Version}";
             ActivityLog.NoteVersion();
             NavigateTo(ShellSection.Overview);
+
+            ModsStudioService.SummaryChanged += UpdateModsBadge;
+            Loaded += (_, _) => _ = ModsStudioService.RefreshSummaryAsync();
         }
 
         public void LoadState()
@@ -89,7 +93,7 @@ namespace ZeroStrap.UI.Elements.Shell
                 NavigateTo(section);
         }
 
-        public void NavigateTo(ShellSection section, int configureTab = 0)
+        public void NavigateTo(ShellSection section, ConfigureTab configureTab = ConfigureTab.FastFlags)
         {
             ClosePalette();
 
@@ -105,8 +109,11 @@ namespace ZeroStrap.UI.Elements.Shell
                 Page page = section switch
                 {
                     ShellSection.Configure => new ConfigurePage(configureTab),
+                    ShellSection.ModsStudio => BuildModsStudio(),
+                    ShellSection.MacroStudio => new MacroStudioPage(),
                     ShellSection.Appearance => new AppearancePage(),
                     ShellSection.System => new SystemPage(),
+                    ShellSection.About => new AboutPage(),
                     _ => BuildOverview()
                 };
 
@@ -117,8 +124,14 @@ namespace ZeroStrap.UI.Elements.Shell
                 {
                     case ShellSection.Overview: NavOverview.IsChecked = true; break;
                     case ShellSection.Configure: NavConfigure.IsChecked = true; break;
+                    case ShellSection.ModsStudio: NavModsStudio.IsChecked = true; break;
+                    case ShellSection.MacroStudio: NavMacroStudio.IsChecked = true; break;
                     case ShellSection.Appearance: NavAppearance.IsChecked = true; break;
                     case ShellSection.System: NavSystem.IsChecked = true; break;
+                    case ShellSection.About:
+                        foreach (var nav in new[] { NavOverview, NavConfigure, NavModsStudio, NavMacroStudio, NavAppearance, NavSystem })
+                            nav.IsChecked = false;
+                        break;
                 }
             }
             finally
@@ -144,9 +157,34 @@ namespace ZeroStrap.UI.Elements.Shell
                 Motion.PageEnter(page);
         }
 
-        private void AboutButton_Click(object sender, RoutedEventArgs e) => _viewModel.OpenAboutCommand.Execute(null);
+        private void AboutButton_Click(object sender, RoutedEventArgs e) => NavigateTo(ShellSection.About);
 
-        private void SettingsButton_Click(object sender, RoutedEventArgs e) => NavigateTo(ShellSection.Configure, ConfigurePage.BehaviourTab);
+        private Page BuildModsStudio()
+        {
+            var page = new ModsStudioPage();
+            page.ToastRequested += (_, toast) => ShowModsToast(toast.Message, toast.IsError);
+            return page;
+        }
+
+        /// <summary>Short, self-dismissing notice for Mods Studio changes.</summary>
+        private void ShowModsToast(string message, bool isError)
+        {
+            ModsToastSnackbar.Show(
+                isError ? "Couldn't update mods" : "Mods updated",
+                message,
+                isError ? SymbolRegular.ErrorCircle24 : SymbolRegular.CheckmarkCircle24,
+                isError ? ControlAppearance.Danger : ControlAppearance.Success);
+        }
+
+        private void UpdateModsBadge()
+        {
+            int conflicts = ModsStudioService.HasSummary ? ModsStudioService.UnresolvedCount : 0;
+
+            NavModsBadge.Visibility = conflicts > 0 ? Visibility.Visible : Visibility.Collapsed;
+            NavModsBadgeText.Text = conflicts.ToString();
+        }
+
+        private void SettingsButton_Click(object sender, RoutedEventArgs e) => NavigateTo(ShellSection.Configure, ConfigureTab.Behaviour);
 
         private void SearchButton_Click(object sender, RoutedEventArgs e) => FocusPalette();
 
@@ -214,7 +252,7 @@ namespace ZeroStrap.UI.Elements.Shell
             catch { online = true; }
 
             NetworkText.Text = online ? "Connected" : "Offline";
-            NetworkDot.Fill = (Brush)FindResource(online ? "ZeroStatusHealthyBrush" : "ZeroStatusErrorBrush");
+            NetworkDot.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, online ? "ZeroStatusHealthyBrush" : "ZeroStatusErrorBrush");
         }
 
         #endregion
@@ -241,34 +279,50 @@ namespace ZeroStrap.UI.Elements.Shell
             new() { Title = "Overview", Hint = "Home dashboard", Group = "Go to", Icon = SymbolRegular.Home24,
                     Keywords = new[] { "overview", "home", "dashboard" }, Run = () => NavigateTo(ShellSection.Overview) },
             new() { Title = "Fast Flags", Hint = "Configure › Fast Flags", Group = "Go to", Icon = SymbolRegular.Flag24,
-                    Keywords = new[] { "fast flags", "fflags", "flags", "editor", "configure" }, Run = () => NavigateTo(ShellSection.Configure, 0) },
-            new() { Title = "Mods", Hint = "Configure › Mods", Group = "Go to", Icon = SymbolRegular.PuzzlePiece24,
-                    Keywords = new[] { "mods", "modifications", "fonts", "cursor" }, Run = () => NavigateTo(ShellSection.Configure, 1) },
+                    Keywords = new[] { "fast flags", "fflags", "flags", "editor", "configure" }, Run = () => NavigateTo(ShellSection.Configure, ConfigureTab.FastFlags) },
+            new() { Title = "Fast Flag Editor", Hint = "Configure › Fast Flags › Editor", Group = "Go to", Icon = SymbolRegular.EditSettings24,
+                    Keywords = new[] { "fast flag editor", "flag editor", "edit flags" }, Run = OpenFastFlagEditor },
+            new() { Title = "Mods Studio", Hint = "Turn mods on or off, resolve conflicts, built-in mods", Group = "Go to", Icon = SymbolRegular.PuzzlePiece24,
+                    Keywords = new[] { "mods", "mods studio", "modifications", "mod packages", "conflicts", "fonts", "cursor", "emoji", "sounds" }, Run = () => NavigateTo(ShellSection.ModsStudio) },
+            new() { Title = "Macro Studio", Hint = "Record and edit macros", Group = "Go to", Icon = SymbolRegular.Record24,
+                    Keywords = new[] { "macro", "macros", "record", "automation", "hotkey" }, Run = () => NavigateTo(ShellSection.MacroStudio) },
             new() { Title = "Integrations", Hint = "Configure › Integrations", Group = "Go to", Icon = SymbolRegular.PlugConnected24,
-                    Keywords = new[] { "integrations", "discord", "rich presence", "activity" }, Run = () => NavigateTo(ShellSection.Configure, 2) },
+                    Keywords = new[] { "integrations", "discord", "rich presence", "activity" }, Run = () => NavigateTo(ShellSection.Configure, ConfigureTab.Integrations) },
             new() { Title = "Shortcuts", Hint = "Configure › Shortcuts", Group = "Go to", Icon = SymbolRegular.Keyboard24,
-                    Keywords = new[] { "shortcuts", "desktop", "start menu" }, Run = () => NavigateTo(ShellSection.Configure, 3) },
+                    Keywords = new[] { "shortcuts", "desktop", "start menu" }, Run = () => NavigateTo(ShellSection.Configure, ConfigureTab.Shortcuts) },
             new() { Title = "Behaviour", Hint = "Configure › Behaviour", Group = "Go to", Icon = SymbolRegular.Settings24,
-                    Keywords = new[] { "behaviour", "behavior", "settings", "updates", "channel" }, Run = () => NavigateTo(ShellSection.Configure, ConfigurePage.BehaviourTab) },
+                    Keywords = new[] { "behaviour", "behavior", "settings", "updates", "channel" }, Run = () => NavigateTo(ShellSection.Configure, ConfigureTab.Behaviour) },
             new() { Title = "Appearance", Hint = "Themes and launcher window style", Group = "Go to", Icon = SymbolRegular.Color24,
                     Keywords = new[] { "appearance", "theme", "themes", "style", "look", "ui", "custom themes" }, Run = () => NavigateTo(ShellSection.Appearance) },
             new() { Title = "System", Hint = "Diagnostics, logs, backups, repair", Group = "Go to", Icon = SymbolRegular.Pulse24,
                     Keywords = new[] { "system", "diagnostics", "logs", "backup", "backups", "repair", "uninstall", "updates" }, Run = () => NavigateTo(ShellSection.System) },
 
             new() { Title = "Theme: Obsidian", Hint = "Dark graphite surfaces", Group = "Theme", Icon = SymbolRegular.WeatherMoon24,
-                    Keywords = new[] { "theme dark", "dark", "obsidian" }, Run = () => SetTheme(Enums.Theme.Dark) },
+                    Keywords = new[] { "theme dark", "dark", "obsidian" }, Run = () => SetTheme(ThemeManager.ObsidianId) },
             new() { Title = "Theme: Light", Hint = "Light surfaces", Group = "Theme", Icon = SymbolRegular.WeatherSunny24,
-                    Keywords = new[] { "theme light", "light" }, Run = () => SetTheme(Enums.Theme.Light) },
+                    Keywords = new[] { "theme light", "light" }, Run = () => SetTheme(ThemeManager.LightId) },
             new() { Title = "Theme: System", Hint = "Follow Windows", Group = "Theme", Icon = SymbolRegular.Desktop24,
-                    Keywords = new[] { "theme system", "theme default", "system theme", "default" }, Run = () => SetTheme(Enums.Theme.Default) },
+                    Keywords = new[] { "theme system", "theme default", "system theme", "default" }, Run = () => SetTheme(ThemeManager.SystemId) },
 
             new() { Title = "Open logs folder", Hint = "ZeroStrap log files", Group = "System", Icon = SymbolRegular.DocumentText24,
                     Keywords = new[] { "logs", "log folder" }, Run = () => Utilities.ShellExecute(Paths.Logs) },
             new() { Title = "Open install folder", Hint = Paths.Base, Group = "System", Icon = SymbolRegular.FolderOpen24,
                     Keywords = new[] { "folder", "install", "directory" }, Run = () => Utilities.ShellExecute(Paths.Base) },
             new() { Title = "About ZeroStrap", Hint = "Version, licenses and links", Group = "Help", Icon = SymbolRegular.Info24,
-                    Keywords = new[] { "about", "version", "license", "credits" }, Run = () => _viewModel.OpenAboutCommand.Execute(null) },
+                    Keywords = new[] { "about", "version", "license", "licenses", "credits", "translators", "build" }, Run = () => NavigateTo(ShellSection.About) },
         };
+
+        private void OpenFastFlagEditor()
+        {
+            NavigateTo(ShellSection.Configure, ConfigureTab.FastFlags);
+
+            // a fresh ConfigurePage becomes the frame's content asynchronously; wait until it is there
+            Dispatcher.BeginInvoke(() =>
+            {
+                if (ContentFrame.Content is ConfigurePage configure)
+                    configure.OpenFastFlagEditor();
+            }, System.Windows.Threading.DispatcherPriority.Loaded);
+        }
 
         private void LaunchRoblox()
         {
@@ -283,11 +337,10 @@ namespace ZeroStrap.UI.Elements.Shell
             }
         }
 
-        private void SetTheme(Enums.Theme theme)
+        private void SetTheme(string themeId)
         {
-            App.Settings.Prop.Theme = theme;
-            ApplyTheme();
-            ActivityLog.Record(ActivityType.Theme, "Theme changed", $"Switched to {(theme == Enums.Theme.Dark ? "Obsidian" : theme.ToString())} theme");
+            ThemeManager.SetActive(themeId);
+            ActivityLog.Record(ActivityType.Theme, "Theme changed", $"Switched to {ThemeManager.ActiveDisplayName} theme");
 
             if (ContentFrame.Content is AppearancePage appearance)
                 appearance.Refresh();
@@ -459,6 +512,20 @@ namespace ZeroStrap.UI.Elements.Shell
 
         private void WpfUiWindow_Closed(object sender, EventArgs e)
         {
+            // Macro Studio creates its runtime lazily; this is a no-op if it was never opened. Dispose also lets a later Instance start fresh.
+            UI.Utility.MacroOverlayHost.Shutdown();
+            Macros.MacroRuntime.TryDispose();
+
+            // Macros outlive this window: if it ran them, a background host takes over (it needs the lock released first).
+            var hostLock = Macros.MacroHostLock.Current;
+
+            if (hostLock is not null)
+            {
+                Macros.MacroHostLock.Current = null;
+                hostLock.Dispose();
+                UI.Utility.MacroBackgroundHost.StartProcess();
+            }
+
             if (App.LaunchSettings.TestModeFlag.Active)
                 LaunchHandler.LaunchRoblox(LaunchMode.Player);
             else

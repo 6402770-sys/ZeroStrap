@@ -12,9 +12,9 @@
     <Product>ZeroStrap</Product>
     <AssemblyTitle>ZeroStrap</AssemblyTitle>
     <Company>ZeroStrap</Company>
-    <Version>3.0.0</Version>
-    <FileVersion>3.0.0</FileVersion>
-    <InformationalVersion>3.0.0-obsidian</InformationalVersion>
+    <Version>3.1.0</Version>
+    <FileVersion>3.1.0</FileVersion>
+    <InformationalVersion>3.1.0</InformationalVersion>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
@@ -27,6 +27,8 @@
     <Resource Include="Resources\BootstrapperStyles\ByfronDialog\ByfronLogoDark.jpg" />
     <Resource Include="Resources\BootstrapperStyles\ByfronDialog\ByfronLogoLight.jpg" />
     <Resource Include="Resources\BootstrapperStyles\ByfronDialog\Matt.png" />
+    <Resource Include="Resources\About\creator.jpg" />
+    <Resource Include="Resources\About\claude.jpg" />
     <Resource Include="Resources\MessageBox\Error.png" />
     <Resource Include="Resources\MessageBox\Information.png" />
     <Resource Include="Resources\MessageBox\Question.png" />
@@ -57,6 +59,8 @@
     <EmbeddedResource Include="Resources\Mods\Sounds\Empty.mp3" />
     <EmbeddedResource Include="Resources\Mods\OldAvatarBackground.rbxl" />
     <EmbeddedResource Include="Resources\FastFlags\FFlags_baseline.hpp" />
+    <EmbeddedResource Include="Resources\FastFlags\ZeroCollections\pure-fps.json" LogicalName="ZeroStrap.FastFlagCollections.pure-fps.json" />
+    <EmbeddedResource Include="Resources\FastFlags\ZeroCollections\low-ping.json" LogicalName="ZeroStrap.FastFlagCollections.low-ping.json" />
   </ItemGroup>
 
   <ItemGroup>

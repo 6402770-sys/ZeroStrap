@@ -1,4 +1,4 @@
-﻿<ui:UiPage x:Class="ZeroStrap.UI.Elements.Settings.Pages.FastFlagsPage"
+<ui:UiPage x:Class="ZeroStrap.UI.Elements.Settings.Pages.FastFlagsPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -6,79 +6,323 @@
       xmlns:models="clr-namespace:ZeroStrap.UI.ViewModels"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:resources="clr-namespace:ZeroStrap.Resources"
-      xmlns:controls="clr-namespace:ZeroStrap.UI.Elements.Controls"
+      xmlns:flagpresets="clr-namespace:ZeroStrap.Enums.FlagPresets"
+      xmlns:fc="clr-namespace:ZeroStrap.FastFlagCollections"
       mc:Ignorable="d"
-      d:DesignHeight="1500" d:DesignWidth="800"
+      d:DesignHeight="900" d:DesignWidth="800"
       Title="FastFlagsPage"
       Scrollable="True"
       Loaded="Page_Loaded">
 
+    <ui:UiPage.Resources>
+        <!--  Collection status line: caption, green when applied, amber when edited since  -->
+        <Style x:Key="CollectionStatusStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource ZeroCaptionStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static fc:CollectionStatus.Applied}">
+                    <Setter Property="Foreground" Value="{DynamicResource ZeroStatusHealthyBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static fc:CollectionStatus.ChangedSinceApplied}">
+                    <Setter Property="Foreground" Value="{DynamicResource ZeroStatusWarningBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!--  Official collection card  -->
+        <DataTemplate x:Key="OfficialCollectionTemplate">
+            <Border Style="{StaticResource ZeroSettingCardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <WrapPanel>
+                            <TextBlock Text="{Binding Name}" Style="{StaticResource ZeroCardTitleStyle}" VerticalAlignment="Center" />
+                            <Border Style="{StaticResource ZeroTagOutlineStyle}" Margin="10,0,0,0">
+                                <TextBlock Text="Official" Style="{StaticResource ZeroTagTextStyle}" />
+                            </Border>
+                            <TextBlock Text="{Binding Meta}" Style="{StaticResource ZeroMetaTextStyle}" Margin="10,0,0,0" />
+                        </WrapPanel>
+                        <TextBlock Text="{Binding StatusText}" Style="{StaticResource CollectionStatusStyle}" Margin="0,4,0,0" />
+                    </StackPanel>
+                    <ui:Button Grid.Column="1" Content="Apply" Style="{StaticResource ZeroButtonSecondary}" Margin="16,0,0,0" MinWidth="76" VerticalAlignment="Center"
+                               Tag="{Binding Id}" Click="CollectionApply_Click"
+                               AutomationProperties.Name="{Binding Name, StringFormat=Apply {0}}" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!--  Imported collection row  -->
+        <DataTemplate x:Key="ImportedCollectionTemplate">
+            <Border Style="{StaticResource ZeroSettingCardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" Style="{StaticResource ZeroCardTitleStyle}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}" />
+                        <TextBlock Text="{Binding Meta}" Style="{StaticResource ZeroMetaTextStyle}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding StatusText}" Style="{StaticResource CollectionStatusStyle}" Margin="0,4,0,0" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                        <ui:Button Content="Apply" Style="{StaticResource ZeroButtonSecondary}" MinWidth="76"
+                                   Tag="{Binding Id}" Click="CollectionApply_Click"
+                                   AutomationProperties.Name="{Binding Name, StringFormat=Apply {0}}" />
+                        <ui:Button Content="Rename" Style="{StaticResource ZeroButtonGhostSmall}" Margin="6,0,0,0"
+                                   Tag="{Binding Id}" Click="CollectionRename_Click"
+                                   AutomationProperties.Name="{Binding Name, StringFormat=Rename {0}}" />
+                        <ui:Button Content="Export" Style="{StaticResource ZeroButtonGhostSmall}"
+                                   Tag="{Binding Id}" Click="CollectionExport_Click"
+                                   AutomationProperties.Name="{Binding Name, StringFormat=Export {0}}" />
+                        <ui:Button Content="Remove" Style="{StaticResource ZeroButtonGhostSmall}"
+                                   Tag="{Binding Id}" Click="CollectionRemove_Click"
+                                   AutomationProperties.Name="{Binding Name, StringFormat=Remove {0}}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!--  Segment label: the enum's display name  -->
+        <DataTemplate x:Key="EnumSegmentTemplate">
+            <TextBlock Text="{Binding Path=., Converter={StaticResource EnumNameConverter}}" />
+        </DataTemplate>
+
+        <!--  Reset link shown only while a segmented value differs from its default  -->
+        <Style x:Key="ResetButtonStyle" TargetType="{x:Type ui:Button}" BasedOn="{StaticResource ZeroButtonGhostSmall}">
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Margin" Value="16,0,0,0" />
+        </Style>
+    </ui:UiPage.Resources>
+
     <StackPanel Margin="0,0,14,14">
-        <TextBlock Margin="0,0,0,16" Text="{x:Static resources:Strings.Menu_FastFlags_Description}" FontSize="14" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
 
-        <controls:OptionControl
-            Header="{x:Static resources:Strings.Menu_FastFlags_ManagerEnabled_Title}"
-            Description="{x:Static resources:Strings.Menu_FastFlags_ManagerEnabled_Description}">
-            <ui:ToggleSwitch IsChecked="{Binding UseFastFlagManager, Mode=TwoWay}" />
-        </controls:OptionControl>
+        <!-- ============================== EDITOR ENTRY ============================== -->
+        <Button x:Name="OpenEditorButton" Style="{StaticResource ZeroTileButton}" Command="{Binding OpenFastFlagEditorCommand}"
+                Padding="20,18" AutomationProperties.Name="{x:Static resources:Strings.Menu_FastFlagEditor_Title}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-        <controls:OptionControl
-            Header="Memory flag injection"
-            Description="Write enabled FFlags directly into the running Roblox process after launch via direct syscalls. Supplements ClientAppSettings.json for runtime-reset flags.">
-            <ui:ToggleSwitch IsChecked="{Binding UseMemoryFlagInjection, Mode=TwoWay}" />
-        </controls:OptionControl>
+                <Border Grid.Column="0" Style="{StaticResource ZeroIconTileStyle}" Width="44" Height="44" CornerRadius="12">
+                    <ui:SymbolIcon Symbol="EditSettings24" Style="{StaticResource ZeroIconTileGlyphStyle}" FontSize="20" />
+                </Border>
 
-        <controls:OptionControl
-            Header="Memory flag watchdog"
-            Description="Keep re-asserting flag values every few seconds while Roblox is running. Requires memory flag injection.">
-            <ui:ToggleSwitch IsChecked="{Binding EnableMemoryFlagWatchdog, Mode=TwoWay}" />
-        </controls:OptionControl>
+                <StackPanel Grid.Column="1" Margin="16,0,16,0" VerticalAlignment="Center">
+                    <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_Title}" Style="{StaticResource ZeroCardTitleStyle}" FontSize="16" />
+                    <TextBlock Text="Search, add and edit every configured flag, and browse Roblox's flag catalog."
+                               Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,0" />
+                </StackPanel>
 
-        <TextBlock Text="{x:Static resources:Strings.Common_Presets}" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{StaticResource ZeroSectionMargin}" />
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock x:Name="ConfiguredCountText" Style="{StaticResource ZeroMetaTextStyle}" />
+                    <ui:SymbolIcon Symbol="ChevronRight24" Style="{StaticResource ZeroChevronStyle}" Margin="12,0,0,0" />
+                </StackPanel>
+            </Grid>
+        </Button>
 
-        <TextBlock Text="{x:Static resources:Strings.Menu_FastFlags_Presets_Categories_Rendering}" Style="{StaticResource ZeroSubsectionTitleStyle}" Margin="0,14,0,0" />
-        <controls:MarkdownTextBlock MarkdownText="{Binding Source={x:Static resources:Strings.Menu_FastFlags_Presets_D3DExclusiveFullscreenInfo}, Converter={StaticResource StringFormatConverter}, ConverterParameter='https://bloxstraplabs.com/wiki/features/engine-settings/#exclusive-fullscreen'}"  Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+        <!-- ============================== ENGINE SETTINGS ============================== -->
+        <TextBlock Text="Engine settings" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{DynamicResource ZeroSectionMargin}" />
+        <TextBlock Text="Rendering options on Roblox's allowlist." Style="{StaticResource ZeroCaptionStyle}" Margin="0,4,0,14" />
 
-        <controls:OptionControl 
-            Header="{x:Static resources:Strings.Menu_FastFlags_Presets_MSAA_Title}">
-            <ComboBox Margin="5,0,0,0" Padding="10,5,10,5" Width="200" ItemsSource="{Binding MSAALevels.Keys, Mode=OneTime}" Text="{Binding SelectedMSAALevel, Mode=TwoWay}">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Path=., Converter={StaticResource EnumNameConverter}}" />
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
-            </ComboBox>
-        </controls:OptionControl>
+        <!--  Anti-aliasing  -->
+        <Border Style="{StaticResource ZeroSettingCardStyle}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-        <controls:OptionControl 
-            Header="{x:Static resources:Strings.Menu_FastFlags_Presets_FixDisplayScaling_Title}" 
-            Description="{x:Static resources:Strings.Menu_FastFlags_Presets_FixDisplayScaling_Description}" 
-            HelpLink="https://bloxstraplabs.com/wiki/features/engine-settings/#preserving-rendering-quality">
-            <ui:ToggleSwitch IsChecked="{Binding FixDisplayScaling, Mode=TwoWay}" />
-        </controls:OptionControl>
+                <StackPanel Grid.Row="0" Grid.Column="0">
+                    <TextBlock Text="{x:Static resources:Strings.Menu_FastFlags_Presets_MSAA_Title}" Style="{StaticResource ZeroCardTitleStyle}" />
+                    <TextBlock Text="Smooths jagged edges. Higher sample counts cost more GPU time." Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,0" />
+                </StackPanel>
 
-        <controls:OptionControl 
-            Header="{x:Static resources:Strings.Menu_FastFlags_Presets_TextureQuality_Title}">
-            <ComboBox Margin="5,0,0,0" Padding="10,5,10,5" Width="200" ItemsSource="{Binding TextureQualities.Keys, Mode=OneTime}" Text="{Binding SelectedTextureQuality, Mode=TwoWay}">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Path=., Converter={StaticResource EnumNameConverter}}" />
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
-            </ComboBox>
-        </controls:OptionControl>
+                <ui:Button Grid.Row="0" Grid.Column="1" Content="Reset" Click="MsaaReset_Click" AutomationProperties.Name="Reset anti-aliasing to automatic">
+                    <ui:Button.Style>
+                        <Style TargetType="{x:Type ui:Button}" BasedOn="{StaticResource ResetButtonStyle}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedItem, ElementName=MsaaList}" Value="{x:Static flagpresets:MSAAMode.Default}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ui:Button.Style>
+                </ui:Button>
 
-        <controls:OptionControl 
-            Margin="0,24,0,0"
-            Header="{x:Static resources:Strings.Menu_FastFlags_Reset_Title}">
-            <ui:ToggleSwitch IsChecked="{Binding ResetConfiguration, Mode=TwoWay}" />
-        </controls:OptionControl>
+                <ListBox x:Name="MsaaList" Grid.Row="1" Grid.ColumnSpan="2" Margin="0,14,0,0"
+                         Style="{StaticResource ZeroSegmentedList}" ItemTemplate="{StaticResource EnumSegmentTemplate}"
+                         ItemsSource="{Binding MSAALevels.Keys, Mode=OneTime}"
+                         SelectedItem="{Binding SelectedMSAALevel, Mode=TwoWay}"
+                         AutomationProperties.Name="{x:Static resources:Strings.Menu_FastFlags_Presets_MSAA_Title}" />
+            </Grid>
+        </Border>
 
-        <ui:CardAction Margin="0,8,0,0" Icon="EditSettings24" Command="{Binding OpenFastFlagEditorCommand}">
-            <StackPanel>
-                <TextBlock FontSize="14" Text="{x:Static resources:Strings.Menu_FastFlagEditor_Title}" />
-                <TextBlock Margin="0,2,0,0" FontSize="12" Text="{x:Static resources:Strings.Menu_FastFlags_Editor_Description}" Padding="0,0,16,0"  Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+        <!--  Texture quality  -->
+        <Border Style="{StaticResource ZeroSettingCardStyle}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Grid.Column="0">
+                    <TextBlock Text="{x:Static resources:Strings.Menu_FastFlags_Presets_TextureQuality_Title}" Style="{StaticResource ZeroCardTitleStyle}" />
+                    <TextBlock Text="Overrides the texture detail Roblox picks automatically." Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,0" />
+                </StackPanel>
+
+                <ui:Button Grid.Row="0" Grid.Column="1" Content="Reset" Click="TextureReset_Click" AutomationProperties.Name="Reset texture quality to automatic">
+                    <ui:Button.Style>
+                        <Style TargetType="{x:Type ui:Button}" BasedOn="{StaticResource ResetButtonStyle}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedItem, ElementName=TextureList}" Value="{x:Static flagpresets:TextureQuality.Default}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ui:Button.Style>
+                </ui:Button>
+
+                <ListBox x:Name="TextureList" Grid.Row="1" Grid.ColumnSpan="2" Margin="0,14,0,0"
+                         Style="{StaticResource ZeroSegmentedList}" ItemTemplate="{StaticResource EnumSegmentTemplate}"
+                         ItemsSource="{Binding TextureQualities.Keys, Mode=OneTime}"
+                         SelectedItem="{Binding SelectedTextureQuality, Mode=TwoWay}"
+                         AutomationProperties.Name="{x:Static resources:Strings.Menu_FastFlags_Presets_TextureQuality_Title}" />
+            </Grid>
+        </Border>
+
+        <!--  Display scaling  -->
+        <Border Style="{StaticResource ZeroSettingCardStyle}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="{x:Static resources:Strings.Menu_FastFlags_Presets_FixDisplayScaling_Title}" Style="{StaticResource ZeroCardTitleStyle}" />
+                    <TextBlock Text="{x:Static resources:Strings.Menu_FastFlags_Presets_FixDisplayScaling_Description}" Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,0" />
+                </StackPanel>
+                <ui:ToggleSwitch Grid.Column="1" Style="{StaticResource ZeroToggle}" Margin="16,0,0,0" VerticalAlignment="Center"
+                                 IsChecked="{Binding FixDisplayScaling, Mode=TwoWay}"
+                                 AutomationProperties.Name="{x:Static resources:Strings.Menu_FastFlags_Presets_FixDisplayScaling_Title}" />
+            </Grid>
+        </Border>
+
+        <TextBlock Text="Direct3D exclusive fullscreen with Alt + Enter is enabled by default." Style="{StaticResource ZeroCaptionStyle}" Margin="2,2,0,0" />
+
+        <!-- ============================== ZERO FASTFLAGS ============================== -->
+        <TextBlock Text="Zero FastFlags" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{DynamicResource ZeroSectionMargin}" />
+        <TextBlock Text="Official collections by ZeroStrap. Applying one replaces your current Fast Flags." Style="{StaticResource ZeroCaptionStyle}" Margin="0,4,0,14" />
+
+        <StackPanel x:Name="UndoPanel" Orientation="Horizontal" Margin="0,0,0,12" Visibility="Collapsed">
+            <TextBlock x:Name="UndoText" Style="{StaticResource ZeroCaptionStyle}" VerticalAlignment="Center" />
+            <ui:Button x:Name="UndoButton" Content="Undo" Style="{StaticResource ZeroButtonGhostSmall}" Margin="8,0,0,0"
+                       Click="CollectionUndo_Click" AutomationProperties.Name="Undo the last collection apply" />
+        </StackPanel>
+
+        <ItemsControl x:Name="OfficialList" ItemTemplate="{StaticResource OfficialCollectionTemplate}" Focusable="False" />
+
+        <!-- ============================== MY COLLECTIONS ============================== -->
+        <Grid Margin="{DynamicResource ZeroSectionMargin}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock Text="My collections" Style="{StaticResource ZeroSectionTitleStyle}" />
+                <TextBlock Text="Imported JSON collections. ZeroStrap keeps each file exactly as imported." Style="{StaticResource ZeroCaptionStyle}" Margin="0,4,0,0" />
             </StackPanel>
-        </ui:CardAction>
+            <ui:Button Grid.Column="1" Content="Import JSON&#8230;" Style="{StaticResource ZeroButtonSecondary}" Margin="16,0,0,0" VerticalAlignment="Center"
+                       Click="CollectionImport_Click" AutomationProperties.Name="Import JSON collection" />
+        </Grid>
+
+        <ui:Button x:Name="MigratePresetsButton" Style="{StaticResource ZeroButtonGhost}" HorizontalAlignment="Left" Margin="0,14,0,0" Visibility="Collapsed"
+                   Click="CollectionMigrate_Click" />
+
+        <TextBlock x:Name="MyCollectionsEmptyText" Text="No imported collections yet. Import a JSON object of flag names and values."
+                   Style="{StaticResource ZeroCaptionStyle}" Margin="0,14,0,0" Visibility="Collapsed" />
+
+        <ItemsControl x:Name="MyCollectionsList" ItemTemplate="{StaticResource ImportedCollectionTemplate}" Margin="0,14,0,0" Focusable="False" />
+
+        <!-- ============================== ADVANCED ============================== -->
+        <TextBlock Text="Advanced" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{DynamicResource ZeroSectionMargin}" />
+        <TextBlock Text="How ZeroStrap applies your flags to Roblox." Style="{StaticResource ZeroCaptionStyle}" Margin="0,4,0,14" />
+
+        <Border Style="{StaticResource ZeroSettingCardStyle}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="{x:Static resources:Strings.Menu_FastFlags_ManagerEnabled_Title}" Style="{StaticResource ZeroCardTitleStyle}" />
+                    <TextBlock Text="{x:Static resources:Strings.Menu_FastFlags_ManagerEnabled_Description}" Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,0" />
+                </StackPanel>
+                <ui:ToggleSwitch Grid.Column="1" Style="{StaticResource ZeroToggle}" Margin="16,0,0,0" VerticalAlignment="Center"
+                                 IsChecked="{Binding UseFastFlagManager, Mode=TwoWay}"
+                                 AutomationProperties.Name="{x:Static resources:Strings.Menu_FastFlags_ManagerEnabled_Title}" />
+            </Grid>
+        </Border>
+
+        <Border Style="{StaticResource ZeroSettingCardStyle}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="Memory flag injection" Style="{StaticResource ZeroCardTitleStyle}" />
+                    <TextBlock Text="Write enabled FFlags directly into the running Roblox process after launch via direct syscalls. Supplements ClientAppSettings.json for runtime-reset flags."
+                               Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,0" />
+                </StackPanel>
+                <ui:ToggleSwitch Grid.Column="1" Style="{StaticResource ZeroToggle}" Margin="16,0,0,0" VerticalAlignment="Center"
+                                 IsChecked="{Binding UseMemoryFlagInjection, Mode=TwoWay}"
+                                 AutomationProperties.Name="Memory flag injection" />
+            </Grid>
+        </Border>
+
+        <Border Style="{StaticResource ZeroSettingCardStyle}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="Memory flag watchdog" Style="{StaticResource ZeroCardTitleStyle}" />
+                    <TextBlock Text="Keep re-asserting flag values every few seconds while Roblox is running. Requires memory flag injection."
+                               Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,0" />
+                </StackPanel>
+                <ui:ToggleSwitch Grid.Column="1" Style="{StaticResource ZeroToggle}" Margin="16,0,0,0" VerticalAlignment="Center"
+                                 IsChecked="{Binding EnableMemoryFlagWatchdog, Mode=TwoWay}"
+                                 AutomationProperties.Name="Memory flag watchdog" />
+            </Grid>
+        </Border>
+
+        <Border Style="{StaticResource ZeroSettingCardStyle}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="{x:Static resources:Strings.Menu_FastFlags_Reset_Title}" Style="{StaticResource ZeroCardTitleStyle}" />
+                    <TextBlock Text="Clears every configured flag when you save. Turn it off again to restore them." Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,0" />
+                </StackPanel>
+                <ui:ToggleSwitch Grid.Column="1" Style="{StaticResource ZeroToggle}" Margin="16,0,0,0" VerticalAlignment="Center"
+                                 IsChecked="{Binding ResetConfiguration, Mode=TwoWay}"
+                                 AutomationProperties.Name="{x:Static resources:Strings.Menu_FastFlags_Reset_Title}" />
+            </Grid>
+        </Border>
     </StackPanel>
 </ui:UiPage>
