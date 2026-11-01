@@ -151,6 +151,24 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
         {
             _loaded = true;
 
+            // Only one process may run the macros: if the background host has them, it hands them over (and exits) now.
+            if (_runtime is null && MacroHostLock.Current is null)
+            {
+                var hostLock = await MacroHostLock.AcquireAsync(TimeSpan.FromSeconds(3), requestRelease: true);
+
+                if (hostLock is null)
+                {
+                    SetMessage("Your macros are running in another ZeroStrap process. Turn them off from its notification area icon, then reopen Macro Studio.");
+                    RecordButton.IsEnabled = RunButton.IsEnabled = NewMacroButton.IsEnabled = ImportButton.IsEnabled = false;
+                    return;
+                }
+
+                MacroHostLock.Current = hostLock;
+
+                if (!_loaded)
+                    return;
+            }
+
             try
             {
                 _runtime ??= MacroRuntime.Instance;

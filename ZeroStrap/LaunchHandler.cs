@@ -59,6 +59,11 @@ namespace ZeroStrap
                 App.Logger.WriteLine(LOG_IDENT, "Opening watcher");
                 LaunchWatcher();
             }
+            else if (App.LaunchSettings.MacroHostFlag.Active)
+            {
+                App.Logger.WriteLine(LOG_IDENT, "Opening background macro host");
+                UI.Utility.MacroBackgroundHost.Run();
+            }
             else if (App.LaunchSettings.BackgroundUpdaterFlag.Active)
             {
                 App.Logger.WriteLine(LOG_IDENT, "Opening background updater");

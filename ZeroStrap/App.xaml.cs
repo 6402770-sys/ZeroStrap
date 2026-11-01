@@ -379,6 +379,14 @@ namespace ZeroStrap
 
                 Logger.Initialize(LaunchSettings.UninstallFlag.Active);
 
+                // The bootstrapper starts the watcher and the background macro host back to back, so they can land on the same
+                // per-second log file name; the macro host then takes the next second's name instead of quitting.
+                if (!Logger.Initialized && !Logger.NoWriteMode && LaunchSettings.MacroHostFlag.Active)
+                {
+                    Thread.Sleep(1100);
+                    Logger.Initialize(LaunchSettings.UninstallFlag.Active);
+                }
+
                 if (!Logger.Initialized && !Logger.NoWriteMode)
                 {
                     Logger.WriteLine(LOG_IDENT, "Possible duplicate launch detected, terminating.");

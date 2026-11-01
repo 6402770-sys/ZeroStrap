@@ -781,6 +781,11 @@ namespace ZeroStrap
                     Process.Start(Paths.Process, args);
             }
 
+            // Macros keep working after this window closes: a background host owns them for the Roblox session (it does
+            // nothing and exits if no macro has a shortcut, or if the settings window already runs them).
+            if (_launchMode == LaunchMode.Player)
+                UI.Utility.MacroBackgroundHost.StartProcess();
+
             // allow for window to show, since the log is created pretty far beforehand
             Thread.Sleep(1000);
         }

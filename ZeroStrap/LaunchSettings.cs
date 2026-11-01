@@ -18,6 +18,8 @@ namespace ZeroStrap
 
         public LaunchFlag BackgroundUpdaterFlag     { get; } = new("backgroundupdater");
 
+        public LaunchFlag MacroHostFlag             { get; } = new("macrohost");
+
         public LaunchFlag QuietFlag                 { get; } = new("quiet");
 
         public LaunchFlag UninstallFlag             { get; } = new("uninstall");
@@ -43,7 +45,7 @@ namespace ZeroStrap
 #if DEBUG
         public bool BypassUpdateCheck => true;
 #else
-        public bool BypassUpdateCheck => UninstallFlag.Active || WatcherFlag.Active;
+        public bool BypassUpdateCheck => UninstallFlag.Active || WatcherFlag.Active || MacroHostFlag.Active;
 #endif
 
         public LaunchMode RobloxLaunchMode { get; set; } = LaunchMode.None;

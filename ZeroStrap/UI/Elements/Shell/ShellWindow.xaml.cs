@@ -516,6 +516,16 @@ namespace ZeroStrap.UI.Elements.Shell
             UI.Utility.MacroOverlayHost.Shutdown();
             Macros.MacroRuntime.TryDispose();
 
+            // Macros outlive this window: if it ran them, a background host takes over (it needs the lock released first).
+            var hostLock = Macros.MacroHostLock.Current;
+
+            if (hostLock is not null)
+            {
+                Macros.MacroHostLock.Current = null;
+                hostLock.Dispose();
+                UI.Utility.MacroBackgroundHost.StartProcess();
+            }
+
             if (App.LaunchSettings.TestModeFlag.Active)
                 LaunchHandler.LaunchRoblox(LaunchMode.Player);
             else
