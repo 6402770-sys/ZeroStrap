@@ -126,7 +126,7 @@ namespace ZeroStrap.Models.Theming
         public string? Media { get; set; }
 
         /// <summary>Scrim opacity over the media, 0 to 0.9.</summary>
-        public double Opacity { get; set; } = 0.5;
+        public double Opacity { get; set; } = 0.7; // dim enough that text over a bright video stays readable
 
         public int Blur { get; set; } = 0;
         public double Speed { get; set; } = 1.0;

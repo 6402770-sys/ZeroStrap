@@ -37,6 +37,75 @@ namespace ZeroStrap.UI.Elements.Controls
             ApplyColors(theme.Colors ?? new ThemeColors(), theme.Components?.ButtonStyle ?? ThemeButtonStyle.Solid);
             ApplyTypography(theme.Typography ?? new ThemeTypography());
             ApplyComponents(theme.Components ?? new ThemeComponents());
+            ApplyBackground(theme);
+        }
+
+        private string? _backdropPath;
+
+        /// <summary>Shows the theme's image (or a video's poster) under its scrim, with the blur scaled to the miniature.</summary>
+        private void ApplyBackground(ThemeDefinition theme)
+        {
+            string? path = null;
+            var b = theme.Background;
+
+            if (ThemeMedia.HasBackground(b) && theme.Kind == ThemeKind.Custom)
+            {
+                try
+                {
+                    path = ThemeManager.Store.GetMediaPath(theme);
+                    if (path is not null && b!.Type == ThemeBackgroundType.Video)
+                    {
+                        string poster = Path.Combine(Path.GetDirectoryName(path)!, ThemeMedia.PosterName(Path.GetFileName(path)));
+                        path = File.Exists(poster) ? poster : null;
+                    }
+                }
+                catch (Exception ex) when (ex is IOException or InvalidOperationException)
+                {
+                    path = null;
+                }
+            }
+
+            if (path is null)
+            {
+                BackdropLayer.Visibility = Visibility.Collapsed;
+                BackdropImage.Source = null;
+                _backdropPath = null;
+                return;
+            }
+
+            if (!string.Equals(path, _backdropPath, StringComparison.OrdinalIgnoreCase))
+            {
+                _backdropPath = path;
+
+                try
+                {
+                    var image = new System.Windows.Media.Imaging.BitmapImage();
+                    image.BeginInit();
+                    image.UriSource = new Uri(path);
+                    image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                    image.CreateOptions = System.Windows.Media.Imaging.BitmapCreateOptions.IgnoreColorProfile;
+                    image.DecodePixelWidth = 640;
+                    image.EndInit();
+                    image.Freeze();
+                    BackdropImage.Source = image;
+                }
+                catch (Exception ex) when (ex is NotSupportedException or IOException or InvalidOperationException or FileFormatException or ArgumentException)
+                {
+                    BackdropImage.Source = null;
+                    BackdropLayer.Visibility = Visibility.Collapsed;
+                    return;
+                }
+            }
+
+            double scale = 0.3; // the miniature is roughly a third of the app window
+            int blur = Math.Clamp(b!.Blur, ThemeValidator.MinBlur, ThemeValidator.MaxBlur);
+            BackdropImage.Effect = blur > 0 ? new System.Windows.Media.Effects.BlurEffect { Radius = blur * scale } : null;
+
+            BackdropScrim.Fill = ColorMath.TryParseHex(theme.Colors?.Background, out var rgb)
+                ? new SolidColorBrush(Color.FromRgb(rgb.R, rgb.G, rgb.B))
+                : Brushes.Black;
+            BackdropScrim.Opacity = Math.Clamp(b.Opacity, ThemeValidator.MinScrim, ThemeValidator.MaxScrim);
+            BackdropLayer.Visibility = Visibility.Visible;
         }
 
         private void ApplyColors(ThemeColors c, ThemeButtonStyle buttonStyle)

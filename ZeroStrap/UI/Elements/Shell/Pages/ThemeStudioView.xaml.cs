@@ -119,6 +119,9 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
         private bool _loading;
         private bool _subscribed;
         private string? _noteMessage;
+        private readonly HashSet<string> _pendingRelease = new(StringComparer.OrdinalIgnoreCase);
+        private MediaElement? _thumbVideo;
+        private bool _backgroundBusy;
 
         /// <summary>One entry in the font family list: the stored family name and the text shown for it.</summary>
         private sealed record FontChoice(string Value, string Display);
@@ -153,7 +156,12 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             {
                 _subscribed = true;
                 ThemeManager.ThemeChanged += ThemeManager_ThemeChanged;
+                BackgroundNoticeBoard.Default.Posted += BackgroundNotice_Posted;
                 Dispatcher.ShutdownStarted += Dispatcher_ShutdownStarted;
+
+                // Sweep media a failed delete left behind (nothing is pending or being imported at this point).
+                if (!_dirty && _pendingRelease.Count == 0)
+                    Store.PruneOrphanedMedia();
             }
 
             LoadMotionControls();
@@ -168,7 +176,33 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             {
                 _subscribed = false;
                 ThemeManager.ThemeChanged -= ThemeManager_ThemeChanged;
+                BackgroundNoticeBoard.Default.Posted -= BackgroundNotice_Posted;
                 Dispatcher.ShutdownStarted -= Dispatcher_ShutdownStarted;
+            }
+
+            StopThumbnailVideo();
+        }
+
+        private void BackgroundNotice_Posted(string themeId)
+        {
+            if (!Dispatcher.CheckAccess())
+            {
+                Dispatcher.BeginInvoke(new Action(() => BackgroundNotice_Posted(themeId)));
+                return;
+            }
+
+            ShowBackgroundNoticeIfAny();
+        }
+
+        /// <summary>The backdrop could not show this theme's media: say so once.</summary>
+        private void ShowBackgroundNoticeIfAny()
+        {
+            if (_selected.Kind == ThemeKind.Custom && BackgroundNoticeBoard.Default.Take(_selected.Id) is { } message)
+            {
+                ShowNote(message);
+
+                if (BackgroundMessage is not null)
+                    ShowBackgroundMessage(message, MessageKind.Error);
             }
         }
 
@@ -255,6 +289,7 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
             LoadSelected();
             UpdateActiveState();
+            ShowBackgroundNoticeIfAny();
         }
 
         /// <summary>Shows the selected theme in the header, preview and editor.</summary>
@@ -418,7 +453,7 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
         private void SectionTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (TypographySection is null || LayoutSection is null || ComponentsSection is null)
+            if (TypographySection is null || LayoutSection is null || ComponentsSection is null || BackgroundSection is null)
                 return; // raised while the XAML is still being built
 
             int index = SectionTabs.SelectedIndex;
@@ -426,6 +461,10 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             TypographySection.Visibility = index == 1 ? Visibility.Visible : Visibility.Collapsed;
             LayoutSection.Visibility = index == 2 ? Visibility.Visible : Visibility.Collapsed;
             ComponentsSection.Visibility = index == 3 ? Visibility.Visible : Visibility.Collapsed;
+            BackgroundSection.Visibility = index == 4 ? Visibility.Visible : Visibility.Collapsed;
+
+            // The thumbnail video only runs while its section is on screen.
+            UpdateThumbnail();
         }
 
         /// <summary>Installed font families, sorted, with the default stack first. Built once.</summary>
@@ -513,6 +552,8 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
                 SelectByTag(ButtonStyleList, _selected.Components.ButtonStyle.ToString());
                 SelectByTag(SurfaceStyleList, _selected.Components.SurfaceStyle.ToString());
+
+                LoadBackgroundControls();
             }
             finally
             {
@@ -658,6 +699,20 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             // Unreadable primary text is saved but never pushed live to the whole app.
             if (ThemeManager.ActiveId == SelectedManagerId && !PrimaryTextBlocked)
                 ThemeManager.Refresh();
+
+            // Media this theme no longer uses is deleted once no saved theme references it. Deferred a little so the
+            // backdrop has released a file it was still playing; anything left over is swept up the next time this opens.
+            if (_pendingRelease.Count > 0)
+            {
+                var release = _pendingRelease.ToArray();
+                _pendingRelease.Clear();
+
+                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ApplicationIdle, new Action(() =>
+                {
+                    foreach (var media in release)
+                        Store.ReleaseMedia(media);
+                }));
+            }
         }
 
         private void ShowNote(string text)
@@ -666,6 +721,404 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             UpdateStatusLine();
             _noteTimer.Stop();
             _noteTimer.Start();
+        }
+
+        // ---------------------------------------------------------------- background
+
+        private enum MessageKind { Info, Warning, Error }
+
+        private ThemeBackground EnsureBackground() => _selected.Background ??= new ThemeBackground();
+
+        private static void Log(string message) => App.Logger.WriteLine("ThemeStudioView", message);
+
+        /// <summary>Fills the Background section from the selected theme. Called with <c>_loading</c> set.</summary>
+        private void LoadBackgroundControls()
+        {
+            var b = EnsureBackground();
+            bool has = ThemeMedia.HasBackground(b);
+
+            SelectByTag(BackgroundTypeList, (has ? b.Type : ThemeBackgroundType.None).ToString());
+
+            int dim = (int)Math.Round(Math.Clamp(b.Opacity, ThemeValidator.MinScrim, ThemeValidator.MaxScrim) * 100 / 5) * 5;
+            DimSlider.Value = dim;
+            DimLabel.Text = dim + " %";
+
+            int blur = Math.Clamp(b.Blur, ThemeValidator.MinBlur, ThemeValidator.MaxBlur);
+            BlurSlider.Value = blur;
+            BlurLabel.Text = blur + " px";
+
+            int speed = (int)Math.Round(Math.Clamp(b.Speed, ThemeValidator.MinSpeed, ThemeValidator.MaxSpeed) * 100 / 25) * 25;
+            SpeedSlider.Value = speed;
+            SpeedLabel.Text = FormatSpeed(speed / 100.0);
+
+            ShowBackgroundMessage(null, MessageKind.Info);
+            RefreshBackgroundUi();
+        }
+
+        private static string FormatSpeed(double speed) => speed.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + "×";
+
+        private void RefreshBackgroundUi()
+        {
+            var b = EnsureBackground();
+            bool has = ThemeMedia.HasBackground(b);
+            bool video = has && b.Type == ThemeBackgroundType.Video;
+
+            BackgroundDetails.Visibility = has ? Visibility.Visible : Visibility.Collapsed;
+            SpeedRow.Visibility = video ? Visibility.Visible : Visibility.Collapsed;
+            BackgroundCaption.Visibility = video ? Visibility.Visible : Visibility.Collapsed;
+
+            if (has)
+            {
+                string? path = Store.GetMediaPath(_selected);
+                BackgroundFileText.Text = path is null ? "File missing" : (b.Type == ThemeBackgroundType.Video ? "Video" : "Image") + " · " + ThemeMedia.FormatSize(new FileInfo(path).Length);
+                BackgroundFileCaption.Text = path is null ? "The file is no longer in ZeroStrap's media folder. Choose another." : "Stored in ZeroStrap's theme media folder.";
+            }
+
+            UpdateThumbnail();
+        }
+
+        private void ShowBackgroundMessage(string? text, MessageKind kind)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                BackgroundMessage.Text = "";
+                BackgroundMessage.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            BackgroundMessage.Text = text;
+            BackgroundMessage.SetResourceReference(TextBlock.ForegroundProperty, kind switch
+            {
+                MessageKind.Error => "ZeroStatusErrorBrush",
+                MessageKind.Warning => "ZeroStatusWarningBrush",
+                _ => "TextFillColorSecondaryBrush"
+            });
+            BackgroundMessage.Visibility = Visibility.Visible;
+        }
+
+        private void SetBackgroundBusy(bool busy, string? message = null)
+        {
+            _backgroundBusy = busy;
+            BackgroundTypeList.IsEnabled = !busy;
+            ChooseFileButton.IsEnabled = !busy;
+            RemoveBackgroundButton.IsEnabled = !busy;
+            DimSlider.IsEnabled = !busy;
+            BlurSlider.IsEnabled = !busy;
+            SpeedSlider.IsEnabled = !busy;
+
+            if (busy)
+                ShowBackgroundMessage(message, MessageKind.Info);
+        }
+
+        // thumbnail ----------------------------------------------------
+
+        private void StopThumbnailVideo()
+        {
+            var video = _thumbVideo;
+            if (video is null)
+                return;
+
+            _thumbVideo = null;
+            video.MediaEnded -= ThumbVideo_MediaEnded;
+            video.MediaFailed -= ThumbVideo_MediaFailed;
+
+            try
+            {
+                video.Stop();
+                video.Close();
+            }
+            catch (InvalidOperationException)
+            {
+            }
+
+            video.Source = null;
+            BackgroundThumbHost.Children.Remove(video);
+        }
+
+        private void ThumbVideo_MediaEnded(object sender, RoutedEventArgs e)
+        {
+            if (sender is MediaElement video && ReferenceEquals(video, _thumbVideo))
+            {
+                video.Position = TimeSpan.Zero;
+                video.Play();
+            }
+        }
+
+        private void ThumbVideo_MediaFailed(object? sender, ExceptionRoutedEventArgs e)
+        {
+            Log("Thumbnail video failed: " + e.ErrorException?.Message);
+            StopThumbnailVideo();
+        }
+
+        /// <summary>16:9 preview of the chosen media: the picture, or a muted looping video while this section is visible.</summary>
+        private void UpdateThumbnail()
+        {
+            if (BackgroundThumb is null)
+                return;
+
+            StopThumbnailVideo();
+
+            var b = _selected.Background;
+            string? path = ThemeMedia.HasBackground(b) && _selected.Kind == ThemeKind.Custom ? Store.GetMediaPath(_selected) : null;
+
+            if (path is null)
+            {
+                BackgroundThumb.Visibility = Visibility.Collapsed;
+                BackgroundThumbImage.Source = null;
+                return;
+            }
+
+            BackgroundThumb.Visibility = Visibility.Visible;
+            bool video = b!.Type == ThemeBackgroundType.Video;
+
+            string imagePath = video ? Path.Combine(Path.GetDirectoryName(path)!, ThemeMedia.PosterName(Path.GetFileName(path))) : path;
+            BackgroundThumbImage.Source = File.Exists(imagePath) ? LoadThumbnail(imagePath) : null;
+
+            if (video && BackgroundSection.Visibility == Visibility.Visible && IsLoaded)
+            {
+                var player = new MediaElement
+                {
+                    LoadedBehavior = MediaState.Manual,
+                    UnloadedBehavior = MediaState.Manual,
+                    IsMuted = true,
+                    Volume = 0,
+                    Stretch = Stretch.UniformToFill
+                };
+
+                player.MediaEnded += ThumbVideo_MediaEnded;
+                player.MediaFailed += ThumbVideo_MediaFailed;
+
+                _thumbVideo = player;
+                BackgroundThumbHost.Children.Add(player);
+                player.Source = new Uri(path);
+                player.Play();
+            }
+        }
+
+        private static ImageSource? LoadThumbnail(string path)
+        {
+            try
+            {
+                var image = new System.Windows.Media.Imaging.BitmapImage();
+                image.BeginInit();
+                image.UriSource = new Uri(path);
+                image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                image.CreateOptions = System.Windows.Media.Imaging.BitmapCreateOptions.IgnoreColorProfile;
+                image.DecodePixelWidth = 640;
+                image.EndInit();
+                image.Freeze();
+                return image;
+            }
+            catch (Exception ex) when (ex is NotSupportedException or IOException or InvalidOperationException or FileFormatException or ArgumentException)
+            {
+                return null;
+            }
+        }
+
+        // handlers ------------------------------------------------------
+
+        private async void BackgroundType_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_loading || _backgroundBusy || _selected.Kind != ThemeKind.Custom || TagOf(BackgroundTypeList) is not { } tag
+                || !Enum.TryParse<ThemeBackgroundType>(tag, out var kind))
+                return;
+
+            var b = EnsureBackground();
+            var current = ThemeMedia.HasBackground(b) ? b.Type : ThemeBackgroundType.None;
+            if (kind == current)
+                return;
+
+            if (kind == ThemeBackgroundType.None)
+            {
+                RemoveBackground();
+                return;
+            }
+
+            if (!await ChooseBackgroundAsync(kind))
+                RevertBackgroundType();
+        }
+
+        private void RevertBackgroundType()
+        {
+            _loading = true;
+            try
+            {
+                var b = EnsureBackground();
+                SelectByTag(BackgroundTypeList, (ThemeMedia.HasBackground(b) ? b.Type : ThemeBackgroundType.None).ToString());
+            }
+            finally
+            {
+                _loading = false;
+            }
+        }
+
+        private async void ChooseFile_Click(object sender, RoutedEventArgs e)
+        {
+            var b = EnsureBackground();
+            if (!ThemeMedia.HasBackground(b) || _backgroundBusy)
+                return;
+
+            await ChooseBackgroundAsync(b.Type);
+        }
+
+        /// <summary>
+        /// Asks for a file, validates it, proves it opens, copies it into the media folder (content-addressed), captures
+        /// a poster for videos and assigns it to the selected theme. Returns false when nothing was changed.
+        /// </summary>
+        private async Task<bool> ChooseBackgroundAsync(ThemeBackgroundType kind)
+        {
+            var dialog = new OpenFileDialog
+            {
+                Title = kind == ThemeBackgroundType.Video ? "Choose a background video" : "Choose a background image",
+                Filter = kind == ThemeBackgroundType.Video ? "MP4 video (*.mp4)|*.mp4" : "Images (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg",
+                CheckFileExists = true
+            };
+
+            if (dialog.ShowDialog(Owner) != true)
+                return false;
+
+            return await SetBackgroundFromFileAsync(kind, dialog.FileName);
+        }
+
+        /// <summary>The validation and import pipeline behind Choose file (public to the page so it can be driven without a dialog).</summary>
+        internal async Task<bool> SetBackgroundFromFileAsync(ThemeBackgroundType kind, string source)
+        {
+            if (_selected.Kind != ThemeKind.Custom)
+                return false;
+
+            var target = _selected;
+
+            var check = ThemeMedia.CheckFile(source, kind);
+            if (!check.Ok)
+            {
+                ShowBackgroundMessage(check.Error, MessageKind.Error);
+                return false;
+            }
+
+            SetBackgroundBusy(true, "Checking the file…");
+
+            try
+            {
+                var probe = await MediaProbe.ProbeAsync(source, kind == ThemeBackgroundType.Video);
+                if (!probe.Ok)
+                {
+                    Log($"Rejected background {Path.GetFileName(source)}: {probe.Error}");
+                    ShowBackgroundMessage(probe.Error, MessageKind.Error);
+                    return false;
+                }
+
+                ShowBackgroundMessage("Adding the file…", MessageKind.Info);
+                string mediaDir = Store.MediaDirectory;
+                var imported = await Task.Run(() => ThemeMedia.Import(mediaDir, source));
+
+                if (kind == ThemeBackgroundType.Video)
+                {
+                    string stored = Path.Combine(mediaDir, imported.Name);
+                    string poster = Path.Combine(mediaDir, ThemeMedia.PosterName(imported.Name));
+
+                    if (!File.Exists(poster) && !await MediaProbe.CapturePosterAsync(stored, poster, Log))
+                        Log("No poster could be captured; reduced motion will show the plain background.");
+                }
+
+                if (!ReferenceEquals(target, _selected))
+                {
+                    // The user moved to another theme while the file was being checked.
+                    Store.ReleaseMedia(imported.Name);
+                    return false;
+                }
+
+                var background = EnsureBackground();
+                string? previous = background.Media;
+
+                background.Type = kind;
+                background.Media = imported.Name;
+
+                if (!string.IsNullOrEmpty(previous) && !string.Equals(previous, imported.Name, StringComparison.OrdinalIgnoreCase))
+                    _pendingRelease.Add(previous);
+
+                RevertBackgroundType();
+                RefreshBackgroundUi();
+                ShowBackgroundMessage(check.Warning, MessageKind.Warning);
+                Edited();
+                return true;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                Log("Could not add background: " + ex.Message);
+                ShowBackgroundMessage("Couldn't copy that file into ZeroStrap: " + ex.Message, MessageKind.Error);
+                return false;
+            }
+            finally
+            {
+                SetBackgroundBusy(false);
+            }
+        }
+
+        private void RemoveBackground_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_backgroundBusy)
+                RemoveBackground();
+        }
+
+        private void RemoveBackground()
+        {
+            var b = EnsureBackground();
+
+            if (!string.IsNullOrEmpty(b.Media))
+                _pendingRelease.Add(b.Media);
+
+            b.Type = ThemeBackgroundType.None;
+            b.Media = null;
+
+            RevertBackgroundType();
+            RefreshBackgroundUi();
+            ShowBackgroundMessage(null, MessageKind.Info);
+            Edited();
+        }
+
+        private void DimSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (DimLabel is null)
+                return;
+
+            int percent = (int)Math.Round(DimSlider.Value);
+            DimLabel.Text = percent + " %";
+
+            if (_loading)
+                return;
+
+            EnsureBackground().Opacity = percent / 100.0;
+            Edited();
+        }
+
+        private void BlurSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (BlurLabel is null)
+                return;
+
+            int blur = (int)Math.Round(BlurSlider.Value);
+            BlurLabel.Text = blur + " px";
+
+            if (_loading)
+                return;
+
+            EnsureBackground().Blur = blur;
+            Edited();
+        }
+
+        private void SpeedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (SpeedLabel is null)
+                return;
+
+            double speed = Math.Round(SpeedSlider.Value) / 100.0;
+            SpeedLabel.Text = FormatSpeed(speed);
+
+            if (_loading)
+                return;
+
+            EnsureBackground().Speed = speed;
+            Edited();
         }
 
         // ---------------------------------------------------------------- activation
@@ -745,12 +1198,14 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             // Saved with the rest of the settings (Ctrl + S); takes effect immediately in this session.
             App.Settings.Prop.ReduceMotion = AnimationsToggle.IsChecked != true;
             UpdateMotionEnabled();
+            Motion.NotifyChanged();
         }
 
         private void FollowWindowsToggle_Click(object sender, RoutedEventArgs e)
         {
             App.Settings.Prop.FollowWindowsAnimations = FollowWindowsToggle.IsChecked == true;
             UpdateMotionEnabled();
+            Motion.NotifyChanged();
         }
 
         private void Intensity_SelectionChanged(object sender, SelectionChangedEventArgs e)

@@ -322,14 +322,108 @@ namespace ZeroStrap.UI.Theming
                 reset.Kind = ThemeKind.Custom;
                 reset.BasedOn = origin.Kind == ThemeKind.Builtin ? origin.Id : (origin.BasedOn ?? BuiltinThemes.ForBase(origin.Base).Id);
 
+                string? oldMedia = theme.Background?.Media;
                 Save(reset);
+                ReleaseMedia(oldMedia);
                 return reset;
+            }
+        }
+
+        /// <summary>
+        /// Deletes a background media file (and a video's poster) when no custom theme references it any more.
+        /// Safe to call at any time: a file that is still used is kept.
+        /// </summary>
+        public void ReleaseMedia(string? media)
+        {
+            if (string.IsNullOrEmpty(media))
+                return;
+
+            lock (_lock)
+            {
+                if (ThemeMedia.IsReferenced(media, ReadCustoms()))
+                    return;
+
+                foreach (var file in ThemeMedia.FilesFor(media))
+                {
+                    try
+                    {
+                        if (file.IndexOfAny(new[] { '/', '\\', ':' }) >= 0)
+                            continue;
+
+                        string path = Path.Combine(_mediaDir, file);
+                        if (File.Exists(path))
+                            File.Delete(path);
+                    }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+                    {
+                        Log($"Could not delete media {file}: {ex.Message}");
+                    }
+                }
+            }
+        }
+
+        private static readonly Regex StoredMediaName =
+            new(@"^[0-9a-f]{64}(\.poster\.png|\.mp4|\.png|\.jpg|\.jpeg)$", RegexOptions.Compiled);
+
+        /// <summary>
+        /// Deletes content-addressed media files (sha256 names) that no custom theme references, e.g. left behind when a
+        /// delete failed because the file was still open. Does nothing when a theme file could not be read, so media of a
+        /// temporarily unreadable theme is never removed. Returns the number of files deleted.
+        /// </summary>
+        public int PruneOrphanedMedia()
+        {
+            lock (_lock)
+            {
+                if (!Directory.Exists(_mediaDir))
+                    return 0;
+
+                try
+                {
+                    var customs = ReadCustoms().ToList();
+                    if (Directory.Exists(_themesDir) && Directory.GetFiles(_themesDir, "*.json").Length != customs.Count)
+                        return 0;
+
+                    var keep = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var theme in customs)
+                    {
+                        if (!string.IsNullOrEmpty(theme.Background?.Media))
+                            foreach (var file in ThemeMedia.FilesFor(theme.Background.Media))
+                                keep.Add(file);
+                    }
+
+                    int deleted = 0;
+                    foreach (var path in Directory.GetFiles(_mediaDir))
+                    {
+                        string name = Path.GetFileName(path);
+                        if (!StoredMediaName.IsMatch(name) || keep.Contains(name))
+                            continue;
+
+                        try
+                        {
+                            File.Delete(path);
+                            deleted++;
+                        }
+                        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                        {
+                            Log($"Could not delete orphaned media {name}: {ex.Message}");
+                        }
+                    }
+
+                    return deleted;
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    Log($"Could not prune media: {ex.Message}");
+                    return 0;
+                }
             }
         }
 
         /// <summary>Deletes a custom theme (and its media when no other theme uses it). Built-ins cannot be deleted.</summary>
         public void Delete(string id)
         {
+            string? media;
+
             lock (_lock)
             {
                 if (BuiltinThemes.IsBuiltinId(id))
@@ -346,23 +440,14 @@ namespace ZeroStrap.UI.Theming
                     throw new ThemeStoreException("Could not delete the theme: " + ex.Message);
                 }
 
-                string? media = theme.Background?.Media;
-                if (!string.IsNullOrEmpty(media) && !ReadCustoms().Any(t => string.Equals(t.Background?.Media, media, StringComparison.OrdinalIgnoreCase)))
-                {
-                    try
-                    {
-                        string path = Path.Combine(_mediaDir, media);
-                        if (File.Exists(path))
-                            File.Delete(path);
-                    }
-                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
-                    {
-                        Log($"Could not delete media for {id}: {ex.Message}");
-                    }
-                }
+                media = theme.Background?.Media;
             }
 
+            // Listeners go first: the shell backdrop may still be playing this theme's media and must let go of it
+            // before the file can be deleted.
             Deleted?.Invoke(id);
+
+            ReleaseMedia(media);
         }
 
         private ThemeDefinition GetCustomOrThrow(string id)

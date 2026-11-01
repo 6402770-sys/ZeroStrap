@@ -14,6 +14,12 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
+            <!-- Background image (or a video's poster) under its scrim; the sidebar keeps its surface, as in the app -->
+            <Grid x:Name="BackdropLayer" Grid.ColumnSpan="2" ClipToBounds="True" Visibility="Collapsed" IsHitTestVisible="False">
+                <Image x:Name="BackdropImage" Stretch="UniformToFill" Margin="-8" RenderOptions.BitmapScalingMode="HighQuality" />
+                <Rectangle x:Name="BackdropScrim" />
+            </Grid>
+
             <!-- Sidebar -->
             <Border x:Name="Sidebar" BorderThickness="0,0,1,0" Padding="10,14" CornerRadius="11,0,0,11">
                 <StackPanel>

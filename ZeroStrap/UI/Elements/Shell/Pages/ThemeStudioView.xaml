@@ -216,6 +216,7 @@
                             <ListBoxItem Content="Typography" />
                             <ListBoxItem Content="Layout" />
                             <ListBoxItem Content="Components" />
+                            <ListBoxItem Content="Background" />
                         </ListBox>
 
                         <!-- Colors -->
@@ -384,6 +385,130 @@
                                     <ListBoxItem Content="Outlined" Tag="Outlined" />
                                 </ListBox>
                             </Grid>
+                        </StackPanel>
+
+                        <!-- Background -->
+                        <StackPanel x:Name="BackgroundSection" Visibility="Collapsed" Margin="0,6,0,0">
+                            <Grid Margin="0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                    <TextBlock Text="Background" FontSize="{DynamicResource ZeroFontSize14}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                    <TextBlock Text="A picture or a looping video behind the app. The sidebar keeps its own surface."
+                                               Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="0,3,0,0" />
+                                </StackPanel>
+                                <ListBox x:Name="BackgroundTypeList" Grid.Column="1" Style="{StaticResource ZeroSegmentedList}" VerticalAlignment="Center"
+                                         SelectionChanged="BackgroundType_SelectionChanged" AutomationProperties.Name="Background type">
+                                    <ListBoxItem Content="None" Tag="None" />
+                                    <ListBoxItem Content="Image" Tag="Image" />
+                                    <ListBoxItem Content="Video" Tag="Video" />
+                                </ListBox>
+                            </Grid>
+
+                            <TextBlock x:Name="BackgroundMessage" Visibility="Collapsed" TextWrapping="Wrap" Margin="0,0,0,10"
+                                       FontSize="{DynamicResource ZeroFontSize12}" AutomationProperties.AutomationId="BackgroundMessage" />
+
+                            <StackPanel x:Name="BackgroundDetails">
+                                <Border Style="{StaticResource ZeroDividerStyle}" />
+
+                                <Grid Margin="0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                        <TextBlock x:Name="BackgroundFileText" Text="No file chosen" FontSize="{DynamicResource ZeroFontSize14}" TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                        <TextBlock x:Name="BackgroundFileCaption" Text="" Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,0" />
+                                    </StackPanel>
+                                    <ui:Button x:Name="ChooseFileButton" Grid.Column="1" Content="Choose file…" Style="{StaticResource ZeroButtonSecondary}"
+                                               VerticalAlignment="Center" Click="ChooseFile_Click" AutomationProperties.Name="Choose background file" />
+                                </Grid>
+
+                                <Border x:Name="BackgroundThumb" Width="320" Height="180" HorizontalAlignment="Left" Margin="0,0,0,14" ClipToBounds="True"
+                                        CornerRadius="{DynamicResource ZeroRadius8}" BorderThickness="1" Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" AutomationProperties.Name="Background preview">
+                                    <Grid x:Name="BackgroundThumbHost">
+                                        <Image x:Name="BackgroundThumbImage" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                                    </Grid>
+                                </Border>
+                                <Border Style="{StaticResource ZeroDividerStyle}" />
+
+                                <Grid Margin="0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                        <TextBlock Text="Dim" FontSize="{DynamicResource ZeroFontSize14}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                        <TextBlock Text="Darkens (or lightens) the picture with the theme's background colour so text stays readable."
+                                                   Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="0,3,0,0" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Slider x:Name="DimSlider" Width="180" Minimum="0" Maximum="90" TickFrequency="5" SmallChange="5" LargeChange="10"
+                                                IsSnapToTickEnabled="True" VerticalAlignment="Center" ValueChanged="DimSlider_ValueChanged"
+                                                AutomationProperties.Name="Dim" />
+                                        <TextBlock x:Name="DimLabel" Text="50 %" Width="48" TextAlignment="Right" VerticalAlignment="Center" Margin="10,0,0,0"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                                <Border Style="{StaticResource ZeroDividerStyle}" />
+
+                                <Grid Margin="0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                        <TextBlock Text="Blur" FontSize="{DynamicResource ZeroFontSize14}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                        <TextBlock Text="Softens the picture. Strong blur is drawn at half resolution to stay light."
+                                                   Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="0,3,0,0" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Slider x:Name="BlurSlider" Width="180" Minimum="0" Maximum="30" TickFrequency="1" SmallChange="1" LargeChange="5"
+                                                IsSnapToTickEnabled="True" VerticalAlignment="Center" ValueChanged="BlurSlider_ValueChanged"
+                                                AutomationProperties.Name="Blur" />
+                                        <TextBlock x:Name="BlurLabel" Text="0 px" Width="48" TextAlignment="Right" VerticalAlignment="Center" Margin="10,0,0,0"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <StackPanel x:Name="SpeedRow">
+                                    <Border Style="{StaticResource ZeroDividerStyle}" />
+                                    <Grid Margin="0,14">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                            <TextBlock Text="Playback speed" FontSize="{DynamicResource ZeroFontSize14}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                            <TextBlock Text="From a quarter of normal speed to double."
+                                                       Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,0" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Slider x:Name="SpeedSlider" Width="180" Minimum="25" Maximum="200" TickFrequency="25" SmallChange="25" LargeChange="25"
+                                                    IsSnapToTickEnabled="True" VerticalAlignment="Center" ValueChanged="SpeedSlider_ValueChanged"
+                                                    AutomationProperties.Name="Playback speed" />
+                                            <TextBlock x:Name="SpeedLabel" Text="1×" Width="48" TextAlignment="Right" VerticalAlignment="Center" Margin="10,0,0,0"
+                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                                <Border Style="{StaticResource ZeroDividerStyle}" />
+
+                                <Grid Margin="0,14,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="BackgroundCaption" Text="Videos play muted and pause while ZeroStrap is minimized. With reduced motion a still frame is shown."
+                                               Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,16,0" />
+                                    <ui:Button x:Name="RemoveBackgroundButton" Grid.Column="1" Content="Remove background" Style="{StaticResource ZeroButtonGhost}"
+                                               VerticalAlignment="Center" Click="RemoveBackground_Click" />
+                                </Grid>
+                            </StackPanel>
                         </StackPanel>
                     </StackPanel>
                 </Border>

@@ -27,6 +27,11 @@ namespace ZeroStrap.UI.Utility
             }
         }
 
+        /// <summary>Raised after a motion preference changed (Theme Studio toggles), so long-running visuals can react.</summary>
+        public static event Action? Changed;
+
+        public static void NotifyChanged() => Changed?.Invoke();
+
         /// <summary>Subtle shortens travel and duration; Standard is the shipped feel.</summary>
         public static MotionIntensity Intensity => App.Settings.Loaded ? App.Settings.Prop.MotionIntensity : MotionIntensity.Standard;
 

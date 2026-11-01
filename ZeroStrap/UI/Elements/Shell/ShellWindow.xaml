@@ -8,6 +8,7 @@
                   xmlns:resources="clr-namespace:ZeroStrap.Resources"
                   xmlns:vm="clr-namespace:ZeroStrap.UI.ViewModels.Shell"
                   xmlns:motion="clr-namespace:ZeroStrap.UI.Utility"
+                  xmlns:controls="clr-namespace:ZeroStrap.UI.Elements.Controls"
                   mc:Ignorable="d"
                   d:DataContext="{d:DesignInstance vm:ShellViewModel, IsDesignTimeCreatable=True}"
                   Title="ZeroStrap"
@@ -28,6 +29,9 @@
             <ColumnDefinition Width="248" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
+
+        <!-- Theme image/video background: the very back layer. The sidebar keeps its surface; the content area and top bar let it through. -->
+        <controls:BackgroundHost x:Name="Backdrop" Grid.Column="0" Grid.ColumnSpan="2" />
 
         <ui:Snackbar x:Name="SettingsSavedSnackbar"
                      Title="{x:Static resources:Strings.Menu_SettingsSaved_Title}"
@@ -161,7 +165,17 @@
         </Border>
 
         <!-- ============================== CONTENT ============================== -->
-        <Grid Grid.Column="1" Background="{DynamicResource SolidBackgroundFillColorBaseBrush}">
+        <Grid Grid.Column="1">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Background" Value="{DynamicResource SolidBackgroundFillColorBaseBrush}" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsActive, ElementName=Backdrop}" Value="True">
+                            <Setter Property="Background" Value="Transparent" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
             <Grid.RowDefinitions>
                 <RowDefinition Height="68" />
                 <RowDefinition Height="*" />
