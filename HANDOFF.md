@@ -59,3 +59,9 @@ Read this first in a new session. Keep it short and factual; update it at each m
 ## Working method
 - Opus designs/reviews; one implementation worker at a time (`savvy-medium` default, `savvy-careful` only for security/migration-critical code). Workers get only the files and spec excerpts they need.
 - Targeted tests while building; full suite at each commit. One commit per phase.
+
+## Next session — start here
+1. Phase 10b (Macro Studio): timeline editor (`UI/Elements/Controls/MacroTimeline.cs`, custom virtualised Canvas: one lane per category, Ctrl+wheel zoom, drag to retime, edge-drag durations, multi-select delete/duplicate/group), list/timeline toggle kept in sync, camera inspector polish, import/export polish. Plan section 13 has the screen.
+2. Fold in the 10a leftovers listed under Known issues (toolbar wrap at 1120 px, invalid edits lost on navigation).
+3. Ask the owner to do the manual macro checks (real recording + F9, playback in Roblox, elevated-window warning) if not yet reported.
+4. Then: update HANDOFF, decide with the owner on pushing / PR (nothing pushed yet).
