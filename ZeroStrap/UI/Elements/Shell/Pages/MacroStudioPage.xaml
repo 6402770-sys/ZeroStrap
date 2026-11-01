@@ -9,33 +9,484 @@
       d:DesignHeight="720" d:DesignWidth="1030"
       Title="Macro Studio">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="{DynamicResource ZeroPageMargin}" MaxWidth="1080" HorizontalAlignment="Stretch">
+    <Page.Resources>
 
-            <!-- ============================== HEADER ============================== -->
-            <StackPanel motion:Motion.Enter="0">
-                <TextBlock Text="M A C R O   S T U D I O" Style="{StaticResource ZeroEyebrowStyle}" Margin="0,4,0,8" />
-                <TextBlock Text="Record it once, run it anytime" FontSize="{DynamicResource ZeroFontSize30}" FontWeight="{DynamicResource ZeroFontWeightHeading}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                <TextBlock Text="Record keyboard and mouse input, or build a sequence by hand, then edit it on a timeline." FontSize="{DynamicResource ZeroFontSize14}" Margin="0,6,0,0"
-                           TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+        <!-- Rows of both lists: a raised pill for the selection, like the Mods Studio Installed list. -->
+        <Style x:Key="MacroRowItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Grid Background="Transparent" Margin="0,1">
+                            <Border x:Name="Hover" CornerRadius="{DynamicResource ZeroRadius8}" Background="{DynamicResource ControlFillColorSecondaryBrush}" Opacity="0" />
+                            <Border x:Name="Pill" CornerRadius="{DynamicResource ZeroRadius8}" Background="{DynamicResource ControlFillColorTertiaryBrush}"
+                                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" Opacity="0" />
+                            <ContentPresenter Margin="10,6" VerticalAlignment="Center" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Hover" Property="Opacity" Value="1" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Pill" Property="Opacity" Value="1" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="MacroListStyle" TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="SelectionMode" Value="Single" />
+            <Setter Property="KeyboardNavigation.TabNavigation" Value="Once" />
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+            <Setter Property="ItemContainerStyle" Value="{StaticResource MacroRowItemStyle}" />
+        </Style>
+
+        <Style x:Key="MacroFieldBox" TargetType="{x:Type ui:TextBox}" BasedOn="{StaticResource ZeroTextField}">
+            <Setter Property="Width" Value="110" />
+            <Setter Property="ClearButtonEnabled" Value="False" />
+        </Style>
+
+        <Style x:Key="MacroFieldLabel" TargetType="TextBlock" BasedOn="{StaticResource ZeroCaptionStyle}">
+            <Setter Property="Margin" Value="2,0,0,4" />
+        </Style>
+
+        <DataTemplate x:Key="MacroRowTemplate">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Name}" ToolTip="{Binding Name}" TextTrimming="CharacterEllipsis"
+                               FontSize="{DynamicResource ZeroFontSize13}" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <TextBlock Text="{Binding Meta}" ToolTip="{Binding Meta}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"
+                               FontSize="{DynamicResource ZeroFontSize11}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    <ContentControl Style="{StaticResource ZeroStatusChip}" Content="{Binding StatusText}" Tag="Conflict" Margin="0,4,0,0"
+                                    Visibility="{Binding StatusVisibility}" />
+                </StackPanel>
+                <ui:ToggleSwitch Grid.Column="1" Style="{StaticResource ZeroToggle}" IsChecked="{Binding Enabled, Mode=OneWay}" Margin="8,0,0,0"
+                                 VerticalAlignment="Center" Click="RowToggle_Click" AutomationProperties.Name="{Binding Name, StringFormat='Enable {0}'}" />
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate x:Key="ActionRowTemplate">
+            <Grid Margin="{Binding Indent}" Opacity="{Binding RowOpacity}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ui:SymbolIcon Symbol="{Binding Glyph}" FontSize="{DynamicResource ZeroFontSize16}" VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <StackPanel Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Summary}" ToolTip="{Binding Summary}" TextTrimming="CharacterEllipsis"
+                               FontSize="{DynamicResource ZeroFontSize13}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <TextBlock Text="{Binding Note}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" Visibility="{Binding NoteVisibility}"
+                               FontSize="{DynamicResource ZeroFontSize11}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                </StackPanel>
+                <TextBlock Grid.Column="2" Text="{Binding DelayText}" VerticalAlignment="Center" Margin="0,0,10,0" ToolTip="Delay before this action"
+                           FontSize="{DynamicResource ZeroFontSize11}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                <CheckBox Grid.Column="3" IsChecked="{Binding Enabled, Mode=OneWay}" Click="ActionRowCheck_Click" MinWidth="0" Padding="0"
+                          VerticalAlignment="Center" ToolTip="Enabled" AutomationProperties.Name="{Binding Summary, StringFormat='Enable {0}'}" />
+            </Grid>
+        </DataTemplate>
+    </Page.Resources>
+
+    <Grid Margin="{DynamicResource ZeroPageMarginFlush}" MaxWidth="1080" HorizontalAlignment="Stretch">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- ============================== HEADER ============================== -->
+        <Grid Grid.Row="0" motion:Motion.Enter="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="M A C R O   S T U D I O" Style="{StaticResource ZeroEyebrowStyle}" Margin="0,4,0,6" />
+                <TextBlock Text="Record it once, run it anytime" FontSize="{DynamicResource ZeroFontSize24}" FontWeight="{DynamicResource ZeroFontWeightHeading}"
+                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                    <Ellipse x:Name="RecDot" Width="9" Height="9" Margin="0,1,8,0" Visibility="Collapsed" VerticalAlignment="Center"
+                             Fill="{DynamicResource ZeroStatusErrorBrush}" />
+                    <TextBlock x:Name="StateText" Text="Idle" FontSize="{DynamicResource ZeroFontSize13}" VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" AutomationProperties.Name="Macro Studio status" />
+                </StackPanel>
             </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="16,2,0,0">
+                <ui:Button x:Name="RecordButton" Content="Record" Icon="Record24" Style="{StaticResource ZeroButtonPrimary}" Click="Record_Click"
+                           AutomationProperties.Name="Record macro" />
+                <ui:Button x:Name="RunButton" Content="Run" Icon="Play24" Style="{StaticResource ZeroButtonSecondary}" Margin="8,0,0,0" Click="Run_Click"
+                           AutomationProperties.Name="Run macro" />
+                <ui:Button x:Name="StopButton" Content="Stop" Icon="Stop24" Style="{StaticResource ZeroButtonSecondary}" Margin="8,0,0,0" Click="Stop_Click"
+                           IsEnabled="False" AutomationProperties.Name="Stop" />
+            </StackPanel>
+        </Grid>
 
-            <!-- ============================== NOT YET AVAILABLE ============================== -->
-            <Border Style="{StaticResource ZeroPanelStyle}" Margin="0,30,0,0" Padding="24,22" motion:Motion.Enter="1">
+        <!-- ============================== NOTICES ============================== -->
+        <StackPanel Grid.Row="1">
+            <Border x:Name="AutomationNotice" Style="{StaticResource ZeroNoticeStyle}" Margin="0,12,0,0" Visibility="Collapsed">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Symbol="Record24" FontSize="22" VerticalAlignment="Top" Margin="0,2,18,0"
-                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <TextBlock Text="Macro Studio isn't available yet" Style="{StaticResource ZeroCardTitleStyle}" />
-                        <TextBlock Text="Recording, the timeline editor and activation shortcuts arrive in a later update of this build."
-                                   Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="0,4,0,0" />
-                    </StackPanel>
+                    <TextBlock x:Name="AutomationNoticeText" TextWrapping="Wrap" VerticalAlignment="Center" FontSize="{DynamicResource ZeroFontSize13}"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <ui:Button Grid.Column="1" Content="Dismiss" Style="{StaticResource ZeroButtonGhostSmall}" Margin="16,0,0,0" Click="DismissAutomationNotice_Click"
+                               AutomationProperties.Name="Dismiss automation notice" />
+                </Grid>
+            </Border>
+
+            <Border x:Name="MessagePanel" Style="{StaticResource ZeroNoticeStyle}" Margin="0,8,0,0" Visibility="Collapsed">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="MessageText" TextWrapping="Wrap" VerticalAlignment="Center" FontSize="{DynamicResource ZeroFontSize13}"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}" AutomationProperties.Name="Macro Studio message" />
+                    <ui:Button Grid.Column="1" Content="Dismiss" Style="{StaticResource ZeroButtonGhostSmall}" Margin="16,0,0,0" Click="DismissMessage_Click"
+                               AutomationProperties.Name="Dismiss message" />
                 </Grid>
             </Border>
         </StackPanel>
-    </ScrollViewer>
+
+        <ProgressBar x:Name="BusyBar" Grid.Row="2" IsIndeterminate="True" Height="2" Margin="0,10,0,0" Visibility="Hidden" />
+
+        <!-- ============================== BODY ============================== -->
+        <Grid Grid.Row="3" Margin="0,10,0,0" motion:Motion.Enter="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="260" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" MinWidth="360" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Left pane: macro list -->
+            <Border Grid.Column="0" Style="{StaticResource ZeroPanelStyle}" Padding="8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <ListBox x:Name="MacroList" Style="{StaticResource MacroListStyle}" ItemTemplate="{StaticResource MacroRowTemplate}"
+                             SelectionChanged="MacroList_SelectionChanged" AutomationProperties.Name="Macro list" />
+                    <TextBlock x:Name="MacroListEmpty" Text="No macros yet" Style="{StaticResource ZeroCaptionStyle}" HorizontalAlignment="Center"
+                               VerticalAlignment="Top" Margin="0,24,0,0" Visibility="Collapsed" />
+
+                    <StackPanel Grid.Row="1" Margin="0,8,0,0">
+                        <ui:Button x:Name="NewMacroButton" Content="New macro" Icon="Add24" Style="{StaticResource ZeroButtonSecondary}" HorizontalAlignment="Stretch"
+                                   Click="NewMacro_Click" AutomationProperties.Name="New macro" />
+                        <ui:Button x:Name="ImportButton" Content="Import" Icon="ArrowDownload24" Style="{StaticResource ZeroButtonGhost}" HorizontalAlignment="Stretch" Margin="0,6,0,0"
+                                   Click="Import_Click" AutomationProperties.Name="Import macro" />
+                    </StackPanel>
+
+                    <Border Grid.Row="2" Margin="0,10,0,0" Padding="4,10,4,2" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
+                        <StackPanel>
+                            <TextBlock x:Name="EmergencyText" Text="Emergency stop: Ctrl+Shift+End" TextWrapping="Wrap" FontSize="{DynamicResource ZeroFontSize12}"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" AutomationProperties.Name="Emergency stop shortcut" />
+                            <TextBox x:Name="EmergencyCapture" Visibility="Collapsed" IsReadOnly="True" IsReadOnlyCaretVisible="False" Margin="0,6,0,0"
+                                     Text="Press the new shortcut…" PreviewKeyDown="EmergencyCapture_PreviewKeyDown" LostKeyboardFocus="EmergencyCapture_LostFocus"
+                                     AutomationProperties.Name="Emergency stop shortcut capture" />
+                            <TextBlock x:Name="EmergencyIssue" Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="0,4,0,0" Visibility="Collapsed"
+                                       Foreground="{DynamicResource ZeroStatusErrorBrush}" />
+                            <ui:Button x:Name="ChangeEmergencyButton" Content="Change" Style="{StaticResource ZeroButtonGhostSmall}" HorizontalAlignment="Left" Margin="0,4,0,0"
+                                       Click="ChangeEmergency_Click" AutomationProperties.Name="Change emergency stop shortcut" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Right pane -->
+            <Grid Grid.Column="2">
+
+                <!-- Empty state: no macros at all -->
+                <Border x:Name="NoMacrosState" Style="{StaticResource ZeroPanelStyle}" Padding="24,48" VerticalAlignment="Top" Visibility="Collapsed">
+                    <StackPanel HorizontalAlignment="Center" MaxWidth="420">
+                        <Border Style="{StaticResource ZeroIconTileStyle}" Width="48" Height="48" HorizontalAlignment="Center">
+                            <ui:SymbolIcon Symbol="Record24" FontSize="{DynamicResource ZeroFontSize22}" Style="{StaticResource ZeroIconTileGlyphStyle}" />
+                        </Border>
+                        <TextBlock Text="Record your first macro or build one by hand" Style="{StaticResource ZeroCardTitleStyle}" HorizontalAlignment="Center"
+                                   TextAlignment="Center" TextWrapping="Wrap" Margin="0,16,0,0" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,18,0,0">
+                            <ui:Button Content="Record" Icon="Record24" Style="{StaticResource ZeroButtonPrimary}" Click="Record_Click" AutomationProperties.Name="Record your first macro" />
+                            <ui:Button Content="New macro" Icon="Add24" Style="{StaticResource ZeroButtonSecondary}" Margin="8,0,0,0" Click="NewMacro_Click"
+                                       AutomationProperties.Name="Build a macro by hand" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock x:Name="NoSelectionText" Text="Select a macro to edit it." Style="{StaticResource ZeroCaptionStyle}" Margin="4,24,0,0" Visibility="Collapsed" />
+
+                <ScrollViewer x:Name="EditorScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
+                    <StackPanel Margin="0,0,6,8">
+
+                        <Border x:Name="ValidationPanel" Style="{StaticResource ZeroNoticeStyle}" Margin="0,0,0,10" Visibility="Collapsed"
+                                BorderBrush="{DynamicResource ZeroStatusErrorBrush}">
+                            <TextBlock x:Name="ValidationText" TextWrapping="Wrap" FontSize="{DynamicResource ZeroFontSize13}"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" AutomationProperties.Name="Macro errors" />
+                        </Border>
+
+                        <!-- Macro settings -->
+                        <Border Style="{StaticResource ZeroPanelStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Macro" Style="{StaticResource ZeroCardTitleStyle}" />
+
+                                <TextBlock Text="Name" Style="{StaticResource MacroFieldLabel}" Margin="2,10,0,4" />
+                                <ui:TextBox x:Name="NameBox" Style="{StaticResource ZeroTextField}" ClearButtonEnabled="False" MaxLength="80"
+                                            TextChanged="NameBox_TextChanged" AutomationProperties.Name="Macro name" />
+
+                                <TextBlock Text="Activation shortcut" Style="{StaticResource MacroFieldLabel}" Margin="2,12,0,4" />
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBox x:Name="ShortcutBox" Width="220" MinHeight="34" IsReadOnly="True" IsReadOnlyCaretVisible="False" VerticalContentAlignment="Center"
+                                             FontSize="{DynamicResource ZeroFontSize13}" PreviewKeyDown="ShortcutBox_PreviewKeyDown" GotKeyboardFocus="CaptureBox_GotFocus"
+                                             LostKeyboardFocus="ShortcutBox_LostFocus" AutomationProperties.Name="Activation shortcut" />
+                                    <ui:Button x:Name="ClearShortcutButton" Content="Clear" Style="{StaticResource ZeroButtonGhostSmall}" Margin="8,0,0,0" Click="ClearShortcut_Click"
+                                               AutomationProperties.Name="Clear shortcut" />
+                                </StackPanel>
+                                <TextBlock x:Name="ShortcutStatusText" Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="2,4,0,0"
+                                           AutomationProperties.Name="Shortcut status" />
+
+                                <WrapPanel Margin="0,12,0,0">
+                                    <StackPanel Margin="0,0,16,8">
+                                        <TextBlock Text="Repeat" Style="{StaticResource MacroFieldLabel}" />
+                                        <ComboBox x:Name="RepeatCombo" Style="{StaticResource ZeroDropdown}" Width="160" SelectionChanged="RepeatCombo_SelectionChanged"
+                                                  AutomationProperties.Name="Repeat mode">
+                                            <ComboBoxItem Content="Once" />
+                                            <ComboBoxItem Content="Repeat N times" />
+                                            <ComboBoxItem Content="Until stopped" />
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <StackPanel x:Name="RepeatCountPanel" Margin="0,0,16,8">
+                                        <TextBlock Text="Times" Style="{StaticResource MacroFieldLabel}" />
+                                        <ui:TextBox x:Name="RepeatCountBox" Style="{StaticResource MacroFieldBox}" Width="90" TextChanged="RepeatCountBox_TextChanged"
+                                                    LostFocus="NumberBox_LostFocus" AutomationProperties.Name="Repeat count" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,0,8">
+                                        <TextBlock Text="Speed" Style="{StaticResource MacroFieldLabel}" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <Slider x:Name="SpeedSlider" Width="170" Minimum="0.25" Maximum="4" SmallChange="0.25" LargeChange="0.5" TickFrequency="0.25"
+                                                    IsSnapToTickEnabled="True" VerticalAlignment="Center" ValueChanged="SpeedSlider_ValueChanged"
+                                                    AutomationProperties.Name="Playback speed" />
+                                            <TextBlock x:Name="SpeedText" Text="1×" Width="44" Margin="10,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource ZeroFontSize13}"
+                                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </WrapPanel>
+
+                                <ui:ToggleSwitch x:Name="FocusToggle" Style="{StaticResource ZeroToggle}" Content="Only while Roblox is focused" Margin="0,4,0,0"
+                                                 Click="FocusToggle_Click" AutomationProperties.Name="Only while Roblox is focused" />
+
+                                <TextBlock x:Name="EstimateText" Style="{StaticResource ZeroCaptionStyle}" Margin="2,12,0,0" AutomationProperties.Name="Estimated duration" />
+
+                                <WrapPanel Margin="0,12,0,0">
+                                    <ui:Button x:Name="DuplicateMacroButton" Content="Duplicate" Icon="Copy24" Style="{StaticResource ZeroButtonSecondary}" Margin="0,0,8,0"
+                                               Click="DuplicateMacro_Click" AutomationProperties.Name="Duplicate macro" />
+                                    <ui:Button x:Name="ExportMacroButton" Content="Export" Icon="ArrowDownload24" Style="{StaticResource ZeroButtonSecondary}" Margin="0,0,8,0"
+                                               Click="ExportMacro_Click" AutomationProperties.Name="Export macro" />
+                                    <ui:Button x:Name="DeleteMacroButton" Content="Delete" Icon="Delete24" Style="{StaticResource ZeroButtonGhost}" Foreground="{DynamicResource ZeroStatusErrorBrush}"
+                                               Click="DeleteMacro_Click" AutomationProperties.Name="Delete macro" />
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Actions -->
+                        <Border Style="{StaticResource ZeroPanelStyle}" Margin="0,10,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Actions" Style="{StaticResource ZeroCardTitleStyle}" />
+
+                                <WrapPanel Margin="0,10,0,8">
+                                    <ui:Button x:Name="AddButton" Content="Add  ▾" Icon="Add24" Style="{StaticResource ZeroButtonSecondary}" Margin="0,0,6,6" Click="AddButton_Click"
+                                               AutomationProperties.Name="Add action">
+                                        <ui:Button.ContextMenu>
+                                            <ContextMenu x:Name="AddMenu" Placement="Bottom">
+                                                <MenuItem Header="Key" Tag="Key" Click="AddMenuItem_Click" AutomationProperties.Name="Add Key action" />
+                                                <MenuItem Header="Mouse" Tag="Mouse" Click="AddMenuItem_Click" AutomationProperties.Name="Add Mouse action" />
+                                                <MenuItem Header="Camera" Tag="Camera" Click="AddMenuItem_Click" AutomationProperties.Name="Add Camera action" />
+                                                <MenuItem Header="Wait" Tag="Wait" Click="AddMenuItem_Click" AutomationProperties.Name="Add Wait action" />
+                                                <MenuItem Header="Move to" Tag="MouseMoveTo" Click="AddMenuItem_Click" AutomationProperties.Name="Add Move to action" />
+                                                <MenuItem Header="Group" Tag="Group" Click="AddMenuItem_Click" AutomationProperties.Name="Add Group action" />
+                                            </ContextMenu>
+                                        </ui:Button.ContextMenu>
+                                    </ui:Button>
+                                    <ui:Button x:Name="AddToGroupButton" Content="Add to group  ▾" Style="{StaticResource ZeroButtonSecondary}" Margin="0,0,6,6" Visibility="Collapsed"
+                                               Click="AddToGroupButton_Click" AutomationProperties.Name="Add to group" />
+                                    <ui:Button x:Name="MoveUpButton" Content="Move up" Icon="ArrowUp24" Style="{StaticResource ZeroButtonGhostSmall}" Margin="0,0,6,6" Click="MoveUp_Click"
+                                               AutomationProperties.Name="Move action up" />
+                                    <ui:Button x:Name="MoveDownButton" Content="Move down" Icon="ArrowDown24" Style="{StaticResource ZeroButtonGhostSmall}" Margin="0,0,6,6" Click="MoveDown_Click"
+                                               AutomationProperties.Name="Move action down" />
+                                    <ui:Button x:Name="DuplicateActionButton" Content="Duplicate" Icon="Copy24" Style="{StaticResource ZeroButtonGhostSmall}" Margin="0,0,6,6"
+                                               Click="DuplicateAction_Click" AutomationProperties.Name="Duplicate action" />
+                                    <ui:Button x:Name="DeleteActionButton" Content="Delete" Icon="Delete24" Style="{StaticResource ZeroButtonGhostSmall}" Margin="0,0,6,6"
+                                               Foreground="{DynamicResource ZeroStatusErrorBrush}" Click="DeleteAction_Click" AutomationProperties.Name="Delete action" />
+                                </WrapPanel>
+
+                                <ListBox x:Name="ActionList" Style="{StaticResource MacroListStyle}" ItemTemplate="{StaticResource ActionRowTemplate}"
+                                         MinHeight="96" MaxHeight="250" SelectionChanged="ActionList_SelectionChanged" PreviewKeyDown="ActionList_PreviewKeyDown"
+                                         AutomationProperties.Name="Action list" />
+                                <TextBlock x:Name="ActionsEmptyText" Text="No actions yet. Add one above, or press Record." Style="{StaticResource ZeroCaptionStyle}"
+                                           Margin="4,8,0,4" Visibility="Collapsed" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Inspector -->
+                        <Border x:Name="InspectorPanel" Style="{StaticResource ZeroPanelStyle}" Margin="0,10,0,0" Visibility="Collapsed">
+                            <StackPanel>
+                                <TextBlock x:Name="InspectorTitle" Text="Action" Style="{StaticResource ZeroCardTitleStyle}" Margin="0,0,0,10" />
+
+                                <WrapPanel>
+                                    <!-- Key -->
+                                    <StackPanel x:Name="KeyPanel" Orientation="Horizontal">
+                                        <StackPanel Margin="0,0,12,10">
+                                            <TextBlock Text="Key" Style="{StaticResource MacroFieldLabel}" />
+                                            <TextBox x:Name="KeyCaptureBox" Width="150" MinHeight="34" IsReadOnly="True" IsReadOnlyCaretVisible="False" VerticalContentAlignment="Center"
+                                                     FontSize="{DynamicResource ZeroFontSize13}" PreviewKeyDown="KeyCaptureBox_PreviewKeyDown" GotKeyboardFocus="CaptureBox_GotFocus"
+                                                     LostKeyboardFocus="KeyCaptureBox_LostFocus" ToolTip="Click, then press a key" AutomationProperties.Name="Key (press a key)" />
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,12,10">
+                                            <TextBlock Text="Mode" Style="{StaticResource MacroFieldLabel}" />
+                                            <ComboBox x:Name="KeyModeCombo" Style="{StaticResource ZeroDropdown}" Width="130" SelectionChanged="KeyModeCombo_SelectionChanged"
+                                                      AutomationProperties.Name="Key mode">
+                                                <ComboBoxItem Content="Hold down" />
+                                                <ComboBoxItem Content="Release" />
+                                                <ComboBoxItem Content="Tap" />
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,12,10">
+                                            <TextBlock Text="Hold (ms)" Style="{StaticResource MacroFieldLabel}" />
+                                            <ui:TextBox x:Name="KeyHoldBox" Style="{StaticResource MacroFieldBox}" TextChanged="KeyHoldBox_TextChanged" LostFocus="NumberBox_LostFocus"
+                                                        AutomationProperties.Name="Key hold (ms)" />
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Mouse -->
+                                    <StackPanel x:Name="MousePanel" Orientation="Horizontal">
+                                        <StackPanel Margin="0,0,12,10">
+                                            <TextBlock Text="Button" Style="{StaticResource MacroFieldLabel}" />
+                                            <ComboBox x:Name="MouseButtonCombo" Style="{StaticResource ZeroDropdown}" Width="110" SelectionChanged="MouseButtonCombo_SelectionChanged"
+                                                      AutomationProperties.Name="Mouse button">
+                                                <ComboBoxItem Content="Left" />
+                                                <ComboBoxItem Content="Right" />
+                                                <ComboBoxItem Content="Middle" />
+                                                <ComboBoxItem Content="Back" />
+                                                <ComboBoxItem Content="Forward" />
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,12,10">
+                                            <TextBlock Text="Mode" Style="{StaticResource MacroFieldLabel}" />
+                                            <ComboBox x:Name="MouseModeCombo" Style="{StaticResource ZeroDropdown}" Width="110" SelectionChanged="MouseModeCombo_SelectionChanged"
+                                                      AutomationProperties.Name="Mouse mode">
+                                                <ComboBoxItem Content="Press" />
+                                                <ComboBoxItem Content="Release" />
+                                                <ComboBoxItem Content="Click" />
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,12,10">
+                                            <TextBlock Text="Hold (ms)" Style="{StaticResource MacroFieldLabel}" />
+                                            <ui:TextBox x:Name="MouseHoldBox" Style="{StaticResource MacroFieldBox}" TextChanged="MouseHoldBox_TextChanged" LostFocus="NumberBox_LostFocus"
+                                                        AutomationProperties.Name="Mouse hold (ms)" />
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Camera -->
+                                    <StackPanel x:Name="CameraPanel" Orientation="Horizontal">
+                                        <WrapPanel MaxWidth="480">
+                                            <StackPanel Margin="0,0,12,10">
+                                                <TextBlock Text="Dx (px)" Style="{StaticResource MacroFieldLabel}" />
+                                                <ui:TextBox x:Name="CamDxBox" Style="{StaticResource MacroFieldBox}" Width="90" TextChanged="CamDxBox_TextChanged" LostFocus="NumberBox_LostFocus"
+                                                            AutomationProperties.Name="Camera Dx" />
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,12,10">
+                                                <TextBlock Text="Dy (px)" Style="{StaticResource MacroFieldLabel}" />
+                                                <ui:TextBox x:Name="CamDyBox" Style="{StaticResource MacroFieldBox}" Width="90" TextChanged="CamDyBox_TextChanged" LostFocus="NumberBox_LostFocus"
+                                                            AutomationProperties.Name="Camera Dy" />
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,12,10">
+                                                <TextBlock Text="Duration (ms)" Style="{StaticResource MacroFieldLabel}" />
+                                                <ui:TextBox x:Name="CamDurationBox" Style="{StaticResource MacroFieldBox}" TextChanged="CamDurationBox_TextChanged" LostFocus="NumberBox_LostFocus"
+                                                            AutomationProperties.Name="Camera duration (ms)" />
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,12,10">
+                                                <TextBlock Text="Speed (px/s)" Style="{StaticResource MacroFieldLabel}" />
+                                                <ui:TextBox x:Name="CamSpeedBox" Style="{StaticResource MacroFieldBox}" TextChanged="CamSpeedBox_TextChanged" LostFocus="NumberBox_LostFocus"
+                                                            AutomationProperties.Name="Camera speed (px/s)" />
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,12,10">
+                                                <TextBlock Text="Easing" Style="{StaticResource MacroFieldLabel}" />
+                                                <ComboBox x:Name="CamEasingCombo" Style="{StaticResource ZeroDropdown}" Width="130" SelectionChanged="CamEasingCombo_SelectionChanged"
+                                                          AutomationProperties.Name="Camera easing">
+                                                    <ComboBoxItem Content="Linear" />
+                                                    <ComboBoxItem Content="Ease in/out" />
+                                                </ComboBox>
+                                            </StackPanel>
+                                            <CheckBox x:Name="CamHoldRightCheck" Content="Hold right button" Margin="0,22,12,10" Click="CamHoldRight_Click"
+                                                      AutomationProperties.Name="Hold right mouse button" />
+                                        </WrapPanel>
+                                    </StackPanel>
+
+                                    <!-- Wait -->
+                                    <StackPanel x:Name="WaitPanel" Margin="0,0,12,10">
+                                        <TextBlock Text="Wait (ms)" Style="{StaticResource MacroFieldLabel}" />
+                                        <ui:TextBox x:Name="WaitMsBox" Style="{StaticResource MacroFieldBox}" TextChanged="WaitMsBox_TextChanged" LostFocus="NumberBox_LostFocus"
+                                                    AutomationProperties.Name="Wait (ms)" />
+                                    </StackPanel>
+
+                                    <!-- Move to -->
+                                    <StackPanel x:Name="MovePanel" Orientation="Horizontal">
+                                        <StackPanel Margin="0,0,12,10">
+                                            <TextBlock Text="X" Style="{StaticResource MacroFieldLabel}" />
+                                            <ui:TextBox x:Name="MoveXBox" Style="{StaticResource MacroFieldBox}" Width="90" TextChanged="MoveXBox_TextChanged" LostFocus="NumberBox_LostFocus"
+                                                        AutomationProperties.Name="Move to X" />
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,12,10">
+                                            <TextBlock Text="Y" Style="{StaticResource MacroFieldLabel}" />
+                                            <ui:TextBox x:Name="MoveYBox" Style="{StaticResource MacroFieldBox}" Width="90" TextChanged="MoveYBox_TextChanged" LostFocus="NumberBox_LostFocus"
+                                                        AutomationProperties.Name="Move to Y" />
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Group -->
+                                    <StackPanel x:Name="GroupPanel" Margin="0,0,12,10">
+                                        <TextBlock Text="Repeat group (times)" Style="{StaticResource MacroFieldLabel}" />
+                                        <ui:TextBox x:Name="GroupRepeatBox" Style="{StaticResource MacroFieldBox}" Width="90" TextChanged="GroupRepeatBox_TextChanged" LostFocus="NumberBox_LostFocus"
+                                                    AutomationProperties.Name="Group repeat" />
+                                    </StackPanel>
+                                </WrapPanel>
+
+                                <!-- Every action -->
+                                <WrapPanel>
+                                    <StackPanel Margin="0,0,12,10">
+                                        <TextBlock Text="Delay before (ms)" Style="{StaticResource MacroFieldLabel}" />
+                                        <ui:TextBox x:Name="DelayBox" Style="{StaticResource MacroFieldBox}" TextChanged="DelayBox_TextChanged" LostFocus="NumberBox_LostFocus"
+                                                    AutomationProperties.Name="Delay before (ms)" />
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,12,10">
+                                        <TextBlock Text="Note" Style="{StaticResource MacroFieldLabel}" />
+                                        <ui:TextBox x:Name="NoteBox" Style="{StaticResource ZeroTextField}" Width="230" ClearButtonEnabled="False" MaxLength="200"
+                                                    TextChanged="NoteBox_TextChanged" AutomationProperties.Name="Action note" />
+                                    </StackPanel>
+                                    <CheckBox x:Name="ActionEnabledCheck" Content="Enabled" Margin="0,22,12,10" Click="ActionEnabled_Click" AutomationProperties.Name="Action enabled" />
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+    </Grid>
 </Page>
