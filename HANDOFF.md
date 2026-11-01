@@ -25,9 +25,10 @@ Read this first in a new session. Keep it short and factual; update it at each m
 | 9 FPS Unlocker | — | deferred (do not build) |
 | 10a Macro Studio engine (recorder, player, hotkeys, runtime, store) | `1c231d4` | done — adversarial review (17 findings) fixed |
 | 10a Macro Studio list editor | `9cd8acf` | done — 1034/1034 tests, UI smoke-tested |
-| 10b Macro Studio timeline, camera inspector, import/export polish | — | **next** |
+| 10b Macro Studio timeline, camera inspector, import/export polish | `8e8adf3` | done — 1072/1072 tests, timeline smoke-tested |
 
 ## Verification
+- 2026-11-01 (10b): `dotnet test ZeroStrap.Tests` → 1072/1072. UI smoke at 1120×700 (`smoke10b*.ps1`): hand-built macro, Tab captured as a key, Timeline view renders lanes/blocks, Zoom in/Fit, click-select + Delete, camera summary + preview, action toolbar on one row. Smoke macro removed. NOT yet exercised in the app: timeline drag/edge-resize/rubber-band/keyboard shortcuts, Discard/Keep-editing prompt, draft restore on return, .zeromacro drop import, export default name, Ease in/out preview, Light theme.
 - 2026-11-01 (10a): `dotnet test ZeroStrap.Tests` → 1034/1034. UI smoke at 1120×700: editor renders, add Wait/Camera, shortcut capture rejects `w` and accepts F7, Run pauses with "Roblox isn't focused", Stop → Idle. With the window minimised: F7 starts and toggles off, Ctrl+Shift+End stops. Smoke scripts `smoke10a*.ps1`. Smoke macro removed from the real store afterwards.
 - Macro items NOT yet verified with real input: recording via real hooks/Raw Input (SendKeys input is injected, so the recorder ignores it by design), hook-removal recovery, playback into a live Roblox window, UIPI warning against an elevated window.
 - 2026-11-01: `dotnet test ZeroStrap.Tests` → 531/531 pass, 0 build errors.
@@ -51,7 +52,7 @@ Read this first in a new session. Keep it short and factual; update it at each m
 - UI automation: dot-source a copy of `zsui.ps1` (UIAutomation helpers; `Start-Shell`, `Find-Name`, `Click`, `Shot`). Dev exe opens the shell with `-settings`; close any installed ZeroStrap first (settings lock).
 
 ## Known issues / leftovers
-- Macro Studio: action toolbar wraps Delete onto a second row at 1120 px; invalid (unsaved) macro edits are dropped on navigating away; absolute MouseMoveTo may land off on mixed-DPI multi-monitor setups; Tab can't be captured as a key. Fold into 10b.
+- Macro Studio: absolute MouseMoveTo may land off on mixed-DPI multi-monitor setups. Invalid drafts survive page navigation (static, in memory) but are lost if the app closes; the shell can't veto navigation, so "Keep editing" only applies to switching macros inside the page. Ruler/labels show slashed zeros (app font).
 - Macro engine notes: Macros live in `ZeroStrap/Macros/*`, UI in `MacroStudioPage.*`, `MacroStudioLogic.cs`, `MacroStudioService.cs`. Hotkeys run on their own message thread (not the UI thread). Typing keys (letters, digits, Space, arrows…) are rejected as shortcuts unless Ctrl/Alt/Win is added.
 - Overview shows "Configuration: Unsaved changes" right after a fresh launch (pre-existing, not from 7b). Not investigated.
 - Test packages `zs-test-alpha` / `zs-test-beta` from earlier UI testing exist in the real store `%LocalAppData%\ZeroStrap\Mods\Packages`; remove via Mods Studio once the owner agrees.
@@ -61,7 +62,6 @@ Read this first in a new session. Keep it short and factual; update it at each m
 - Targeted tests while building; full suite at each commit. One commit per phase.
 
 ## Next session — start here
-1. Phase 10b (Macro Studio): timeline editor (`UI/Elements/Controls/MacroTimeline.cs`, custom virtualised Canvas: one lane per category, Ctrl+wheel zoom, drag to retime, edge-drag durations, multi-select delete/duplicate/group), list/timeline toggle kept in sync, camera inspector polish, import/export polish. Plan section 13 has the screen.
-2. Fold in the 10a leftovers listed under Known issues (toolbar wrap at 1120 px, invalid edits lost on navigation).
-3. Ask the owner to do the manual macro checks (real recording + F9, playback in Roblox, elevated-window warning) if not yet reported.
-4. Then: update HANDOFF, decide with the owner on pushing / PR (nothing pushed yet).
+1. Ask the owner to try the timeline interactively (drag to retime, edge-resize, rubber-band, Ctrl+wheel, Delete/Ctrl+D/Ctrl+G) and the manual macro checks (real recording + F9, playback in Roblox, elevated-window warning) if not yet reported.
+2. All active phases (0–8, 10) are done; Phase 9 FPS Unlocker stays deferred. Decide with the owner on pushing `zerostrap-expansion` / opening a PR to `main` (nothing pushed yet).
+3. Optional cleanup: remove test mod packages `zs-test-alpha` / `zs-test-beta` from the real store once the owner agrees; investigate the Overview "Unsaved changes" on fresh launch.
