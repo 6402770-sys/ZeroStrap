@@ -26,7 +26,14 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
         public OverviewPage()
         {
             InitializeComponent();
-            Loaded += (_, _) => Populate();
+            Loaded += (_, _) =>
+            {
+                Populate();
+                ModsStudioService.SummaryChanged -= UpdateModsSummary;
+                ModsStudioService.SummaryChanged += UpdateModsSummary;
+                _ = ModsStudioService.RefreshSummaryAsync();
+            };
+            Unloaded += (_, _) => ModsStudioService.SummaryChanged -= UpdateModsSummary;
         }
 
         private void Populate()
@@ -114,15 +121,28 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             }
             catch { FlagsSummaryText.Text = "Unavailable"; }
 
-            try
+            UpdateModsSummary();
+        }
+
+        /// <summary>Package count and unresolved conflicts from Mods Studio; "Checking..." until the first read finishes.</summary>
+        private void UpdateModsSummary()
+        {
+            if (!ModsStudioService.HasSummary)
             {
-                int mods = Directory.Exists(Paths.Modifications)
-                    ? Directory.EnumerateFiles(Paths.Modifications, "*", SearchOption.AllDirectories)
-                        .Count(f => !f.Contains(@"\ClientSettings\", StringComparison.OrdinalIgnoreCase))
-                    : 0;
-                ModsSummaryText.Text = mods == 0 ? "None installed" : $"{mods} file{(mods == 1 ? "" : "s")}";
+                ModsSummaryText.Text = "Checking...";
+                ModsConflictRow.Visibility = Visibility.Collapsed;
+                return;
             }
-            catch { ModsSummaryText.Text = "Unavailable"; }
+
+            ModsSummaryText.Text = ModsStudioService.InstalledText(ModsStudioService.PackageCount);
+
+            int conflicts = ModsStudioService.UnresolvedCount;
+            ModsConflictRow.Visibility = conflicts > 0 ? Visibility.Visible : Visibility.Collapsed;
+            ModsConflictText.Text = ModsStudioService.ConflictsText(conflicts);
+
+            // the tile is narrow at the minimum window width: the full text is one hover away
+            ModsSummaryText.ToolTip = ModsSummaryText.Text;
+            ModsConflictText.ToolTip = ModsConflictText.Text;
         }
 
         private void PopulateStatus()

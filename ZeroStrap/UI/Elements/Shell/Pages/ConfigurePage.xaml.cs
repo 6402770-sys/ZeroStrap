@@ -19,7 +19,14 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
         {
             InitializeComponent();
             SelectTab(initialTab);
-            Loaded += (_, _) => RefreshStats();
+            Loaded += (_, _) =>
+            {
+                RefreshStats();
+                ModsStudioService.SummaryChanged -= UpdateModsStat;
+                ModsStudioService.SummaryChanged += UpdateModsStat;
+                _ = ModsStudioService.RefreshSummaryAsync();
+            };
+            Unloaded += (_, _) => ModsStudioService.SummaryChanged -= UpdateModsStat;
         }
 
         private FastFlagsPage? _fastFlagsPage;
@@ -151,7 +158,6 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
             ConfigureTabs.SelectedItem = tab switch
             {
-                ConfigureTab.Mods => TabMods,
                 ConfigureTab.Integrations => TabIntegrations,
                 ConfigureTab.Shortcuts => TabShortcuts,
                 ConfigureTab.Behaviour => TabBehaviour,
@@ -194,21 +200,12 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
                 StatIntegrationsCount.Text = "-";
             }
 
-            try
-            {
-                var modsDir = Paths.Modifications;
-                if (Directory.Exists(modsDir))
-                    StatModsCount.Text = Directory.EnumerateFiles(modsDir, "*", SearchOption.AllDirectories)
-                        .Count(f => !f.Contains(@"\ClientSettings\", System.StringComparison.OrdinalIgnoreCase)) // Fast Flags live here, not mods
-                        .ToString();
-                else
-                    StatModsCount.Text = "0";
-            }
-            catch
-            {
-                StatModsCount.Text = "-";
-            }
+            UpdateModsStat();
         }
+
+        /// <summary>Number of installed mod packages (from Mods Studio); a dash until it is known.</summary>
+        private void UpdateModsStat() =>
+            StatModsCount.Text = ModsStudioService.HasSummary ? ModsStudioService.PackageCount.ToString() : "-";
 
         private static void NavigateOnce(object sender, Page page)
         {
@@ -227,7 +224,6 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             _fastFlagsPage = page;
             NavigateOnce(sender, page);
         }
-        private void ModsHost_Loaded(object sender, RoutedEventArgs e) => NavigateOnce(sender, new ModsPage());
         private void IntegrationsHost_Loaded(object sender, RoutedEventArgs e) => NavigateOnce(sender, new IntegrationsPage());
         private void ShortcutsHost_Loaded(object sender, RoutedEventArgs e) => NavigateOnce(sender, new ShortcutsPage());
         private void BehaviourHost_Loaded(object sender, RoutedEventArgs e) => NavigateOnce(sender, new BehaviourPage());

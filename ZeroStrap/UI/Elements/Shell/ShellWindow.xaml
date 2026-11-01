@@ -44,6 +44,9 @@
                      Icon="Keyboard24" Timeout="4000"
                      Margin="200,0,200,20" Grid.ColumnSpan="2" Panel.ZIndex="11" />
 
+        <ui:Snackbar x:Name="ModsToastSnackbar" Timeout="5000" Appearance="Success" Icon="CheckmarkCircle32"
+                     Margin="200,0,200,20" Grid.ColumnSpan="2" Panel.ZIndex="12" />
+
         <!-- ============================== SIDEBAR ============================== -->
         <Border Grid.Column="0" Background="{DynamicResource ApplicationBackgroundBrush}"
                 BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,1,0">
@@ -90,10 +93,20 @@
                     </RadioButton>
                     <RadioButton x:Name="NavModsStudio" Style="{StaticResource ZeroNavItem}" GroupName="ShellNav"
                                  Checked="Nav_Checked" Tag="ModsStudio">
-                        <StackPanel Orientation="Horizontal">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
                             <ui:SymbolIcon Symbol="PuzzlePiece24" FontSize="19" Margin="0,0,14,0" />
-                            <TextBlock Text="Mods Studio" VerticalAlignment="Center" />
-                        </StackPanel>
+                            <TextBlock Grid.Column="1" Text="Mods Studio" VerticalAlignment="Center" />
+                            <Border x:Name="NavModsBadge" Grid.Column="2" Visibility="Collapsed" VerticalAlignment="Center" Padding="7,1,7,2"
+                                    CornerRadius="{DynamicResource ZeroRadius8}" Background="{DynamicResource ZeroStatusWarningSoftBrush}"
+                                    ToolTip="Mods with conflicts you haven't settled">
+                                <TextBlock x:Name="NavModsBadgeText" FontSize="{DynamicResource ZeroFontSize11}" FontWeight="SemiBold" Foreground="{DynamicResource ZeroStatusWarningBrush}" />
+                            </Border>
+                        </Grid>
                     </RadioButton>
                     <RadioButton x:Name="NavMacroStudio" Style="{StaticResource ZeroNavItem}" GroupName="ShellNav"
                                  Checked="Nav_Checked" Tag="MacroStudio">

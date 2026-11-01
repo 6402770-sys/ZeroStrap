@@ -21,7 +21,6 @@ namespace ZeroStrap.UI.ViewModels.Shell
     public enum ConfigureTab
     {
         FastFlags,
-        Mods,
         Integrations,
         Shortcuts,
         Behaviour

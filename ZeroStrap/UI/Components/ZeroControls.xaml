@@ -368,6 +368,56 @@
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
+    <!--  Soft tints behind semantic status text (pills, badges).  -->
+    <SolidColorBrush x:Key="ZeroStatusHealthySoftBrush" Color="#1F3FBF7F" />
+    <SolidColorBrush x:Key="ZeroStatusWarningSoftBrush" Color="#29D4A054" />
+
+    <!--
+        Status chip for lists: Content is the label, Tag picks the colour. "On" / "Resolved" are healthy,
+        "Conflict" / "Unresolved" / "Blocked" are warnings, anything else (Off) stays neutral.
+    -->
+    <Style x:Key="ZeroStatusChip" TargetType="{x:Type ContentControl}">
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="FontSize" Value="{DynamicResource ZeroFontSize11}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+        <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ContentControl}">
+                    <Border CornerRadius="{DynamicResource ZeroRadius5}" Padding="8,2,8,3" Background="{TemplateBinding Background}">
+                        <ContentPresenter TextElement.Foreground="{TemplateBinding Foreground}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="Tag" Value="On">
+                <Setter Property="Background" Value="{DynamicResource ZeroStatusHealthySoftBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource ZeroStatusHealthyBrush}" />
+            </Trigger>
+            <Trigger Property="Tag" Value="Resolved">
+                <Setter Property="Background" Value="{DynamicResource ZeroStatusHealthySoftBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource ZeroStatusHealthyBrush}" />
+            </Trigger>
+            <Trigger Property="Tag" Value="Conflict">
+                <Setter Property="Background" Value="{DynamicResource ZeroStatusWarningSoftBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource ZeroStatusWarningBrush}" />
+            </Trigger>
+            <Trigger Property="Tag" Value="Unresolved">
+                <Setter Property="Background" Value="{DynamicResource ZeroStatusWarningSoftBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource ZeroStatusWarningBrush}" />
+            </Trigger>
+            <Trigger Property="Tag" Value="Blocked">
+                <Setter Property="Background" Value="{DynamicResource ZeroStatusWarningSoftBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource ZeroStatusWarningBrush}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
     <!-- ============================== SECTION HEADER ============================== -->
 
     <Style x:Key="ZeroSectionHeaderStackStyle" TargetType="{x:Type StackPanel}">

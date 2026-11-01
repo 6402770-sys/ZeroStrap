@@ -9,36 +9,532 @@
       d:DesignHeight="720" d:DesignWidth="1030"
       Title="Mods Studio">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="{DynamicResource ZeroPageMargin}" MaxWidth="1080" HorizontalAlignment="Stretch">
+    <Page.Resources>
 
-            <!-- ============================== HEADER ============================== -->
-            <StackPanel motion:Motion.Enter="0">
-                <TextBlock Text="M O D S   S T U D I O" Style="{StaticResource ZeroEyebrowStyle}" Margin="0,4,0,8" />
-                <TextBlock Text="Your mods, one package at a time" FontSize="{DynamicResource ZeroFontSize30}" FontWeight="{DynamicResource ZeroFontWeightHeading}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                <TextBlock Text="Install, enable and remove Roblox mods individually, with conflicts shown before they happen." FontSize="{DynamicResource ZeroFontSize14}" Margin="0,6,0,0"
-                           TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-            </StackPanel>
+        <!-- Installed list: rows are 56 px, the selected one is a raised pill (same look as the Theme Studio rail). -->
+        <Style x:Key="ModRowItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Grid Background="Transparent" Margin="0,1">
+                            <Border x:Name="Hover" CornerRadius="{DynamicResource ZeroRadius8}" Background="{DynamicResource ControlFillColorSecondaryBrush}" Opacity="0" />
+                            <Border x:Name="Pill" CornerRadius="{DynamicResource ZeroRadius8}" Background="{DynamicResource ControlFillColorTertiaryBrush}"
+                                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" Opacity="0" />
+                            <ContentPresenter Margin="10,7" VerticalAlignment="Center" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Hover" Property="Opacity" Value="1" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Pill" Property="Opacity" Value="1" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-            <!-- ============================== NOT YET AVAILABLE ============================== -->
-            <Border Style="{StaticResource ZeroPanelStyle}" Margin="0,30,0,0" Padding="24,22" motion:Motion.Enter="1">
+        <Style x:Key="ModListStyle" TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="SelectionMode" Value="Single" />
+            <Setter Property="KeyboardNavigation.TabNavigation" Value="Once" />
+            <Setter Property="ItemContainerStyle" Value="{StaticResource ModRowItemStyle}" />
+            <Setter Property="ItemsPanel">
+                <Setter.Value>
+                    <ItemsPanelTemplate>
+                        <StackPanel />
+                    </ItemsPanelTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBox">
+                        <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Thumbnail or category glyph on a 40 px tile. -->
+        <DataTemplate x:Key="ModRowTemplate">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Border Style="{StaticResource ZeroIconTileStyle}" Width="40" Height="40" Padding="0">
+                    <Grid>
+                        <Border CornerRadius="{DynamicResource ZeroRadius8}" Visibility="{Binding ThumbVisibility}">
+                            <Border.Background>
+                                <ImageBrush ImageSource="{Binding Thumb}" Stretch="UniformToFill" />
+                            </Border.Background>
+                        </Border>
+                        <ui:SymbolIcon Symbol="{Binding Glyph}" FontSize="19" Visibility="{Binding GlyphVisibility}"
+                                       Style="{StaticResource ZeroIconTileGlyphStyle}" />
+                    </Grid>
+                </Border>
+
+                <StackPanel Grid.Column="1" Margin="12,0,10,0" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Name}" ToolTip="{Binding Name}" TextTrimming="CharacterEllipsis"
+                               FontSize="{DynamicResource ZeroFontSize13}" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <TextBlock Text="{Binding Meta}" ToolTip="{Binding Meta}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"
+                               FontSize="{DynamicResource ZeroFontSize11}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <ContentControl Style="{StaticResource ZeroStatusChip}" Content="{Binding StatusText}" Tag="{Binding Status}" HorizontalAlignment="Right" />
+                    <ui:ToggleSwitch Style="{StaticResource ZeroToggle}" IsChecked="{Binding Enabled, Mode=OneWay}" HorizontalAlignment="Right" Margin="0,4,0,0"
+                                     Checked="RowToggle_Changed" Unchecked="RowToggle_Changed" AutomationProperties.Name="{Binding Name, StringFormat='Toggle {0}'}" />
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+        <!-- Conflict row: path, one radio per candidate, who has it now. -->
+        <DataTemplate x:Key="CandidateTemplate">
+            <RadioButton Content="{Binding Label}" IsChecked="{Binding IsCurrent, Mode=OneWay}" IsEnabled="{Binding Selectable}"
+                         Margin="0,0,22,0" Click="Candidate_Chosen" Checked="Candidate_Chosen" ToolTip="{Binding ToolTip}" />
+        </DataTemplate>
+
+        <DataTemplate x:Key="ConflictRowTemplate">
+            <Border Style="{StaticResource ZeroSettingCardStyle}">
                 <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <ui:SymbolIcon Symbol="PuzzlePiece24" FontSize="22" VerticalAlignment="Top" Margin="0,2,18,0"
-                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <TextBlock Text="Mods Studio isn't available yet" Style="{StaticResource ZeroCardTitleStyle}" />
-                        <TextBlock Text="Until it is, your mods and built-in presets are managed in Configure › Mods. Nothing there changes when Mods Studio arrives; existing mods are carried over."
-                                   Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="0,4,24,0" />
-                    </StackPanel>
-                    <ui:Button Grid.Column="2" Content="Open Configure › Mods" Style="{StaticResource ZeroButtonGhost}"
-                               VerticalAlignment="Center" Click="OpenLegacyMods_Click" />
+
+                    <TextBlock Text="{Binding Path}" ToolTip="{Binding Path}" Style="{StaticResource ZeroMonoTextStyle}" TextTrimming="CharacterEllipsis" Margin="0,0,16,0" />
+                    <ContentControl Grid.Column="1" Style="{StaticResource ZeroStatusChip}" Content="{Binding StatusText}" Tag="{Binding Status}" />
+
+                    <ItemsControl Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{Binding Candidates}" ItemTemplate="{StaticResource CandidateTemplate}" Margin="0,12,0,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+
+                    <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding CurrentText}" Style="{StaticResource ZeroCaptionStyle}" Margin="0,2,0,0" />
                 </Grid>
             </Border>
-        </StackPanel>
-    </ScrollViewer>
+        </DataTemplate>
+
+        <!-- Up / down arrows: one that cannot move is hidden (it keeps its space) instead of drawing a disabled box. -->
+        <Style x:Key="OrderMoveButton" TargetType="{x:Type ui:Button}" BasedOn="{StaticResource ZeroIconButton}">
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Visibility" Value="Hidden" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <DataTemplate x:Key="OrderRowTemplate">
+            <Grid Margin="0,2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="28" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding Position}" Style="{StaticResource ZeroMetaTextStyle}" />
+                <TextBlock Grid.Column="1" Text="{Binding Name}" ToolTip="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                           FontSize="{DynamicResource ZeroFontSize13}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                <ui:Button Grid.Column="2" Style="{StaticResource OrderMoveButton}" Icon="ArrowUp24" IsEnabled="{Binding CanUp}" Click="OrderUp_Click"
+                           ToolTip="Move up" AutomationProperties.Name="{Binding Name, StringFormat='Move {0} up'}" />
+                <ui:Button Grid.Column="3" Style="{StaticResource OrderMoveButton}" Icon="ArrowDown24" IsEnabled="{Binding CanDown}" Click="OrderDown_Click"
+                           ToolTip="Move down" Margin="2,0,0,0" AutomationProperties.Name="{Binding Name, StringFormat='Move {0} down'}" />
+            </Grid>
+        </DataTemplate>
+
+        <!-- Library tile pieces -->
+        <Style x:Key="TileStyle" TargetType="Border" BasedOn="{StaticResource ZeroCardStyle}">
+            <Setter Property="Padding" Value="16" />
+            <Setter Property="Margin" Value="6" />
+            <Setter Property="MinHeight" Value="176" />
+        </Style>
+
+        <Style x:Key="TileTitleStyle" TargetType="TextBlock" BasedOn="{StaticResource ZeroCardTitleStyle}">
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="TileDescriptionStyle" TargetType="TextBlock" BasedOn="{StaticResource ZeroCaptionStyle}">
+            <Setter Property="Margin" Value="0,12,0,0" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <DataTemplate x:Key="EnumNameTemplate">
+            <TextBlock Text="{Binding Path=., Converter={StaticResource EnumNameConverter}}" />
+        </DataTemplate>
+    </Page.Resources>
+
+    <Grid Margin="{DynamicResource ZeroPageMarginTabbed}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- ============================== HEADER ============================== -->
+        <Grid Grid.Row="0" motion:Motion.Enter="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="M O D S   S T U D I O" Style="{StaticResource ZeroEyebrowStyle}" Margin="0,4,0,8" />
+                <TextBlock Text="Your mods, one package at a time" FontSize="{DynamicResource ZeroFontSize30}" FontWeight="{DynamicResource ZeroFontWeightHeading}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                <TextBlock Text="Each mod keeps its own files. Turn mods on or off, or remove one, without touching the others." FontSize="{DynamicResource ZeroFontSize14}" Margin="0,6,0,0"
+                           TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+            <Button x:Name="MoreButton" Grid.Column="1" Style="{StaticResource ZeroHeaderIconButton}" VerticalAlignment="Top" Margin="16,2,0,0"
+                    Click="MoreButton_Click" ToolTip="More" AutomationProperties.Name="More actions">
+                <ui:SymbolIcon Symbol="MoreHorizontal24" FontSize="18" />
+                <Button.ContextMenu>
+                    <ContextMenu x:Name="MoreMenu" Placement="Bottom">
+                        <MenuItem Header="Open Modifications folder" Click="OpenModsFolder_Click" />
+                        <MenuItem Header="Roblox compatibility settings" Click="OpenCompat_Click" />
+                    </ContextMenu>
+                </Button.ContextMenu>
+            </Button>
+        </Grid>
+
+        <!-- ============================== MIGRATION NOTICE ============================== -->
+        <Border x:Name="MigrationNotice" Grid.Row="1" Style="{StaticResource ZeroNoticeStyle}" Margin="0,16,0,0" Visibility="Collapsed">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="MigrationNoticeText" TextWrapping="Wrap" VerticalAlignment="Center" FontSize="{DynamicResource ZeroFontSize13}"
+                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                <ui:Button Grid.Column="1" Content="Dismiss" Style="{StaticResource ZeroButtonGhostSmall}" Margin="16,0,0,0" Click="DismissNotice_Click" />
+            </Grid>
+        </Border>
+
+        <!-- Busy bar: hidden (not collapsed) so the layout never jumps. -->
+        <ProgressBar x:Name="BusyBar" Grid.Row="2" IsIndeterminate="True" Height="2" Margin="0,14,0,0" Visibility="Hidden" />
+
+        <!-- ============================== TABS ============================== -->
+        <TabControl x:Name="StudioTabs" Grid.Row="3" Style="{StaticResource ZeroSegmentedTabControlStyle}" Margin="0,8,0,0"
+                    SelectionChanged="StudioTabs_SelectionChanged" motion:Motion.Enter="1">
+
+            <!-- Tab: Installed -->
+            <TabItem x:Name="TabInstalled" Header="Installed">
+                <Grid>
+                    <Grid x:Name="InstalledPanes">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="340" />
+                            <ColumnDefinition Width="20" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Style="{StaticResource ZeroCardStyle}" Padding="0">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <ListBox x:Name="PackageList" Style="{StaticResource ModListStyle}" ItemTemplate="{StaticResource ModRowTemplate}" Margin="8"
+                                         SelectionChanged="PackageList_SelectionChanged" AutomationProperties.Name="Installed mods" />
+                            </ScrollViewer>
+                        </Border>
+
+                        <Border Grid.Column="2" Style="{StaticResource ZeroCardStyle}" Padding="0">
+                            <ScrollViewer x:Name="DetailsScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel x:Name="DetailsPanel" Margin="24,22">
+                                    <TextBlock x:Name="DetailsName" Style="{StaticResource ZeroPageTitleStyle}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                                    <TextBlock x:Name="DetailsMeta" Style="{StaticResource ZeroCaptionStyle}" FontSize="{DynamicResource ZeroFontSize12}" Margin="0,4,0,0" />
+
+                                    <Border x:Name="LegacyNote" Style="{StaticResource ZeroNoticeStyle}" Margin="0,14,0,0" Visibility="Collapsed">
+                                        <TextBlock Text="Created from the files that were already in your Modifications folder." TextWrapping="Wrap"
+                                                   FontSize="{DynamicResource ZeroFontSize13}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    </Border>
+
+                                    <Border x:Name="DetailsThumb" Width="320" Height="180" HorizontalAlignment="Left" Margin="0,16,0,0" Visibility="Collapsed"
+                                            CornerRadius="{DynamicResource ZeroRadius8}" BorderThickness="1" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                                        <Border.Background>
+                                            <ImageBrush x:Name="DetailsThumbBrush" Stretch="UniformToFill" />
+                                        </Border.Background>
+                                    </Border>
+
+                                    <TextBlock x:Name="DetailsDescription" Style="{StaticResource ZeroBodyStyle}" Margin="0,16,0,0" />
+
+                                    <TextBlock Text="COMPATIBILITY" Style="{StaticResource ZeroEyebrowStyle}" Margin="0,20,0,4" />
+                                    <TextBlock x:Name="DetailsCompat" Style="{StaticResource ZeroBodyStyle}" />
+
+                                    <Expander x:Name="FilesExpander" Margin="0,16,0,0" Expanded="FilesExpander_Expanded" Collapsed="FilesExpander_Collapsed">
+                                        <Expander.Header>
+                                            <TextBlock x:Name="FilesHeader" FontSize="{DynamicResource ZeroFontSize13}" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                        </Expander.Header>
+                                        <ItemsControl x:Name="FilesList" MaxHeight="220" Margin="0,4,0,0">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <VirtualizingStackPanel />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.Template>
+                                                <ControlTemplate TargetType="ItemsControl">
+                                                    <ScrollViewer VerticalScrollBarVisibility="Auto" CanContentScroll="True" Focusable="False">
+                                                        <ItemsPresenter />
+                                                    </ScrollViewer>
+                                                </ControlTemplate>
+                                            </ItemsControl.Template>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding}" Style="{StaticResource ZeroMonoTextStyle}" FontSize="{DynamicResource ZeroFontSize11_5}"
+                                                               TextTrimming="CharacterEllipsis" ToolTip="{Binding}" Margin="0,2" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Expander>
+
+                                    <Button x:Name="ConflictsLink" Style="{StaticResource ZeroFlatButton}" HorizontalAlignment="Left" Margin="0,12,0,0" Padding="0,4"
+                                            Click="ConflictsLink_Click" Visibility="Collapsed">
+                                        <TextBlock x:Name="ConflictsLinkText" FontSize="{DynamicResource ZeroFontSize13}" FontWeight="SemiBold" TextDecorations="Underline"
+                                                   Foreground="{DynamicResource ZeroStatusWarningBrush}" />
+                                    </Button>
+                                    <TextBlock x:Name="NoConflictsText" Text="No conflicts" Style="{StaticResource ZeroCaptionStyle}" FontSize="{DynamicResource ZeroFontSize13}" Margin="0,14,0,0" />
+
+                                    <StackPanel Orientation="Horizontal" Margin="0,22,0,0">
+                                        <ui:Button x:Name="DetailsToggleButton" Style="{StaticResource ZeroButtonSecondary}" Click="DetailsToggle_Click" />
+                                        <ui:Button x:Name="DetailsRemoveButton" Content="Remove…" Style="{StaticResource ZeroButtonGhost}" Margin="8,0,0,0"
+                                                   Foreground="{DynamicResource ZeroStatusErrorBrush}" Click="DetailsRemove_Click" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Border>
+                    </Grid>
+
+                    <!-- Empty state -->
+                    <Border x:Name="InstalledEmpty" Style="{StaticResource ZeroCardStyle}" Padding="24,48" VerticalAlignment="Top" Visibility="Collapsed">
+                        <StackPanel HorizontalAlignment="Center" MaxWidth="420">
+                            <Border Style="{StaticResource ZeroIconTileStyle}" Width="48" Height="48" HorizontalAlignment="Center">
+                                <ui:SymbolIcon Symbol="PuzzlePiece24" FontSize="22" Style="{StaticResource ZeroIconTileGlyphStyle}" />
+                            </Border>
+                            <TextBlock Text="No mods installed yet" Style="{StaticResource ZeroCardTitleStyle}" HorizontalAlignment="Center" Margin="0,16,0,0" />
+                            <TextBlock Text="Mods you import will appear here. Built-in mods are in the Library." Style="{StaticResource ZeroCaptionStyle}"
+                                       FontSize="{DynamicResource ZeroFontSize13}" TextAlignment="Center" Margin="0,6,0,0" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- Tab: Library -->
+            <TabItem x:Name="TabLibrary" Header="Library">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel x:Name="LibraryRoot">
+                        <TextBlock Text="Built-in mods apply when you save (Ctrl + S)." Style="{StaticResource ZeroCaptionStyle}" FontSize="{DynamicResource ZeroFontSize13}" Margin="2,0,0,8" />
+
+                        <UniformGrid x:Name="LibraryGrid" Columns="3" Margin="-6,0,-6,0" SizeChanged="LibraryGrid_SizeChanged">
+
+                            <!-- Classic cursors -->
+                            <Border Style="{StaticResource TileStyle}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Style="{StaticResource ZeroIconTileStyle}"><ui:SymbolIcon Symbol="Cursor24" Style="{StaticResource ZeroIconTileGlyphStyle}" /></Border>
+                                        <TextBlock Grid.Column="1" Text="Classic cursors" Style="{StaticResource TileTitleStyle}" Margin="12,0,8,0" />
+                                        <ContentControl x:Name="CursorsPill" Grid.Column="2" Style="{StaticResource ZeroStatusChip}" Content="Conflict" Tag="Conflict" Visibility="Collapsed" />
+                                    </Grid>
+                                    <TextBlock Grid.Row="1" Text="Swap Roblox's mouse cursor for the 2006 or 2013 look." Style="{StaticResource TileDescriptionStyle}" />
+                                    <StackPanel Grid.Row="3" Margin="0,12,0,0">
+                                        <ComboBox x:Name="CursorCombo" Style="{StaticResource ZeroDropdown}" ItemTemplate="{StaticResource EnumNameTemplate}"
+                                                  ItemsSource="{Binding CursorTypeTask.Selections, Mode=OneTime}" SelectedItem="{Binding CursorTypeTask.NewState, Mode=TwoWay}"
+                                                  SelectionChanged="CursorCombo_SelectionChanged" AutomationProperties.Name="Cursor style" />
+                                        <StackPanel x:Name="CursorPreview" Orientation="Horizontal" Margin="2,10,0,0" Height="32">
+                                            <Image x:Name="CursorArrowImage" Width="32" Height="32" RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                                            <Image x:Name="CursorFarImage" Width="32" Height="32" Margin="14,0,0,0" RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                                        </StackPanel>
+                                        <TextBlock x:Name="CursorDefaultHint" Text="Roblox's own cursor" Style="{StaticResource ZeroCaptionStyle}" Margin="2,10,0,0" Height="32" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!-- Classic character sounds -->
+                            <Border Style="{StaticResource TileStyle}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Style="{StaticResource ZeroIconTileStyle}"><ui:SymbolIcon Symbol="Speaker224" Style="{StaticResource ZeroIconTileGlyphStyle}" /></Border>
+                                        <TextBlock Grid.Column="1" Text="Classic character sounds" Style="{StaticResource TileTitleStyle}" Margin="12,0,8,0" />
+                                        <ContentControl x:Name="SoundsPill" Grid.Column="2" Style="{StaticResource ZeroStatusChip}" Content="Conflict" Tag="Conflict" Visibility="Collapsed" />
+                                    </Grid>
+                                    <TextBlock Grid.Row="1" Text="The original walking, jumping and landing sounds." Style="{StaticResource TileDescriptionStyle}" />
+                                    <ui:ToggleSwitch Grid.Row="3" Style="{StaticResource ZeroToggle}" HorizontalAlignment="Left" Margin="0,12,0,0"
+                                                     IsChecked="{Binding OldCharacterSoundsTask.NewState, Mode=TwoWay}" AutomationProperties.Name="Classic character sounds" />
+                                </Grid>
+                            </Border>
+
+                            <!-- Classic avatar background -->
+                            <Border Style="{StaticResource TileStyle}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Style="{StaticResource ZeroIconTileStyle}"><ui:SymbolIcon Symbol="Person24" Style="{StaticResource ZeroIconTileGlyphStyle}" /></Border>
+                                        <TextBlock Grid.Column="1" Text="Classic avatar background" Style="{StaticResource TileTitleStyle}" Margin="12,0,8,0" />
+                                        <ContentControl x:Name="AvatarPill" Grid.Column="2" Style="{StaticResource ZeroStatusChip}" Content="Conflict" Tag="Conflict" Visibility="Collapsed" />
+                                    </Grid>
+                                    <TextBlock Grid.Row="1" Text="The old look behind your avatar in the editor." Style="{StaticResource TileDescriptionStyle}" />
+                                    <ui:ToggleSwitch Grid.Row="3" Style="{StaticResource ZeroToggle}" HorizontalAlignment="Left" Margin="0,12,0,0"
+                                                     IsChecked="{Binding OldAvatarBackgroundTask.NewState, Mode=TwoWay}" AutomationProperties.Name="Classic avatar background" />
+                                </Grid>
+                            </Border>
+
+                            <!-- Emoji font -->
+                            <Border Style="{StaticResource TileStyle}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Style="{StaticResource ZeroIconTileStyle}"><ui:SymbolIcon Symbol="Emoji24" Style="{StaticResource ZeroIconTileGlyphStyle}" /></Border>
+                                        <TextBlock Grid.Column="1" Text="Emoji font" Style="{StaticResource TileTitleStyle}" Margin="12,0,8,0" />
+                                        <ContentControl x:Name="EmojiPill" Grid.Column="2" Style="{StaticResource ZeroStatusChip}" Content="Conflict" Tag="Conflict" Visibility="Collapsed" />
+                                    </Grid>
+                                    <TextBlock Grid.Row="1" Text="Use another emoji set in Roblox. It is downloaded when you save." Style="{StaticResource TileDescriptionStyle}" />
+                                    <ComboBox Grid.Row="3" Style="{StaticResource ZeroDropdown}" ItemTemplate="{StaticResource EnumNameTemplate}" Margin="0,12,0,0"
+                                              ItemsSource="{Binding EmojiFontTask.Selections, Mode=OneTime}" SelectedItem="{Binding EmojiFontTask.NewState, Mode=TwoWay}"
+                                              AutomationProperties.Name="Emoji font" />
+                                </Grid>
+                            </Border>
+
+                            <!-- Custom font -->
+                            <Border Style="{StaticResource TileStyle}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Style="{StaticResource ZeroIconTileStyle}"><ui:SymbolIcon Symbol="TextFont24" Style="{StaticResource ZeroIconTileGlyphStyle}" /></Border>
+                                        <TextBlock Grid.Column="1" Text="Custom font" Style="{StaticResource TileTitleStyle}" Margin="12,0,8,0" />
+                                        <ContentControl x:Name="FontPill" Grid.Column="2" Style="{StaticResource ZeroStatusChip}" Content="Conflict" Tag="Conflict" Visibility="Collapsed" />
+                                    </Grid>
+                                    <TextBlock Grid.Row="1" Text="Use your own .ttf, .otf or .ttc font for Roblox's text." Style="{StaticResource TileDescriptionStyle}" />
+                                    <StackPanel Grid.Row="3" Margin="0,12,0,0">
+                                        <TextBlock Text="{Binding CustomFontName}" ToolTip="{Binding CustomFontName}" TextTrimming="CharacterEllipsis"
+                                                   FontSize="{DynamicResource ZeroFontSize12}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,8"
+                                                   Visibility="{Binding DeleteCustomFontVisibility, Mode=OneWay}" />
+                                        <ui:Button Content="Choose…" Icon="DocumentAdd16" Style="{StaticResource ZeroButtonSecondary}" HorizontalAlignment="Left"
+                                                   Command="{Binding ManageCustomFontCommand}" Visibility="{Binding ChooseCustomFontVisibility, Mode=OneWay}" />
+                                        <ui:Button Content="Remove" Icon="Delete16" Style="{StaticResource ZeroButtonGhost}" HorizontalAlignment="Left"
+                                                   Foreground="{DynamicResource ZeroStatusErrorBrush}"
+                                                   Command="{Binding ManageCustomFontCommand}" Visibility="{Binding DeleteCustomFontVisibility, Mode=OneWay}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </UniformGrid>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Tab: Conflicts -->
+            <TabItem x:Name="TabConflicts" AutomationProperties.Name="Conflicts">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Conflicts" />
+                        <Border x:Name="ConflictsBadge" Margin="8,0,0,0" Padding="6,0,6,1" CornerRadius="{DynamicResource ZeroRadius8}" VerticalAlignment="Center"
+                                Background="{DynamicResource ZeroStatusWarningSoftBrush}" Visibility="Collapsed">
+                            <TextBlock x:Name="ConflictsBadgeText" FontSize="{DynamicResource ZeroFontSize11}" FontWeight="SemiBold" Foreground="{DynamicResource ZeroStatusWarningBrush}" />
+                        </Border>
+                    </StackPanel>
+                </TabItem.Header>
+
+                <Grid>
+                    <ScrollViewer x:Name="ConflictsScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel>
+                            <Border x:Name="ConflictFilterBar" Style="{StaticResource ZeroNoticeStyle}" Margin="0,0,0,12" Visibility="Collapsed">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="ConflictFilterText" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontSize="{DynamicResource ZeroFontSize13}"
+                                               Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                    <ui:Button Grid.Column="1" Content="Show all" Style="{StaticResource ZeroButtonGhostSmall}" Margin="16,0,0,0" Click="ShowAllConflicts_Click" />
+                                </Grid>
+                            </Border>
+
+                            <Border x:Name="OrderCard" Style="{StaticResource ZeroCardStyle}" Padding="18,16" Margin="0,0,0,12" Visibility="Collapsed">
+                                <StackPanel>
+                                    <TextBlock Text="Order" Style="{StaticResource ZeroCardTitleStyle}" />
+                                    <TextBlock Text="When you haven't chosen, the higher mod wins." Style="{StaticResource ZeroCaptionStyle}" Margin="0,2,0,10" />
+                                    <ItemsControl x:Name="OrderList" ItemTemplate="{StaticResource OrderRowTemplate}" AutomationProperties.Name="Mod order" />
+                                </StackPanel>
+                            </Border>
+
+                            <ItemsControl x:Name="ConflictList" ItemTemplate="{StaticResource ConflictRowTemplate}" AutomationProperties.Name="Conflicts" />
+                    <Border x:Name="ConflictsEmpty" Style="{StaticResource ZeroCardStyle}" Padding="24,48" Visibility="Collapsed">
+                        <StackPanel HorizontalAlignment="Center" MaxWidth="420">
+                            <Border Style="{StaticResource ZeroIconTileStyle}" Width="48" Height="48" HorizontalAlignment="Center">
+                                <ui:SymbolIcon Symbol="CheckmarkCircle24" FontSize="22" Style="{StaticResource ZeroIconTileGlyphStyle}" />
+                            </Border>
+                            <TextBlock Text="No conflicts" Style="{StaticResource ZeroCardTitleStyle}" HorizontalAlignment="Center" Margin="0,16,0,0" />
+                            <TextBlock Text="When two mods change the same file, you'll choose which one wins here." Style="{StaticResource ZeroCaptionStyle}"
+                                       FontSize="{DynamicResource ZeroFontSize13}" TextAlignment="Center" Margin="0,6,0,0" />
+                        </StackPanel>
+                    </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
 </Page>

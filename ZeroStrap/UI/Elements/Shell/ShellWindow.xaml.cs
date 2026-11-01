@@ -55,6 +55,9 @@ namespace ZeroStrap.UI.Elements.Shell
             VersionLabel.Text = $"ZeroStrap v{App.Version}";
             ActivityLog.NoteVersion();
             NavigateTo(ShellSection.Overview);
+
+            ModsStudioService.SummaryChanged += UpdateModsBadge;
+            Loaded += (_, _) => _ = ModsStudioService.RefreshSummaryAsync();
         }
 
         public void LoadState()
@@ -159,8 +162,26 @@ namespace ZeroStrap.UI.Elements.Shell
         private Page BuildModsStudio()
         {
             var page = new ModsStudioPage();
-            page.OpenLegacyModsRequested += (_, _) => NavigateTo(ShellSection.Configure, ConfigureTab.Mods);
+            page.ToastRequested += (_, toast) => ShowModsToast(toast.Message, toast.IsError);
             return page;
+        }
+
+        /// <summary>Short, self-dismissing notice for Mods Studio changes.</summary>
+        private void ShowModsToast(string message, bool isError)
+        {
+            ModsToastSnackbar.Show(
+                isError ? "Couldn't update mods" : "Mods updated",
+                message,
+                isError ? SymbolRegular.ErrorCircle24 : SymbolRegular.CheckmarkCircle24,
+                isError ? ControlAppearance.Danger : ControlAppearance.Success);
+        }
+
+        private void UpdateModsBadge()
+        {
+            int conflicts = ModsStudioService.HasSummary ? ModsStudioService.UnresolvedCount : 0;
+
+            NavModsBadge.Visibility = conflicts > 0 ? Visibility.Visible : Visibility.Collapsed;
+            NavModsBadgeText.Text = conflicts.ToString();
         }
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e) => NavigateTo(ShellSection.Configure, ConfigureTab.Behaviour);
@@ -261,10 +282,8 @@ namespace ZeroStrap.UI.Elements.Shell
                     Keywords = new[] { "fast flags", "fflags", "flags", "editor", "configure" }, Run = () => NavigateTo(ShellSection.Configure, ConfigureTab.FastFlags) },
             new() { Title = "Fast Flag Editor", Hint = "Configure › Fast Flags › Editor", Group = "Go to", Icon = SymbolRegular.EditSettings24,
                     Keywords = new[] { "fast flag editor", "flag editor", "edit flags" }, Run = OpenFastFlagEditor },
-            new() { Title = "Mods",Hint = "Configure › Mods", Group = "Go to", Icon = SymbolRegular.PuzzlePiece24,
-                    Keywords = new[] { "mods", "modifications", "fonts", "cursor" }, Run = () => NavigateTo(ShellSection.Configure, ConfigureTab.Mods) },
-            new() { Title = "Mods Studio", Hint = "Install and manage mod packages", Group = "Go to", Icon = SymbolRegular.PuzzlePiece24,
-                    Keywords = new[] { "mods studio", "mod packages", "import mod", "conflicts" }, Run = () => NavigateTo(ShellSection.ModsStudio) },
+            new() { Title = "Mods Studio", Hint = "Turn mods on or off, resolve conflicts, built-in mods", Group = "Go to", Icon = SymbolRegular.PuzzlePiece24,
+                    Keywords = new[] { "mods", "mods studio", "modifications", "mod packages", "conflicts", "fonts", "cursor", "emoji", "sounds" }, Run = () => NavigateTo(ShellSection.ModsStudio) },
             new() { Title = "Macro Studio", Hint = "Record and edit macros", Group = "Go to", Icon = SymbolRegular.Record24,
                     Keywords = new[] { "macro", "macros", "record", "automation", "hotkey" }, Run = () => NavigateTo(ShellSection.MacroStudio) },
             new() { Title = "Integrations", Hint = "Configure › Integrations", Group = "Go to", Icon = SymbolRegular.PlugConnected24,

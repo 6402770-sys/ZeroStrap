@@ -35,7 +35,7 @@
         <StackPanel Grid.Row="0" motion:Motion.Enter="0">
             <TextBlock Text="C O N F I G U R E" Style="{StaticResource ZeroEyebrowStyle}" Margin="0,4,0,8" />
             <TextBlock Text="Shape how Roblox runs" FontSize="{DynamicResource ZeroFontSize30}" FontWeight="{DynamicResource ZeroFontWeightHeading}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-            <TextBlock Text="Fast Flags, mods, integrations, shortcuts and launcher behaviour. Changes apply when you save (Ctrl + S)."
+            <TextBlock Text="Fast Flags, integrations, shortcuts and launcher behaviour. Changes apply when you save (Ctrl + S)."
                        FontSize="{DynamicResource ZeroFontSize14}" Margin="0,6,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
         </StackPanel>
 
@@ -83,7 +83,7 @@
                     <Border Style="{StaticResource ZeroIconTileStyle}"><ui:SymbolIcon Symbol="PuzzlePiece24" Style="{StaticResource ZeroIconTileGlyphStyle}" /></Border>
                     <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
                         <TextBlock x:Name="StatModsCount" Text="0" Style="{StaticResource StatValue}" />
-                        <TextBlock Text="Mod files" Style="{StaticResource StatLabel}" />
+                        <TextBlock Text="Mods" Style="{StaticResource StatLabel}" />
                     </StackPanel>
                 </StackPanel>
             </Grid>
@@ -94,9 +94,6 @@
                     SelectionChanged="ConfigureTabs_SelectionChanged" motion:Motion.Enter="2">
             <TabItem x:Name="TabFastFlags" Header="Fast Flags">
                 <Frame NavigationUIVisibility="Hidden" Loaded="FastFlagsHost_Loaded" />
-            </TabItem>
-            <TabItem x:Name="TabMods" Header="Mods">
-                <Frame NavigationUIVisibility="Hidden" Loaded="ModsHost_Loaded" />
             </TabItem>
             <TabItem x:Name="TabIntegrations" Header="Integrations">
                 <Frame NavigationUIVisibility="Hidden" Loaded="IntegrationsHost_Loaded" />

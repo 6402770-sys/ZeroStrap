@@ -16,7 +16,69 @@ namespace ZeroStrap.UI.ViewModels.Settings
 {
     public class ModsViewModel : NotifyPropertyChangedViewModel
     {
+        private static ModsViewModel? _shared;
+
+        /// <summary>
+        /// The instance Mods Studio's Library binds to. It is kept for the whole session so a preset changed but not yet saved
+        /// still shows as changed when the page is visited again.
+        /// </summary>
+        public static ModsViewModel Shared => _shared ??= new ModsViewModel();
+
         private void OpenModsFolder() => Process.Start("explorer.exe", Paths.Modifications);
+
+        /// <summary>
+        /// Records that a preset has just been switched off on disk (Mods Studio did it): both the saved and the shown value become
+        /// "off", and any pending change for it is dropped. <paramref name="taskName"/> is <c>BuiltinPreset.TaskName</c>.
+        /// </summary>
+        public void SetPresetOff(string taskName)
+        {
+            Models.SettingTasks.Base.BaseTask? task = null;
+
+            switch (taskName)
+            {
+                case "CursorType":
+                    CursorTypeTask.OriginalState = default;
+                    task = CursorTypeTask;
+                    break;
+                case "OldCharacterSounds":
+                    OldCharacterSoundsTask.OriginalState = false;
+                    task = OldCharacterSoundsTask;
+                    break;
+                case "OldAvatarBackground":
+                    OldAvatarBackgroundTask.OriginalState = false;
+                    task = OldAvatarBackgroundTask;
+                    break;
+                case "EmojiFont":
+                    EmojiFontTask.OriginalState = default;
+                    task = EmojiFontTask;
+                    break;
+                case "TextFont":
+                    TextFontTask.OriginalState = "";
+                    task = TextFontTask;
+                    break;
+            }
+
+            if (task is not null)
+                App.PendingSettingTasks.Remove(task.Name);
+
+            RefreshPresets();
+        }
+
+        /// <summary>Makes the bindings read the preset values again (they are plain properties of the tasks).</summary>
+        public void RefreshPresets()
+        {
+            OnPropertyChanged(nameof(CursorTypeTask));
+            OnPropertyChanged(nameof(OldCharacterSoundsTask));
+            OnPropertyChanged(nameof(OldAvatarBackgroundTask));
+            OnPropertyChanged(nameof(EmojiFontTask));
+            OnPropertyChanged(nameof(TextFontTask));
+            OnPropertyChanged(nameof(ChooseCustomFontVisibility));
+            OnPropertyChanged(nameof(DeleteCustomFontVisibility));
+            OnPropertyChanged(nameof(CustomFontName));
+        }
+
+        /// <summary>File name of the chosen custom font, empty when none.</summary>
+        public string CustomFontName => String.IsNullOrEmpty(TextFontTask.NewState) ? "" : Path.GetFileName(TextFontTask.NewState);
 
         private readonly Dictionary<string, byte[]> FontHeaders = new()
         {
@@ -55,6 +117,7 @@ namespace ZeroStrap.UI.ViewModels.Settings
 
             OnPropertyChanged(nameof(ChooseCustomFontVisibility));
             OnPropertyChanged(nameof(DeleteCustomFontVisibility));
+            OnPropertyChanged(nameof(CustomFontName));
         }
 
         public ICommand OpenModsFolderCommand => new RelayCommand(OpenModsFolder);
