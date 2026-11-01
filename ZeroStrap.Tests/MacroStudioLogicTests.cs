@@ -338,5 +338,35 @@ namespace ZeroStrap.Tests
             Assert.Equal("F6 · 4 actions", MacroStudioLogic.ListMeta(macro));
             Assert.Equal("No shortcut · 0 actions", MacroStudioLogic.ListMeta(new Macro()));
         }
+
+        [Fact]
+        public void CameraSummary_ReadsOnOneLine()
+        {
+            var move = new MacroAction { Kind = MacroActionKind.Camera, Dx = 300, Dy = 0, DurationMs = 800 };
+            Assert.Equal("Horizontal 300 px · Vertical 0 px · Duration 0.8 s · Speed 375 px/s", MacroStudioLogic.CameraSummary(move));
+
+            var still = new MacroAction { Kind = MacroActionKind.Camera, DurationMs = 500 };
+            Assert.Equal("Horizontal 0 px · Vertical 0 px · Duration 0.5 s", MacroStudioLogic.CameraSummary(still));
+        }
+
+        [Fact]
+        public void CameraEase_MatchesPlayerCurves()
+        {
+            Assert.Equal(0.25, MacroStudioLogic.CameraEase(0.25, MacroEasing.Linear));
+            Assert.Equal(0.5, MacroStudioLogic.CameraEase(0.5, MacroEasing.EaseInOut), 6);
+            Assert.True(MacroStudioLogic.CameraEase(0.25, MacroEasing.EaseInOut) < 0.25);
+            Assert.Equal(1.0, MacroStudioLogic.CameraEase(5, MacroEasing.Linear));
+            Assert.Equal(0.0, MacroStudioLogic.CameraEase(double.NaN, MacroEasing.EaseInOut));
+        }
+
+        [Theory]
+        [InlineData("Spin / jump", "Spin _ jump")]
+        [InlineData("  Farm  ", "Farm")]
+        [InlineData("", "macro")]
+        [InlineData(null, "macro")]
+        [InlineData("a:b*c?", "a_b_c_")]
+        [InlineData("...", "macro")]
+        public void ExportFileName_IsSanitised(string? name, string expected) =>
+            Assert.Equal(expected, MacroStudioLogic.ExportFileName(name));
     }
 }

@@ -212,6 +212,7 @@ namespace ZeroStrap.Macros
                 }
 
                 // An id, hotkey or enabled flag from a foreign file is never trusted: the id is replaced and the others cleared before validation.
+                string? droppedHotkey = parsed.Hotkey;
                 parsed.Id = MacroValidator.NewId();
                 parsed.Enabled = false;
                 parsed.Hotkey = null;
@@ -225,6 +226,9 @@ namespace ZeroStrap.Macros
                 }
 
                 var saved = SaveAsNew(result.Macro);
+
+                if (!string.IsNullOrWhiteSpace(droppedHotkey))
+                    result.Warnings.Add($"The shortcut {droppedHotkey} from the file was not kept, so it can't clash with yours. Set one in the macro's settings.");
 
                 return new MacroImportResult { Macro = saved, Warnings = result.Warnings };
             }

@@ -7,13 +7,17 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Shapes;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 
 using Wpf.Ui.Common;
 
 using ZeroStrap.Macros;
+using ZeroStrap.UI.Elements.Controls;
 using ZeroStrap.UI.Utility;
 using ZeroStrap.UI.ViewModels.Shell;
 
@@ -106,6 +110,13 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
         private bool _reloading;
         private bool _reloadAgain;
         private bool _addToGroup;
+        private bool _revertingMacro;
+
+        // Session memory: the chosen action view, and edits that failed validation when the page was left (pages are rebuilt on every visit).
+        private static bool s_timelineMode;
+        private static readonly Dictionary<string, Macro> s_drafts = new();
+
+        private bool TimelineMode => s_timelineMode;
 
         public MacroStudioPage()
         {
@@ -116,6 +127,11 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
             _saveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
             _saveTimer.Tick += (_, _) => FlushSave();
+
+            Timeline.LabelProvider = a => MacroStudioLogic.Summary(a, MacroStudioService.KeyName);
+            BindTimelineScroll();
+            ViewSwitch.SelectedIndex = s_timelineMode ? 1 : 0;
+            ApplyViewMode();
 
             AddMenu.Closed += (_, _) => Dispatcher.BeginInvoke(new Action(() => _addToGroup = false), DispatcherPriority.Background);
 
@@ -167,10 +183,14 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
                 foreach (var macro in macros)
                     _rows.Add(new MacroRow(macro));
 
+                var restored = RestoreDrafts();
+
                 UpdateEmptyStates();
                 UpdateState();
 
-                if (_rows.Count > 0)
+                if (restored is not null)
+                    MacroList.SelectedItem = restored;
+                else if (_rows.Count > 0)
                     MacroList.SelectedIndex = 0;
 
                 RequestReload();
@@ -186,6 +206,38 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             }
         }
 
+        /// <summary>Puts back macros whose edits were not valid when the page was left; they are still unsaved and show their errors again.</summary>
+        private MacroRow? RestoreDrafts()
+        {
+            MacroRow? first = null;
+            var names = new List<string>();
+
+            foreach (var draft in s_drafts.Values.ToList())
+            {
+                var row = _rows.FirstOrDefault(r => r.Macro.Id == draft.Id);
+
+                if (row is null)
+                {
+                    s_drafts.Remove(draft.Id);
+                    continue;
+                }
+
+                int index = _rows.IndexOf(row);
+                var replacement = new MacroRow(draft) { Problem = row.Problem };
+                _rows[index] = replacement;
+                _dirty.Add(draft);
+                first ??= replacement;
+                names.Add(string.IsNullOrWhiteSpace(draft.Name) ? "Untitled" : draft.Name);
+            }
+
+            s_drafts.Clear();
+
+            if (names.Count > 0)
+                SetMessage($"Your unsaved changes to {string.Join(", ", names.Select(n => "\"" + n + "\""))} are back. They still have errors, so fix them or discard them.");
+
+            return first;
+        }
+
         private void Page_Unloaded(object sender, RoutedEventArgs e)
         {
             _loaded = false;
@@ -199,6 +251,10 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             {
                 App.Logger.WriteException(LOG_IDENT, ex);
             }
+
+            // Whatever is still dirty failed validation (or could not be written): keep it for the next visit instead of dropping it.
+            foreach (var macro in _dirty)
+                s_drafts[macro.Id] = macro;
 
             if (_runtime is null)
                 return;
@@ -403,7 +459,12 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             _rows.FirstOrDefault(r => ReferenceEquals(r.Macro, macro))?.Refresh();
 
             if (ReferenceEquals(macro, _current))
+            {
                 EstimateText.Text = MacroStudioLogic.EstimateText(macro);
+
+                if (TimelineMode)
+                    Timeline.Refresh();
+            }
 
             _saveTimer.Stop();
             _saveTimer.Start();
@@ -438,6 +499,7 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
                     _runtime.Store.Save(macro);
                     _dirty.Remove(macro);
+                    s_drafts.Remove(macro.Id);
                     saved = true;
 
                     if (ReferenceEquals(macro, _current))
@@ -553,8 +615,103 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
         private void MacroList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            _current = (MacroList.SelectedItem as MacroRow)?.Macro;
+            if (_revertingMacro)
+                return;
+
+            var previous = _current;
+            var target = MacroList.SelectedItem as MacroRow;
+
+            if (previous is not null && !ReferenceEquals(previous, target?.Macro) && !ConfirmLeaveMacro(previous))
+            {
+                // Keep editing: put the selection back on the macro with the errors.
+                _revertingMacro = true;
+
+                try
+                {
+                    MacroList.SelectedItem = _rows.FirstOrDefault(r => ReferenceEquals(r.Macro, previous));
+                }
+                finally
+                {
+                    _revertingMacro = false;
+                }
+
+                return;
+            }
+
+            _current = target?.Macro;
             LoadMacroIntoControls();
+        }
+
+        /// <summary>
+        /// Saves the macro being left. If it still has errors, asks before dropping them: true when it is fine to leave
+        /// (saved, or the changes were discarded), false for "Keep editing".
+        /// </summary>
+        private bool ConfirmLeaveMacro(Macro macro)
+        {
+            FlushSave();
+
+            if (!_dirty.Contains(macro))
+                return true;
+
+            var answer = Frontend.ShowMessageBox(
+                "This macro has errors and wasn't saved. Discard changes?" + Environment.NewLine + Environment.NewLine + "Yes discards them, No keeps editing.",
+                MessageBoxImage.Warning, MessageBoxButton.YesNo, MessageBoxResult.No);
+
+            if (answer != MessageBoxResult.Yes)
+                return false;
+
+            DiscardDraft(macro);
+            return true;
+        }
+
+        /// <summary>Throws away unsaved edits: the macro goes back to what is on disk (or leaves the list if it was never written).</summary>
+        private void DiscardDraft(Macro macro)
+        {
+            _dirty.Remove(macro);
+            s_drafts.Remove(macro.Id);
+
+            int index = _rows.ToList().FindIndex(r => ReferenceEquals(r.Macro, macro));
+
+            if (index < 0)
+                return;
+
+            Macro? saved = null;
+
+            try
+            {
+                saved = _runtime?.Store.Load(macro.Id);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteException(LOG_IDENT, ex);
+            }
+
+            if (saved is null)
+            {
+                _revertingMacro = true;
+
+                try
+                {
+                    _rows.RemoveAt(index);
+                }
+                finally
+                {
+                    _revertingMacro = false;
+                }
+
+                return;
+            }
+
+            _revertingMacro = true;
+
+            try
+            {
+                _rows[index] = new MacroRow(saved);
+            }
+            finally
+            {
+                _revertingMacro = false;
+            }
         }
 
         private void LoadMacroIntoControls()
@@ -578,6 +735,7 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
                     SpeedSlider.Value = MacroStudioLogic.ClampSpeed(_current.Speed);
                     SpeedText.Text = MacroStudioLogic.FormatSpeedMultiplier(_current.Speed);
+                    UpdateSpeedNote();
                     FocusToggle.IsChecked = _current.FocusRule == MacroFocusRule.RobloxOnly;
                     EstimateText.Text = MacroStudioLogic.EstimateText(_current);
 
@@ -639,11 +797,20 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             if (dialog.ShowDialog() != true)
                 return;
 
+            await ImportFileAsync(dialog.FileName);
+        }
+
+        /// <summary>Imports one .zeromacro (from the dialog or a drop) and selects the new macro.</summary>
+        private async Task ImportFileAsync(string path)
+        {
+            if (_runtime is null)
+                return;
+
             BusyBar.Visibility = Visibility.Visible;
 
             try
             {
-                var result = await MacroStudioService.ImportAsync(_runtime, dialog.FileName);
+                var result = await MacroStudioService.ImportAsync(_runtime, path);
 
                 if (!_loaded)
                     return;
@@ -666,6 +833,33 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             {
                 BusyBar.Visibility = Visibility.Hidden;
             }
+        }
+
+        private static string[] DroppedMacroFiles(IDataObject data) =>
+            data.GetDataPresent(DataFormats.FileDrop) && data.GetData(DataFormats.FileDrop) is string[] files
+                ? files.Where(f => string.Equals(System.IO.Path.GetExtension(f), MacroStore.ShareExtension, StringComparison.OrdinalIgnoreCase)).ToArray()
+                : Array.Empty<string>();
+
+        private void Page_PreviewDragOver(object sender, DragEventArgs e)
+        {
+            if (_runtime is null || DroppedMacroFiles(e.Data).Length == 0)
+                return;
+
+            e.Effects = DragDropEffects.Copy;
+            e.Handled = true;
+        }
+
+        private async void Page_PreviewDrop(object sender, DragEventArgs e)
+        {
+            var files = DroppedMacroFiles(e.Data);
+
+            if (_runtime is null || files.Length == 0)
+                return;
+
+            e.Handled = true;
+
+            foreach (var file in files.Take(5))
+                await ImportFileAsync(file);
         }
 
         /// <summary>Adds a macro the store already wrote (imported) without saving it again.</summary>
@@ -703,7 +897,7 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
                 return;
             }
 
-            string fileName = string.Concat((string.IsNullOrWhiteSpace(macro.Name) ? "macro" : macro.Name).Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
+            string fileName = MacroStudioLogic.ExportFileName(macro.Name);
 
             var dialog = new Microsoft.Win32.SaveFileDialog
             {
@@ -806,6 +1000,7 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
             _current.Speed = SpeedSlider.Value;
             SpeedText.Text = MacroStudioLogic.FormatSpeedMultiplier(_current.Speed);
+            UpdateSpeedNote();
             MarkDirty(_current);
         }
 
@@ -933,7 +1128,7 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
         // ---------------------------------------------------------------- action list
 
-        private void RebuildActionList(MacroAction? select)
+        private void RebuildActionList(MacroAction? select, bool syncTimeline = true)
         {
             _suppressActionSelection = true;
 
@@ -960,7 +1155,10 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
                 _suppressActionSelection = false;
             }
 
-            OnActionSelectionChanged();
+            if (syncTimeline)
+                SyncTimelineFromModel();
+
+            OnActionSelectionChanged(syncTimeline);
         }
 
         private void ActionList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -969,20 +1167,140 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
                 OnActionSelectionChanged();
         }
 
-        private void OnActionSelectionChanged()
+        private void OnActionSelectionChanged(bool syncTimeline = true)
         {
             _action = (ActionList.SelectedItem as ActionRow)?.Action;
+
+            if (syncTimeline && TimelineMode)
+                Timeline.SetSelection(_action is null ? null : new[] { _action }, _action);
+
             LoadInspector();
             UpdateToolbar();
         }
+
+        // ---------------------------------------------------------------- list / timeline views
+
+        private void BindTimelineScroll()
+        {
+            BindingOperations.SetBinding(TimelineScroll, System.Windows.Controls.Primitives.RangeBase.MaximumProperty,
+                new Binding(nameof(MacroTimeline.ScrollableMs)) { Source = Timeline, Mode = BindingMode.OneWay });
+            BindingOperations.SetBinding(TimelineScroll, System.Windows.Controls.Primitives.ScrollBar.ViewportSizeProperty,
+                new Binding(nameof(MacroTimeline.ViewportMs)) { Source = Timeline, Mode = BindingMode.OneWay });
+            BindingOperations.SetBinding(TimelineScroll, System.Windows.Controls.Primitives.RangeBase.ValueProperty,
+                new Binding(nameof(MacroTimeline.HorizontalOffsetMs)) { Source = Timeline, Mode = BindingMode.TwoWay });
+        }
+
+        private void ViewSwitch_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // Raised while the XAML is still being built (SelectedIndex attribute) before the panels exist.
+            if (ViewSwitch.SelectedIndex < 0 || TimelineViewPanel is null || Timeline is null)
+                return;
+
+            bool timeline = ViewSwitch.SelectedIndex == 1;
+
+            if (timeline == (TimelineViewPanel.Visibility == Visibility.Visible))
+                return;
+
+            s_timelineMode = timeline;
+            ApplyViewMode();
+
+            if (timeline)
+            {
+                SyncTimelineFromModel();
+
+                if (_action is not null)
+                    Timeline.ScrollIntoView(_action);
+
+                UpdateToolbar();
+            }
+            else if (Timeline.PrimaryAction is { } primary)
+            {
+                // The list shows one selection: the timeline's primary.
+                RebuildActionList(primary, syncTimeline: false);
+            }
+        }
+
+        private void ApplyViewMode()
+        {
+            bool timeline = TimelineMode;
+            ListViewPanel.Visibility = timeline ? Visibility.Collapsed : Visibility.Visible;
+            TimelineViewPanel.Visibility = timeline ? Visibility.Visible : Visibility.Collapsed;
+            ZoomTools.Visibility = timeline ? Visibility.Visible : Visibility.Collapsed;
+            GroupActionButton.Visibility = timeline ? Visibility.Visible : Visibility.Collapsed;
+            MoveUpButton.Visibility = MoveDownButton.Visibility = timeline ? Visibility.Collapsed : Visibility.Visible;
+            UpdateToolbar();
+        }
+
+        /// <summary>Points the timeline at the current macro's actions and mirrors the list's selection into it.</summary>
+        private void SyncTimelineFromModel()
+        {
+            Timeline.Actions = _current?.Actions;
+
+            if (TimelineMode)
+                Timeline.SetSelection(_action is null ? null : new[] { _action }, _action);
+        }
+
+        private void UpdateSpeedNote()
+        {
+            TimelineSpeedNote.Visibility = _current is not null && Math.Abs(_current.Speed - 1.0) > 0.0001 ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void Timeline_SelectionChanged(object? sender, EventArgs e)
+        {
+            var primary = Timeline.PrimaryAction;
+
+            _suppressActionSelection = true;
+
+            try
+            {
+                ActionList.SelectedItem = primary is null ? null : _actionRows.FirstOrDefault(r => ReferenceEquals(r.Action, primary));
+            }
+            finally
+            {
+                _suppressActionSelection = false;
+            }
+
+            _action = primary;
+            LoadInspector();
+            UpdateToolbar();
+        }
+
+        private void Timeline_ActionsEdited(object? sender, EventArgs e)
+        {
+            if (_current is null)
+                return;
+
+            MarkDirty(_current);
+            RebuildActionList(Timeline.PrimaryAction, syncTimeline: false);
+        }
+
+        private void ZoomIn_Click(object sender, RoutedEventArgs e) => Timeline.ZoomIn();
+
+        private void ZoomOut_Click(object sender, RoutedEventArgs e) => Timeline.ZoomOut();
+
+        private void ZoomFit_Click(object sender, RoutedEventArgs e) => Timeline.ZoomToFit();
+
+        private void GroupAction_Click(object sender, RoutedEventArgs e) => Timeline.GroupSelection();
 
         private void UpdateToolbar()
         {
             bool has = _action is not null && _current is not null;
             MoveUpButton.IsEnabled = has && MacroStudioLogic.CanMoveUp(_current!.Actions, _action!);
             MoveDownButton.IsEnabled = has && MacroStudioLogic.CanMoveDown(_current!.Actions, _action!);
-            DuplicateActionButton.IsEnabled = has;
-            DeleteActionButton.IsEnabled = has;
+
+            if (TimelineMode)
+            {
+                DuplicateActionButton.IsEnabled = has && Timeline.CanDuplicateSelection;
+                DeleteActionButton.IsEnabled = has && Timeline.CanDeleteSelection;
+                GroupActionButton.IsEnabled = has && Timeline.CanGroupSelection;
+            }
+            else
+            {
+                DuplicateActionButton.IsEnabled = has;
+                DeleteActionButton.IsEnabled = has;
+                GroupActionButton.IsEnabled = false;
+            }
+
             AddToGroupButton.Visibility = has && _action!.Kind == MacroActionKind.Group ? Visibility.Visible : Visibility.Collapsed;
             AddButton.IsEnabled = _current is not null;
         }
@@ -1081,6 +1399,12 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
         private void DuplicateAction_Click(object sender, RoutedEventArgs e)
         {
+            if (TimelineMode)
+            {
+                Timeline.DuplicateSelection();
+                return;
+            }
+
             if (_current is null || _action is null)
                 return;
 
@@ -1096,6 +1420,12 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
         private void DeleteAction_Click(object sender, RoutedEventArgs e)
         {
+            if (TimelineMode)
+            {
+                Timeline.DeleteSelection();
+                return;
+            }
+
             if (_current is null || _action is null)
                 return;
 
@@ -1145,6 +1475,7 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
                 WaitPanel.Visibility = Show(a.Kind == MacroActionKind.Wait);
                 MovePanel.Visibility = Show(a.Kind == MacroActionKind.MouseMoveTo);
                 GroupPanel.Visibility = Show(a.Kind == MacroActionKind.Group);
+                CameraSummaryText.Visibility = Show(a.Kind == MacroActionKind.Camera);
 
                 DelayBox.Text = a.DelayBeforeMs.ToString();
                 NoteBox.Text = a.Note ?? "";
@@ -1188,6 +1519,68 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             {
                 _loading = false;
             }
+
+            UpdateCameraPreview();
+        }
+
+        /// <summary>The camera's one-line summary and the small preview: move direction on the left, easing curve on the right.</summary>
+        private void UpdateCameraPreview()
+        {
+            if (_action is not { Kind: MacroActionKind.Camera } a)
+                return;
+
+            CameraSummaryText.Text = MacroStudioLogic.CameraSummary(a);
+            CameraPreview.Children.Clear();
+
+            const double arrowCx = 42, arrowCy = 44, arrowReach = 30;
+            const double curveLeft = 92, curveTop = 12, curveW = 56, curveH = 64;
+
+            Shape Styled(Shape shape, string brushKey, double thickness)
+            {
+                shape.SetResourceReference(Shape.StrokeProperty, brushKey);
+                shape.StrokeThickness = thickness;
+                shape.StrokeLineJoin = PenLineJoin.Round;
+                shape.StrokeStartLineCap = shape.StrokeEndLineCap = PenLineCap.Round;
+                return shape;
+            }
+
+            // Direction: scaled so the longer axis reaches arrowReach; a still camera shows just the origin dot.
+            var origin = new Ellipse { Width = 5, Height = 5 };
+            origin.SetResourceReference(Shape.FillProperty, "TextFillColorTertiaryBrush");
+            Canvas.SetLeft(origin, arrowCx - 2.5);
+            Canvas.SetTop(origin, arrowCy - 2.5);
+            CameraPreview.Children.Add(origin);
+
+            double longest = Math.Max(Math.Abs(a.Dx), Math.Abs(a.Dy));
+
+            if (longest > 0)
+            {
+                double scale = arrowReach / longest;
+                double tx = arrowCx + a.Dx * scale;
+                double ty = arrowCy + a.Dy * scale;
+                CameraPreview.Children.Add(Styled(new Line { X1 = arrowCx, Y1 = arrowCy, X2 = tx, Y2 = ty }, "AccentFillColorDefaultBrush", 2));
+
+                double angle = Math.Atan2(ty - arrowCy, tx - arrowCx);
+                const double head = 7;
+                var wing1 = new Point(tx - head * Math.Cos(angle - 0.5), ty - head * Math.Sin(angle - 0.5));
+                var wing2 = new Point(tx - head * Math.Cos(angle + 0.5), ty - head * Math.Sin(angle + 0.5));
+                CameraPreview.Children.Add(Styled(new Polyline { Points = new PointCollection { wing1, new Point(tx, ty), wing2 } }, "AccentFillColorDefaultBrush", 2));
+            }
+
+            // Easing: progress over time, in a small frame.
+            var frame = Styled(new Rectangle { Width = curveW, Height = curveH }, "ControlStrokeColorDefaultBrush", 1);
+            Canvas.SetLeft(frame, curveLeft);
+            Canvas.SetTop(frame, curveTop);
+            CameraPreview.Children.Add(frame);
+            var curve = new PointCollection();
+
+            for (int i = 0; i <= 24; i++)
+            {
+                double t = i / 24.0;
+                curve.Add(new Point(curveLeft + t * curveW, curveTop + curveH - MacroStudioLogic.CameraEase(t, a.Easing) * curveH));
+            }
+
+            CameraPreview.Children.Add(Styled(new Polyline { Points = curve }, "AccentFillColorDefaultBrush", 2));
         }
 
         private static Visibility Show(bool visible) => visible ? Visibility.Visible : Visibility.Collapsed;
@@ -1199,6 +1592,10 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
                 return;
 
             _actionRows.FirstOrDefault(r => ReferenceEquals(r.Action, _action))?.Refresh();
+
+            if (_action.Kind == MacroActionKind.Camera)
+                UpdateCameraPreview();
+
             MarkDirty(_current);
         }
 
@@ -1261,9 +1658,7 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
         {
             var key = MacroStudioService.RealKey(e);
 
-            if (key == Key.Tab)
-                return;
-
+            // Tab is a key like any other here (it is captured, not used to move focus); capturing moves focus on afterwards.
             e.Handled = true;
 
             if (_action is not { Kind: MacroActionKind.Key } a)

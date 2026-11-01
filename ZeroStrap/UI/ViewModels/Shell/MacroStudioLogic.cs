@@ -587,6 +587,30 @@ namespace ZeroStrap.UI.ViewModels.Shell
         public static string FormatSpeed(double pxPerSec) =>
             pxPerSec <= 0 ? "0" : Math.Round(pxPerSec, pxPerSec >= 100 ? 0 : 1).ToString("0.#", CultureInfo.InvariantCulture);
 
+        /// <summary>"Horizontal 300 px · Vertical 0 px · Duration 0.8 s · Speed 375 px/s" (the camera inspector's one-line summary).</summary>
+        public static string CameraSummary(MacroAction a)
+        {
+            string text = $"Horizontal {a.Dx} px · Vertical {a.Dy} px · Duration {FormatSeconds(a.DurationMs)}";
+            double speed = CameraSpeed(a);
+            return speed > 0 ? text + $" · Speed {FormatSpeed(speed)} px/s" : text;
+        }
+
+        /// <summary>Progress (0..1) of a camera move at time fraction t, the same curve the player uses; for the inspector preview.</summary>
+        public static double CameraEase(double t, MacroEasing easing)
+        {
+            t = Math.Clamp(double.IsNaN(t) ? 0 : t, 0, 1);
+            return easing == MacroEasing.EaseInOut ? t * t * (3.0 - 2.0 * t) : t;
+        }
+
+        /// <summary>Default export file name: the macro name with characters a file name can't hold replaced by "_" (no extension).</summary>
+        public static string ExportFileName(string? name)
+        {
+            string text = string.IsNullOrWhiteSpace(name) ? "macro" : name.Trim();
+            var invalid = System.IO.Path.GetInvalidFileNameChars();
+            string clean = string.Concat(text.Select(c => invalid.Contains(c) ? '_' : c)).TrimEnd('.', ' ');
+            return clean.Length == 0 ? "macro" : clean;
+        }
+
         // ---------------------------------------------------------------- field parsing
 
         public static bool TryParseInt(string? text, int min, int max, out int value)
