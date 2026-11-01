@@ -312,6 +312,17 @@ namespace ZeroStrap
 
                 // we require deployment details for applying modifications for a worst case scenario,
                 // where we'd need to restore files from a package that isn't present on disk and needs to be redownloaded
+                try
+                {
+                    ZeroStrap.Mods.ModStudio.Default.EnsureOverlay();
+                }
+                catch (Exception ex)
+                {
+                    // a Mods Studio failure must never stop the launch; Modifications is applied as it is
+                    App.Logger.WriteLine("Bootstrapper::Run", "Mods Studio overlay failed, continuing with the Modifications folder as it is");
+                    App.Logger.WriteException("Bootstrapper::Run", ex);
+                }
+
                 allModificationsApplied = await ApplyModifications();
             }
 
