@@ -19,8 +19,8 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
                         <Grid Background="Transparent" Margin="0,1">
-                            <Border x:Name="Hover" CornerRadius="8" Background="{DynamicResource ControlFillColorSecondaryBrush}" Opacity="0" />
-                            <Border x:Name="Pill" CornerRadius="8" Background="{DynamicResource ControlFillColorTertiaryBrush}"
+                            <Border x:Name="Hover" CornerRadius="{DynamicResource ZeroRadius8}" Background="{DynamicResource ControlFillColorSecondaryBrush}" Opacity="0" />
+                            <Border x:Name="Pill" CornerRadius="{DynamicResource ZeroRadius8}" Background="{DynamicResource ControlFillColorTertiaryBrush}"
                                     BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" Opacity="0" />
                             <ContentPresenter Margin="10,6" VerticalAlignment="Center" />
                         </Grid>
@@ -82,11 +82,11 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Name}" FontSize="13" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"
+                    <TextBlock Text="{Binding Name}" FontSize="{DynamicResource ZeroFontSize13}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"
                                Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                     <StackPanel Orientation="Horizontal" Margin="0,2,0,0" Visibility="{Binding StatusVisibility}">
                         <ui:SymbolIcon Symbol="Checkmark12" FontSize="11" Margin="0,1,5,0" Foreground="{DynamicResource ZeroStatusHealthyBrush}" />
-                        <TextBlock Text="{Binding Status}" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="{Binding Status}" FontSize="{DynamicResource ZeroFontSize11}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     </StackPanel>
                 </StackPanel>
             </Grid>
@@ -136,7 +136,7 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
-                            <TextBlock Text="Match Windows" FontSize="13" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                            <TextBlock Text="Match Windows" FontSize="{DynamicResource ZeroFontSize13}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                             <TextBlock Text="Switches between Obsidian and Light with your Windows setting"
                                        Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="0,3,0,0" />
                         </StackPanel>
@@ -160,7 +160,7 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock x:Name="NameText" Text="Obsidian" FontSize="22" FontWeight="SemiBold" MaxWidth="300"
+                    <TextBlock x:Name="NameText" Text="Obsidian" FontSize="{DynamicResource ZeroFontSize22}" FontWeight="{DynamicResource ZeroFontWeightHeading}" MaxWidth="300"
                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                                Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                     <Border x:Name="KindTag" Grid.Column="1" Style="{StaticResource ZeroTagOutlineStyle}" Margin="12,3,0,0">
@@ -186,7 +186,9 @@
                     </StackPanel>
                 </Grid>
 
-                <TextBlock x:Name="NoteText" Margin="0,8,0,0" TextWrapping="Wrap" FontSize="12" Visibility="Collapsed"
+                <!-- One status line under the header. It always occupies its row (hidden, not collapsed) so showing a note or warning never moves the content below. -->
+                <TextBlock x:Name="NoteText" Text=" " Margin="0,8,0,0" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                           FontSize="{DynamicResource ZeroFontSize12}" Visibility="Hidden"
                            Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
 
                 <!-- Preview -->
@@ -199,7 +201,7 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Built-in themes can't be edited." VerticalAlignment="Center" FontSize="13" TextWrapping="Wrap"
+                        <TextBlock Text="Built-in themes can't be edited." VerticalAlignment="Center" FontSize="{DynamicResource ZeroFontSize13}" TextWrapping="Wrap"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,12,0" />
                         <ui:Button Grid.Column="1" Content="Duplicate to customize" Style="{StaticResource ZeroButtonSecondary}" Click="Duplicate_Click" />
                     </Grid>
@@ -208,7 +210,15 @@
                 <!-- Custom: editor -->
                 <Border x:Name="EditorPanel" Style="{StaticResource ZeroCardStyle}" Margin="0,16,0,0" Padding="18,16,18,10">
                     <StackPanel>
-                        <TextBlock Text="Colors" Style="{StaticResource ZeroCardTitleStyle}" />
+                        <ListBox x:Name="SectionTabs" Style="{StaticResource ZeroSegmentedList}" SelectedIndex="0"
+                                 SelectionChanged="SectionTabs_SelectionChanged" AutomationProperties.Name="Theme sections">
+                            <ListBoxItem Content="Colors" />
+                            <ListBoxItem Content="Typography" />
+                            <ListBoxItem Content="Layout" />
+                            <ListBoxItem Content="Components" />
+                        </ListBox>
+
+                        <!-- Colors -->
                         <ItemsControl x:Name="ColorsList" Margin="0,6,0,0" IsTabStop="False">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -225,27 +235,212 @@
                                 </GroupStyle>
                             </ItemsControl.GroupStyle>
                         </ItemsControl>
+
+                        <!-- Typography -->
+                        <StackPanel x:Name="TypographySection" Visibility="Collapsed" Margin="0,6,0,0">
+                            <Grid Margin="0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                    <TextBlock Text="Font family" FontSize="{DynamicResource ZeroFontSize14}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                    <TextBlock Text="Used for all interface text. Falls back to Inter, then Segoe UI."
+                                               Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,0" />
+                                </StackPanel>
+                                <ComboBox x:Name="FamilyBox" Grid.Column="1" Width="230" Style="{StaticResource ZeroDropdown}" DisplayMemberPath="Display"
+                                          SelectionChanged="FamilyBox_SelectionChanged" AutomationProperties.Name="Font family" />
+                            </Grid>
+                            <Border Style="{StaticResource ZeroDividerStyle}" />
+
+                            <Grid Margin="0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                    <TextBlock Text="Text size" FontSize="{DynamicResource ZeroFontSize14}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                    <TextBlock Text="Scales every size in the interface from 90 % to 115 %."
+                                               Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,0" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Slider x:Name="ScaleSlider" Width="180" Minimum="90" Maximum="115" TickFrequency="5" SmallChange="5" LargeChange="5"
+                                            IsSnapToTickEnabled="True" VerticalAlignment="Center" ValueChanged="ScaleSlider_ValueChanged"
+                                            AutomationProperties.Name="Text size" />
+                                    <TextBlock x:Name="ScaleLabel" Text="100 %" Width="48" TextAlignment="Right" VerticalAlignment="Center" Margin="10,0,0,0"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                </StackPanel>
+                            </Grid>
+                            <Border Style="{StaticResource ZeroDividerStyle}" />
+
+                            <Grid Margin="0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                    <TextBlock Text="Body weight" FontSize="{DynamicResource ZeroFontSize14}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                    <TextBlock Text="Weight of regular text." Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,0" />
+                                </StackPanel>
+                                <ListBox x:Name="BodyWeightList" Grid.Column="1" Style="{StaticResource ZeroSegmentedList}" VerticalAlignment="Center"
+                                         SelectionChanged="BodyWeight_SelectionChanged" AutomationProperties.Name="Body weight">
+                                    <ListBoxItem Content="Regular" Tag="400" />
+                                    <ListBoxItem Content="Medium" Tag="500" />
+                                </ListBox>
+                            </Grid>
+                            <Border Style="{StaticResource ZeroDividerStyle}" />
+
+                            <Grid Margin="0,14,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                    <TextBlock Text="Heading weight" FontSize="{DynamicResource ZeroFontSize14}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                    <TextBlock Text="Weight of page titles, section titles and card titles." Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,0" />
+                                </StackPanel>
+                                <ListBox x:Name="HeadingWeightList" Grid.Column="1" Style="{StaticResource ZeroSegmentedList}" VerticalAlignment="Center"
+                                         SelectionChanged="HeadingWeight_SelectionChanged" AutomationProperties.Name="Heading weight">
+                                    <ListBoxItem Content="Medium" Tag="500" />
+                                    <ListBoxItem Content="SemiBold" Tag="600" />
+                                    <ListBoxItem Content="Bold" Tag="700" />
+                                </ListBox>
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- Layout -->
+                        <StackPanel x:Name="LayoutSection" Visibility="Collapsed" Margin="0,6,0,0">
+                            <Grid Margin="0,14,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                    <TextBlock Text="Density" FontSize="{DynamicResource ZeroFontSize14}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                    <TextBlock x:Name="DensityHint" Text="Default spacing." Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,0" />
+                                </StackPanel>
+                                <ListBox x:Name="DensityList" Grid.Column="1" Style="{StaticResource ZeroSegmentedList}" VerticalAlignment="Center"
+                                         SelectionChanged="Density_SelectionChanged" AutomationProperties.Name="Density">
+                                    <ListBoxItem Content="Compact" Tag="Compact" />
+                                    <ListBoxItem Content="Comfortable" Tag="Comfortable" />
+                                    <ListBoxItem Content="Spacious" Tag="Spacious" />
+                                </ListBox>
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- Components -->
+                        <StackPanel x:Name="ComponentsSection" Visibility="Collapsed" Margin="0,6,0,0">
+                            <Grid Margin="0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                    <TextBlock Text="Corner radius" FontSize="{DynamicResource ZeroFontSize14}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                    <TextBlock Text="Roundness of buttons, cards and fields, from square (0) to very round (16)."
+                                               Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,0" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Slider x:Name="RadiusSlider" Width="180" Minimum="0" Maximum="16" TickFrequency="1" SmallChange="1" LargeChange="2"
+                                            IsSnapToTickEnabled="True" VerticalAlignment="Center" ValueChanged="RadiusSlider_ValueChanged"
+                                            AutomationProperties.Name="Corner radius" />
+                                    <TextBlock x:Name="RadiusLabel" Text="6 px" Width="48" TextAlignment="Right" VerticalAlignment="Center" Margin="10,0,0,0"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                </StackPanel>
+                            </Grid>
+                            <Border Style="{StaticResource ZeroDividerStyle}" />
+
+                            <Grid Margin="0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                    <TextBlock Text="Buttons" FontSize="{DynamicResource ZeroFontSize14}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                    <TextBlock Text="Solid uses the accent fill. Subtle uses a light accent tint with accent text."
+                                               Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,0" />
+                                </StackPanel>
+                                <ListBox x:Name="ButtonStyleList" Grid.Column="1" Style="{StaticResource ZeroSegmentedList}" VerticalAlignment="Center"
+                                         SelectionChanged="ButtonStyle_SelectionChanged" AutomationProperties.Name="Button style">
+                                    <ListBoxItem Content="Solid" Tag="Solid" />
+                                    <ListBoxItem Content="Subtle" Tag="Subtle" />
+                                </ListBox>
+                            </Grid>
+                            <Border Style="{StaticResource ZeroDividerStyle}" />
+
+                            <Grid Margin="0,14,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                    <TextBlock Text="Surfaces" FontSize="{DynamicResource ZeroFontSize14}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                    <TextBlock Text="Outlined cards have a thin border. Flat cards rely on their fill alone."
+                                               Style="{StaticResource ZeroCaptionStyle}" Margin="0,3,0,0" />
+                                </StackPanel>
+                                <ListBox x:Name="SurfaceStyleList" Grid.Column="1" Style="{StaticResource ZeroSegmentedList}" VerticalAlignment="Center"
+                                         SelectionChanged="SurfaceStyle_SelectionChanged" AutomationProperties.Name="Surface style">
+                                    <ListBoxItem Content="Flat" Tag="Flat" />
+                                    <ListBoxItem Content="Outlined" Tag="Outlined" />
+                                </ListBox>
+                            </Grid>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 
                 <!-- Motion -->
                 <TextBlock Text="Motion · applies to every theme" Style="{StaticResource ZeroCardTitleStyle}" Margin="0,28,0,10" />
                 <Border Style="{StaticResource ZeroCardStyle}" Padding="20,4">
-                    <Grid Margin="0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Border Style="{StaticResource ZeroIconTileStyle}"><ui:SymbolIcon Symbol="Sparkle24" Style="{StaticResource ZeroIconTileGlyphStyle}" /></Border>
-                        <StackPanel Grid.Column="1" Margin="14,0,16,0" VerticalAlignment="Center">
-                            <TextBlock Text="Smooth animations" FontSize="14" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                            <TextBlock Text="Page transitions and staggered entrances. Turn off to reduce motion; hover feedback stays."
-                                       Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="0,3,0,0" />
-                        </StackPanel>
-                        <ui:ToggleSwitch x:Name="AnimationsToggle" Grid.Column="2" Style="{StaticResource ZeroToggle}" Click="AnimationsToggle_Click"
-                                         AutomationProperties.Name="Smooth animations" />
-                    </Grid>
+                    <StackPanel>
+                        <Grid Margin="0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Border Style="{StaticResource ZeroIconTileStyle}"><ui:SymbolIcon Symbol="Sparkle24" Style="{StaticResource ZeroIconTileGlyphStyle}" /></Border>
+                            <StackPanel Grid.Column="1" Margin="14,0,16,0" VerticalAlignment="Center">
+                                <TextBlock Text="Smooth animations" FontSize="{DynamicResource ZeroFontSize14}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                <TextBlock Text="Page transitions and staggered entrances. Turn off to reduce motion; hover feedback stays."
+                                           Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="0,3,0,0" />
+                            </StackPanel>
+                            <ui:ToggleSwitch x:Name="AnimationsToggle" Grid.Column="2" Style="{StaticResource ZeroToggle}" Click="AnimationsToggle_Click"
+                                             AutomationProperties.Name="Smooth animations" />
+                        </Grid>
+                        <Border Style="{StaticResource ZeroDividerStyle}" />
+
+                        <Grid Margin="0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Margin="58,0,16,0" VerticalAlignment="Center">
+                                <TextBlock Text="Follow Windows animation setting" FontSize="{DynamicResource ZeroFontSize14}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                <TextBlock Text="Keeps animations off while Windows animation effects are off."
+                                           Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="0,3,0,0" />
+                            </StackPanel>
+                            <ui:ToggleSwitch x:Name="FollowWindowsToggle" Grid.Column="1" Style="{StaticResource ZeroToggle}" Click="FollowWindowsToggle_Click"
+                                             AutomationProperties.Name="Follow Windows animation setting" />
+                        </Grid>
+                        <Border Style="{StaticResource ZeroDividerStyle}" />
+
+                        <Grid Margin="0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Margin="58,0,16,0" VerticalAlignment="Center">
+                                <TextBlock Text="Transition intensity" FontSize="{DynamicResource ZeroFontSize14}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                <TextBlock Text="Subtle travels less and finishes sooner. Needs animations on."
+                                           Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="0,3,0,0" />
+                            </StackPanel>
+                            <ListBox x:Name="IntensityList" Grid.Column="1" Style="{StaticResource ZeroSegmentedList}" VerticalAlignment="Center"
+                                     SelectionChanged="Intensity_SelectionChanged" AutomationProperties.Name="Transition intensity">
+                                <ListBoxItem Content="Subtle" Tag="Subtle" />
+                                <ListBoxItem Content="Standard" Tag="Standard" />
+                            </ListBox>
+                        </Grid>
+                    </StackPanel>
                 </Border>
             </StackPanel>
         </ScrollViewer>

@@ -43,7 +43,7 @@
             </controls:OptionControl>
         </Grid>
 
-        <TextBlock Text="{x:Static resources:Strings.Menu_Shortcuts_Function_Title}" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{StaticResource ZeroSectionMargin}" />
+        <TextBlock Text="{x:Static resources:Strings.Menu_Shortcuts_Function_Title}" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{DynamicResource ZeroSectionMargin}" />
         <TextBlock Text="{x:Static resources:Strings.Menu_Shortcuts_Function_Description}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
 
         <Grid>

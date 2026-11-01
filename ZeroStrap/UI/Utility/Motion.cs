@@ -2,6 +2,8 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 
+using ZeroStrap.Enums;
+
 namespace ZeroStrap.UI.Utility
 {
     /// <summary>
@@ -12,7 +14,21 @@ namespace ZeroStrap.UI.Utility
     {
         private const int StaggerMs = 45;
 
-        public static bool Enabled => !(App.Settings.Loaded && App.Settings.Prop.ReduceMotion);
+        /// <summary>See <see cref="MotionRules.IsEnabled"/>: "Smooth animations" and, optionally, the Windows animation setting.</summary>
+        public static bool Enabled
+        {
+            get
+            {
+                bool loaded = App.Settings.Loaded;
+                return MotionRules.IsEnabled(
+                    loaded && App.Settings.Prop.ReduceMotion,
+                    !loaded || App.Settings.Prop.FollowWindowsAnimations,
+                    SystemParameters.ClientAreaAnimation);
+            }
+        }
+
+        /// <summary>Subtle shortens travel and duration; Standard is the shipped feel.</summary>
+        public static MotionIntensity Intensity => App.Settings.Loaded ? App.Settings.Prop.MotionIntensity : MotionIntensity.Standard;
 
         public static readonly DependencyProperty EnterProperty = DependencyProperty.RegisterAttached(
             "Enter", typeof(int), typeof(Motion), new PropertyMetadata(-1, OnEnterChanged));
@@ -33,7 +49,7 @@ namespace ZeroStrap.UI.Utility
         {
             var element = (FrameworkElement)sender;
             element.Loaded -= Element_Loaded;
-            FadeRise(element, GetEnter(element) * StaggerMs);
+            FadeRise(element, MotionRules.Duration(GetEnter(element) * StaggerMs, Intensity));
         }
 
         /// <summary>Fade from 0 and rise from <paramref name="offset"/> px below, after <paramref name="delayMs"/>.</summary>
@@ -41,6 +57,10 @@ namespace ZeroStrap.UI.Utility
         {
             if (!Enabled)
                 return;
+
+            var intensity = Intensity;
+            offset = MotionRules.Travel(offset, intensity);
+            durationMs = MotionRules.Duration(durationMs, intensity);
 
             var translate = new TranslateTransform(0, offset);
             element.RenderTransform = translate;
@@ -81,6 +101,10 @@ namespace ZeroStrap.UI.Utility
                 return;
             }
 
+            var intensity = Intensity;
+            double travelOut = MotionRules.Travel(28, intensity);
+            double travelIn = MotionRules.Travel(36, intensity);
+
             IsSwapping = true;
             outgoing.IsHitTestVisible = false;
             incoming.IsHitTestVisible = false;
@@ -91,7 +115,7 @@ namespace ZeroStrap.UI.Utility
             var outMove = new TranslateTransform(0, 0);
             outgoing.RenderTransform = new TransformGroup { Children = { outScale, outMove } };
 
-            double inFrom = forward ? 36 : -36;
+            double inFrom = forward ? travelIn : -travelIn;
             var inScale = new ScaleTransform(0.985, 0.985);
             var inMove = new TranslateTransform(inFrom, 0);
             incoming.RenderTransform = new TransformGroup { Children = { inScale, inMove } };
@@ -103,12 +127,12 @@ namespace ZeroStrap.UI.Utility
 
             var easeIn = new CubicEase { EasingMode = EasingMode.EaseIn };
             var easeOut = new CubicEase { EasingMode = EasingMode.EaseOut };
-            var outDuration = TimeSpan.FromMilliseconds(200);
-            var inDuration = TimeSpan.FromMilliseconds(340);
-            var inBegin = TimeSpan.FromMilliseconds(110);
+            var outDuration = TimeSpan.FromMilliseconds(MotionRules.Duration(200, intensity));
+            var inDuration = TimeSpan.FromMilliseconds(MotionRules.Duration(340, intensity));
+            var inBegin = TimeSpan.FromMilliseconds(MotionRules.Duration(110, intensity));
 
             outgoing.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(1, 0, outDuration) { EasingFunction = easeIn, FillBehavior = FillBehavior.HoldEnd });
-            outMove.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(0, forward ? -28 : 28, outDuration) { EasingFunction = easeIn, FillBehavior = FillBehavior.HoldEnd });
+            outMove.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(0, forward ? -travelOut : travelOut, outDuration) { EasingFunction = easeIn, FillBehavior = FillBehavior.HoldEnd });
             outScale.BeginAnimation(ScaleTransform.ScaleXProperty, new DoubleAnimation(1, 0.985, outDuration) { EasingFunction = easeIn, FillBehavior = FillBehavior.HoldEnd });
             outScale.BeginAnimation(ScaleTransform.ScaleYProperty, new DoubleAnimation(1, 0.985, outDuration) { EasingFunction = easeIn, FillBehavior = FillBehavior.HoldEnd });
 

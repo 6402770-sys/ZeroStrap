@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Media;
 
 using Wpf.Ui.Appearance;
@@ -32,6 +32,9 @@ namespace ZeroStrap.UI.Theming
 
         private static readonly IThemeService _themeService = new ThemeService();
         private static bool _storeWired;
+        private static bool _pagesHooked;
+        private static ResourceDictionary? _tokenDictionary;
+        private static Dictionary<string, object>? _appliedTokens;
 
         /// <summary>Raised after <see cref="SetActive"/> or <see cref="Refresh"/> has applied a theme.</summary>
         public static event Action<ThemeDefinition>? ThemeChanged;
@@ -160,7 +163,23 @@ namespace ZeroStrap.UI.Theming
         public static ThemeDefinition ActiveDefinition =>
             Resolve(ActiveId, Store, LegacyTheme.Default.GetFinal() == LegacyTheme.Dark, Log);
 
-        public static bool IsDark => ActiveDefinition.Base == ThemeBase.Dark;
+        public static bool IsDark => EffectiveDefinition.Base == ThemeBase.Dark;
+
+        /// <summary>
+        /// The theme that is actually applied: the active one, or Obsidian when the active custom theme's primary
+        /// text is too low-contrast to read (the setting is kept, so fixing the colours restores the theme).
+        /// </summary>
+        public static ThemeDefinition EffectiveDefinition
+        {
+            get
+            {
+                var active = ActiveDefinition;
+                return ThemeGuard.IsUnreadable(active) ? BuiltinThemes.Obsidian() : active;
+            }
+        }
+
+        /// <summary>True while the active custom theme is not applied because its primary text is unreadable.</summary>
+        public static bool IsFallbackActive => ThemeGuard.IsUnreadable(ActiveDefinition);
 
         /// <summary>Name for the UI: "System" for the follow-Windows choice, otherwise the theme name.</summary>
         public static string ActiveDisplayName => ActiveId == SystemId ? "System" : ActiveDefinition.Name;
@@ -192,10 +211,19 @@ namespace ZeroStrap.UI.Theming
         /// </summary>
         public static void Apply()
         {
+            HookPages();
+
             // keep the legacy Settings.Theme aligned even if InterfaceThemeId was changed outside SetActive (in memory; saved with the next settings save)
             ApplyToSettings(App.Settings.Prop, ActiveId, Store, Log);
 
             var definition = ActiveDefinition;
+
+            if (ThemeGuard.IsUnreadable(definition))
+            {
+                Log($"Theme \"{definition.Name}\" is not applied: its primary text contrast is below {ContrastNote.MinimumRatio}:1. Using Obsidian (the setting is kept).");
+                definition = BuiltinThemes.Obsidian();
+                App.Settings.Prop.Theme = LegacyTheme.Dark;
+            }
 
             try
             {
@@ -239,6 +267,58 @@ namespace ZeroStrap.UI.Theming
             }
 
             resources.MergedDictionaries[CustomThemeDictionaryIndex] = dictionary;
+
+            ApplyTokens(definition);
+        }
+
+        /// <summary>
+        /// Writes typography, layout and component tokens for the theme. All tokens live in one dictionary that is
+        /// merged after the defaults and swapped as a whole, so a change costs a single resource invalidation, and
+        /// nothing happens when the tokens did not change (every window re-applies the theme when it opens).
+        /// </summary>
+        /// <summary>
+        /// A Frame is an inheritance boundary, so a Page hosted in one does not pick up the window's font. Every Page
+        /// is therefore bound to the theme's UI font family and body weight when it loads (dynamic references, so a
+        /// change in Theme Studio updates open pages live).
+        /// </summary>
+        private static void HookPages()
+        {
+            if (_pagesHooked)
+                return;
+
+            _pagesHooked = true;
+            EventManager.RegisterClassHandler(typeof(System.Windows.Controls.Page), FrameworkElement.LoadedEvent, new RoutedEventHandler((sender, _) =>
+            {
+                if (sender is System.Windows.Controls.Page page)
+                {
+                    page.SetResourceReference(System.Windows.Controls.Page.FontFamilyProperty, ThemeTokens.FamilyKey);
+                    page.SetResourceReference(System.Windows.Documents.TextElement.FontWeightProperty, ThemeTokens.BodyWeightKey);
+                }
+            }));
+        }
+
+        private static void ApplyTokens(ThemeDefinition definition)
+        {
+            var resources = Application.Current.Resources;
+            var tokens = ThemeTokens.Build(definition);
+
+            ThemeState.Instance.SubtleButtons = definition.Components?.ButtonStyle == ThemeButtonStyle.Subtle;
+
+            if (_tokenDictionary is not null && resources.MergedDictionaries.Contains(_tokenDictionary) && ThemeTokens.Same(_appliedTokens, tokens))
+                return;
+
+            var dictionary = new ResourceDictionary();
+            foreach (var (key, value) in tokens)
+                dictionary[key] = value;
+
+            int index = _tokenDictionary is null ? -1 : resources.MergedDictionaries.IndexOf(_tokenDictionary);
+            if (index >= 0)
+                resources.MergedDictionaries[index] = dictionary;
+            else
+                resources.MergedDictionaries.Add(dictionary);
+
+            _tokenDictionary = dictionary;
+            _appliedTokens = tokens;
         }
 
         private static void ApplyMonochromeAccent(bool dark)

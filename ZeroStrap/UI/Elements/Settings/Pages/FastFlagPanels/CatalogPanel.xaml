@@ -61,7 +61,7 @@
             </StackPanel>
 
             <!--  Update preferences  -->
-            <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Updates}" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{StaticResource ZeroSectionMargin}" />
+            <TextBlock Text="{x:Static resources:Strings.Menu_FastFlagEditor_Catalog_Updates}" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{DynamicResource ZeroSectionMargin}" />
             <Border Style="{StaticResource ZeroSettingCardStyle}" Margin="0,14,0,8">
                 <Grid>
                     <Grid.ColumnDefinitions>

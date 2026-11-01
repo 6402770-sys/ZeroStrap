@@ -48,7 +48,7 @@
             </ui:CardAction>
         </Grid>
 
-        <TextBlock Text="{x:Static resources:Strings.Common_Presets}" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{StaticResource ZeroSectionMargin}" />
+        <TextBlock Text="{x:Static resources:Strings.Common_Presets}" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{DynamicResource ZeroSectionMargin}" />
 
         <controls:OptionControl 
             Header="{x:Static resources:Strings.Menu_Mods_Presets_MouseCursor_Title}" 
@@ -86,7 +86,7 @@
             </ComboBox>
         </controls:OptionControl>
 
-        <TextBlock Text="{x:Static resources:Strings.Common_Miscellaneous}" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{StaticResource ZeroSectionMargin}" />
+        <TextBlock Text="{x:Static resources:Strings.Common_Miscellaneous}" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{DynamicResource ZeroSectionMargin}" />
 
         <controls:OptionControl 
             Header="{x:Static resources:Strings.Menu_Mods_Misc_CustomFont_Title}">

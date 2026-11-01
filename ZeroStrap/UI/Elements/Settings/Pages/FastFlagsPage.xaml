@@ -125,7 +125,7 @@
         </Button>
 
         <!-- ============================== ENGINE SETTINGS ============================== -->
-        <TextBlock Text="Engine settings" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{StaticResource ZeroSectionMargin}" />
+        <TextBlock Text="Engine settings" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{DynamicResource ZeroSectionMargin}" />
         <TextBlock Text="Rendering options on Roblox's allowlist." Style="{StaticResource ZeroCaptionStyle}" Margin="0,4,0,14" />
 
         <!--  Anti-aliasing  -->
@@ -222,7 +222,7 @@
         <TextBlock Text="Direct3D exclusive fullscreen with Alt + Enter is enabled by default." Style="{StaticResource ZeroCaptionStyle}" Margin="2,2,0,0" />
 
         <!-- ============================== ZERO FASTFLAGS ============================== -->
-        <TextBlock Text="Zero FastFlags" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{StaticResource ZeroSectionMargin}" />
+        <TextBlock Text="Zero FastFlags" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{DynamicResource ZeroSectionMargin}" />
         <TextBlock Text="Official collections by ZeroStrap. Applying one replaces your current Fast Flags." Style="{StaticResource ZeroCaptionStyle}" Margin="0,4,0,14" />
 
         <StackPanel x:Name="UndoPanel" Orientation="Horizontal" Margin="0,0,0,12" Visibility="Collapsed">
@@ -234,7 +234,7 @@
         <ItemsControl x:Name="OfficialList" ItemTemplate="{StaticResource OfficialCollectionTemplate}" Focusable="False" />
 
         <!-- ============================== MY COLLECTIONS ============================== -->
-        <Grid Margin="{StaticResource ZeroSectionMargin}">
+        <Grid Margin="{DynamicResource ZeroSectionMargin}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -256,7 +256,7 @@
         <ItemsControl x:Name="MyCollectionsList" ItemTemplate="{StaticResource ImportedCollectionTemplate}" Margin="0,14,0,0" Focusable="False" />
 
         <!-- ============================== ADVANCED ============================== -->
-        <TextBlock Text="Advanced" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{StaticResource ZeroSectionMargin}" />
+        <TextBlock Text="Advanced" Style="{StaticResource ZeroSectionTitleStyle}" Margin="{DynamicResource ZeroSectionMargin}" />
         <TextBlock Text="How ZeroStrap applies your flags to Roblox." Style="{StaticResource ZeroCaptionStyle}" Margin="0,4,0,14" />
 
         <Border Style="{StaticResource ZeroSettingCardStyle}">

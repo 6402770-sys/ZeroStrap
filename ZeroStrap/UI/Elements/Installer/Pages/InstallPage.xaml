@@ -46,7 +46,7 @@
             </TextBlock.Style>
         </TextBlock>
 
-        <TextBlock Style="{StaticResource ZeroSectionTitleStyle}" Text="{x:Static resources:Strings.Common_Shortcuts}" Margin="{StaticResource ZeroSectionMargin}" />
+        <TextBlock Style="{StaticResource ZeroSectionTitleStyle}" Text="{x:Static resources:Strings.Common_Shortcuts}" Margin="{DynamicResource ZeroSectionMargin}" />
         <TextBlock Margin="0,4,0,0" Style="{StaticResource ZeroBodyStyle}" Text="{x:Static resources:Strings.Installer_Install_Shortcuts_Description}" />
 
         <Grid>
@@ -66,7 +66,7 @@
             </controls:OptionControl>
         </Grid>
 
-        <TextBlock Style="{StaticResource ZeroSectionTitleStyle}" Text="{x:Static resources:Strings.Common_Analytics}" Margin="{StaticResource ZeroSectionMargin}" />
+        <TextBlock Style="{StaticResource ZeroSectionTitleStyle}" Text="{x:Static resources:Strings.Common_Analytics}" Margin="{DynamicResource ZeroSectionMargin}" />
         <controls:MarkdownTextBlock FontSize="14" MarkdownText="{Binding Source={x:Static resources:Strings.Menu_ZeroStrap_Analytics_Description}, Converter={StaticResource StringFormatConverter}, ConverterParameter='https://bloxstraplabs.com/wiki/info/privacy-policy/'}" TextWrapping="Wrap" />
 
         <controls:OptionControl 

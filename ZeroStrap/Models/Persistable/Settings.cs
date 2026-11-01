@@ -22,6 +22,10 @@ namespace ZeroStrap.Models.Persistable
         public bool CheckForUpdates { get; set; } = true;
         public bool ConfirmLaunches { get; set; } = false;
         public bool ReduceMotion { get; set; } = false;
+        /// <summary>When true, animations also stay off while Windows' "Animation effects" setting is off.</summary>
+        // opt-in: many users turn Windows animation effects off for performance, not as a motion preference
+        public bool FollowWindowsAnimations { get; set; } = false;
+        public MotionIntensity MotionIntensity { get; set; } = MotionIntensity.Standard;
         public string Locale { get; set; } = "nil";
         public bool UseFastFlagManager { get; set; } = true;
         public bool UseMemoryFlagInjection { get; set; } = false;

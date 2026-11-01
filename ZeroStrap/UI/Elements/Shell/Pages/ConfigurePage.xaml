@@ -1,4 +1,4 @@
-<Page x:Class="ZeroStrap.UI.Elements.Shell.Pages.ConfigurePage"
+﻿<Page x:Class="ZeroStrap.UI.Elements.Shell.Pages.ConfigurePage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -11,12 +11,12 @@
 
     <Page.Resources>
         <Style x:Key="StatValue" TargetType="{x:Type TextBlock}">
-            <Setter Property="FontSize" Value="24" />
+            <Setter Property="FontSize" Value="{DynamicResource ZeroFontSize24}" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
         </Style>
         <Style x:Key="StatLabel" TargetType="{x:Type TextBlock}">
-            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontSize" Value="{DynamicResource ZeroFontSize12}" />
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
             <Setter Property="Margin" Value="0,2,0,0" />
         </Style>
@@ -24,7 +24,7 @@
 
     <Grid>
         <!-- Normal Configure content. Swapped out (not removed) while a workspace is open, so tab state survives. -->
-        <Grid x:Name="MainContent" Margin="40,30,40,20">
+        <Grid x:Name="MainContent" Margin="{DynamicResource ZeroPageMarginFlush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -34,9 +34,9 @@
         <!-- ============================== HEADER ============================== -->
         <StackPanel Grid.Row="0" motion:Motion.Enter="0">
             <TextBlock Text="C O N F I G U R E" Style="{StaticResource ZeroEyebrowStyle}" Margin="0,4,0,8" />
-            <TextBlock Text="Shape how Roblox runs" FontSize="30" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+            <TextBlock Text="Shape how Roblox runs" FontSize="{DynamicResource ZeroFontSize30}" FontWeight="{DynamicResource ZeroFontWeightHeading}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
             <TextBlock Text="Fast Flags, mods, integrations, shortcuts and launcher behaviour. Changes apply when you save (Ctrl + S)."
-                       FontSize="14" Margin="0,6,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                       FontSize="{DynamicResource ZeroFontSize14}" Margin="0,6,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
         </StackPanel>
 
         <!-- ============================== STATS STRIP ============================== -->

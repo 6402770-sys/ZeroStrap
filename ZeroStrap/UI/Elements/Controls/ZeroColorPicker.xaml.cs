@@ -314,7 +314,7 @@ namespace ZeroStrap.UI.Elements.Controls
         {
             var template = new ControlTemplate(typeof(Button));
             var border = new FrameworkElementFactory(typeof(Border));
-            border.SetValue(Border.CornerRadiusProperty, new CornerRadius(6));
+            border.SetResourceReference(Border.CornerRadiusProperty, "ControlCornerRadius");
             border.SetValue(Border.BorderThicknessProperty, new Thickness(1));
             border.SetResourceReference(Border.BorderBrushProperty, "ControlStrokeColorSecondaryBrush");
             border.SetBinding(Border.BackgroundProperty, new Binding(nameof(Background)) { RelativeSource = RelativeSource.TemplatedParent });

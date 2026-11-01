@@ -13,7 +13,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Chip" CornerRadius="7" BorderThickness="1" Background="{TemplateBinding Background}"
+                        <Border x:Name="Chip" CornerRadius="{DynamicResource ZeroRadius7}" BorderThickness="1" Background="{TemplateBinding Background}"
                                 BorderBrush="{DynamicResource ControlStrokeColorSecondaryBrush}" />
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -29,7 +29,7 @@
         </Style>
 
         <Style x:Key="NoteStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontSize" Value="{DynamicResource ZeroFontSize12}" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="TextWrapping" Value="Wrap" />
             <Setter Property="Visibility" Value="Collapsed" />
@@ -54,7 +54,7 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <TextBlock Text="{Binding Label}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+        <TextBlock Text="{Binding Label}" FontSize="{DynamicResource ZeroFontSize13}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                    Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
 
         <Button x:Name="SwatchButton" Grid.Column="1" Style="{StaticResource SwatchButtonStyle}" Background="{Binding Swatch}"
@@ -62,7 +62,7 @@
 
         <Popup x:Name="PickerPopup" PlacementTarget="{Binding ElementName=SwatchButton}" Placement="Bottom" StaysOpen="False"
                AllowsTransparency="True" PopupAnimation="Fade" Opened="PickerPopup_Opened" Closed="PickerPopup_Closed">
-            <Border Margin="10,4,10,14" Padding="12" CornerRadius="12" BorderThickness="1"
+            <Border Margin="10,4,10,14" Padding="12" CornerRadius="{DynamicResource ZeroRadiusSurface}" BorderThickness="1"
                     Background="{DynamicResource SolidBackgroundFillColorTertiaryBrush}"
                     BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
                 <Border.Effect>

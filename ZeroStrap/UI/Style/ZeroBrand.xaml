@@ -32,14 +32,49 @@
     -->
     <Geometry x:Key="ZeroWordmarkGeometry">F0 M12,0 H76 V16 L25,84 H76 L64,100 H0 V84 L51,16 H0 Z M110,0 H174 V16 H114 V42 H166 V58 H114 V84 H174 V100 H98 V12 Z M196,0 H256 L272,16 V44 L262,54 L274,100 H257 L246,62 H212 V100 H196 Z M212,16 H250 L256,22 V40 L250,46 H212 Z M308,0 H372 V88 L360,100 H296 V12 Z M312,16 V84 H356 V16 Z</Geometry>
 
-    <!-- ============================== SCALE TOKENS ============================== -->
+    <!-- ============================== DESIGN TOKENS ============================== -->
+    <!--
+        Everything below is a DEFAULT. ThemeManager (UI/Theming/ThemeTokens.cs) writes the same keys into
+        Application.Resources for the active theme (typography scale, family, weights, corner radius, density,
+        surface and button style), so every consumer must use DynamicResource, never StaticResource.
+        UI/Theming/ThemeTokens.cs keeps a copy of these defaults (a unit test checks the two stay identical).
+
+        Font size ladder (px, scaled by Typography.Scale and rounded to 0.5):
+          roles   ZeroFontSizeDisplay 28 | Title 22 | Section 17 | Body 14 | Caption 12 | Eyebrow 11
+          ladder  ZeroFontSize10 | 10_5 | 11 | 11_5 | 12 | 12_5 | 13 | 13_5 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 22 | 24 | 30 | 38
+                  ("_5" is a half pixel: 12_5 = 12.5). Icon glyph sizes (ui:SymbolIcon) are deliberately not tokens.
+        Radius ladder (scaled by Components.Radius / 6): ControlCornerRadius 6 | ZeroRadiusSurface 12 | ZeroRadiusTile 14
+          | ZeroRadius4 | 5 | 7 | 8 | 10 | 11 | 17. Hairline shapes (1-2px stripes) keep their literal radius.
+        Spacing (scaled by density 0.8 / 1.0 / 1.2): page margins, section margin, card / setting card / list row padding.
+    -->
 
     <!--  Slightly softer than Fluent's 4px; applied app-wide through WPF-UI's own key.  -->
     <CornerRadius x:Key="ControlCornerRadius">6</CornerRadius>
     <CornerRadius x:Key="ZeroRadiusSurface">12</CornerRadius>
     <CornerRadius x:Key="ZeroRadiusTile">14</CornerRadius>
+    <CornerRadius x:Key="ZeroRadius4">4</CornerRadius>
+    <CornerRadius x:Key="ZeroRadius5">5</CornerRadius>
+    <CornerRadius x:Key="ZeroRadius7">7</CornerRadius>
+    <CornerRadius x:Key="ZeroRadius8">8</CornerRadius>
+    <CornerRadius x:Key="ZeroRadius10">10</CornerRadius>
+    <CornerRadius x:Key="ZeroRadius11">11</CornerRadius>
+    <CornerRadius x:Key="ZeroRadius17">17</CornerRadius>
 
+    <!--  Density: page gutters and the handful of paddings that set a page's rhythm.  -->
+    <Thickness x:Key="ZeroPageMargin">40,30,40,40</Thickness>
+    <Thickness x:Key="ZeroPageMarginTabbed">40,30,40,24</Thickness>
+    <Thickness x:Key="ZeroPageMarginFlush">40,30,40,20</Thickness>
+    <Thickness x:Key="ZeroPageMarginSplit">40,30,32,32</Thickness>
+    <Thickness x:Key="ZeroPageMarginSplitTall">40,30,32,40</Thickness>
     <Thickness x:Key="ZeroSectionMargin">0,28,0,0</Thickness>
+    <Thickness x:Key="ZeroCardPadding">16</Thickness>
+    <Thickness x:Key="ZeroSettingCardPadding">18,16</Thickness>
+    <Thickness x:Key="ZeroSettingCardMargin">0,0,0,8</Thickness>
+    <Thickness x:Key="ZeroSettingRowPadding">0,14</Thickness>
+    <Thickness x:Key="ZeroListRowPadding">0,12</Thickness>
+
+    <!--  Components: 1 = Outlined surfaces, 0 = Flat.  -->
+    <Thickness x:Key="ZeroSurfaceBorderThickness">1</Thickness>
 
     <sys:Double x:Key="ZeroFontSizeDisplay">28</sys:Double>
     <sys:Double x:Key="ZeroFontSizeTitle">22</sys:Double>
@@ -47,6 +82,29 @@
     <sys:Double x:Key="ZeroFontSizeBody">14</sys:Double>
     <sys:Double x:Key="ZeroFontSizeCaption">12</sys:Double>
     <sys:Double x:Key="ZeroFontSizeEyebrow">11</sys:Double>
+
+    <sys:Double x:Key="ZeroFontSize10">10</sys:Double>
+    <sys:Double x:Key="ZeroFontSize10_5">10.5</sys:Double>
+    <sys:Double x:Key="ZeroFontSize11">11</sys:Double>
+    <sys:Double x:Key="ZeroFontSize11_5">11.5</sys:Double>
+    <sys:Double x:Key="ZeroFontSize12">12</sys:Double>
+    <sys:Double x:Key="ZeroFontSize12_5">12.5</sys:Double>
+    <sys:Double x:Key="ZeroFontSize13">13</sys:Double>
+    <sys:Double x:Key="ZeroFontSize13_5">13.5</sys:Double>
+    <sys:Double x:Key="ZeroFontSize14">14</sys:Double>
+    <sys:Double x:Key="ZeroFontSize15">15</sys:Double>
+    <sys:Double x:Key="ZeroFontSize16">16</sys:Double>
+    <sys:Double x:Key="ZeroFontSize17">17</sys:Double>
+    <sys:Double x:Key="ZeroFontSize18">18</sys:Double>
+    <sys:Double x:Key="ZeroFontSize19">19</sys:Double>
+    <sys:Double x:Key="ZeroFontSize20">20</sys:Double>
+    <sys:Double x:Key="ZeroFontSize22">22</sys:Double>
+    <sys:Double x:Key="ZeroFontSize24">24</sys:Double>
+    <sys:Double x:Key="ZeroFontSize30">30</sys:Double>
+    <sys:Double x:Key="ZeroFontSize38">38</sys:Double>
+
+    <FontWeight x:Key="ZeroFontWeightBody">Normal</FontWeight>
+    <FontWeight x:Key="ZeroFontWeightHeading">SemiBold</FontWeight>
 
     <!-- ============================== TYPEFACES ============================== -->
 
@@ -74,7 +132,7 @@
     <!--  "BOOTSTRAP" descriptor. WPF has no letter-spacing, so tracking is set with hair spaces in the text.  -->
     <Style x:Key="ZeroDescriptorStyle" TargetType="{x:Type TextBlock}">
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="FontSize" Value="10" />
+        <Setter Property="FontSize" Value="{DynamicResource ZeroFontSize10}" />
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="AutomationProperties.Name" Value="Bootstrap" />
@@ -85,7 +143,7 @@
         letter-spacing. Used by every title bar and by the shell sidebar.
     -->
     <Style x:Key="ZeroWordmarkTextStyle" TargetType="{x:Type TextBlock}">
-        <Setter Property="FontFamily" Value="{StaticResource ZeroUIFont}" />
+        <Setter Property="FontFamily" Value="{DynamicResource ZeroUIFont}" />
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="AutomationProperties.Name" Value="ZeroStrap" />
@@ -101,7 +159,7 @@
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0,0,0"
                     AutomationProperties.Name="ZeroStrap">
             <Path Style="{StaticResource ZeroMarkStyle}" Width="14" Height="14" />
-            <ContentPresenter ContentTemplate="{StaticResource ZeroWordmark}" Margin="10,0,0,0" TextElement.FontSize="11" />
+            <ContentPresenter ContentTemplate="{StaticResource ZeroWordmark}" Margin="10,0,0,0" TextElement.FontSize="{DynamicResource ZeroFontSize11}" />
         </StackPanel>
     </DataTemplate>
 
@@ -121,7 +179,7 @@
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0,0,0">
             <Path Style="{StaticResource ZeroMarkStyle}" Width="15" Height="15" />
             <Rectangle Width="1" Height="12" Margin="10,0" Fill="{DynamicResource DividerStrokeColorDefaultBrush}" />
-            <TextBlock Text="{Binding}" FontSize="12" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+            <TextBlock Text="{Binding}" FontSize="{DynamicResource ZeroFontSize12}" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
         </StackPanel>
     </DataTemplate>
 
@@ -139,44 +197,46 @@
     <!-- ============================== TYPOGRAPHY ============================== -->
 
     <Style x:Key="ZeroPageTitleStyle" TargetType="{x:Type TextBlock}">
-        <Setter Property="FontSize" Value="{StaticResource ZeroFontSizeTitle}" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="{DynamicResource ZeroFontSizeTitle}" />
+        <Setter Property="FontWeight" Value="{DynamicResource ZeroFontWeightHeading}" />
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
         <Setter Property="TextWrapping" Value="Wrap" />
     </Style>
 
     <!--  Section heading inside a page. Pages keep their own top margin where it was set inline.  -->
     <Style x:Key="ZeroSectionTitleStyle" TargetType="{x:Type TextBlock}">
-        <Setter Property="FontSize" Value="{StaticResource ZeroFontSizeSection}" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="{DynamicResource ZeroFontSizeSection}" />
+        <Setter Property="FontWeight" Value="{DynamicResource ZeroFontWeightHeading}" />
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
         <Setter Property="TextWrapping" Value="Wrap" />
     </Style>
 
     <!--  Group inside a section: clearly below the section title, above option rows.  -->
     <Style x:Key="ZeroSubsectionTitleStyle" TargetType="{x:Type TextBlock}">
-        <Setter Property="FontSize" Value="{StaticResource ZeroFontSizeBody}" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="{DynamicResource ZeroFontSizeBody}" />
+        <Setter Property="FontWeight" Value="{DynamicResource ZeroFontWeightHeading}" />
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
         <Setter Property="TextWrapping" Value="Wrap" />
     </Style>
 
     <Style x:Key="ZeroBodyStyle" TargetType="{x:Type TextBlock}">
-        <Setter Property="FontSize" Value="{StaticResource ZeroFontSizeBody}" />
+        <Setter Property="FontSize" Value="{DynamicResource ZeroFontSizeBody}" />
+        <Setter Property="FontWeight" Value="{DynamicResource ZeroFontWeightBody}" />
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
         <Setter Property="TextWrapping" Value="Wrap" />
         <Setter Property="LineHeight" Value="20" />
     </Style>
 
     <Style x:Key="ZeroCaptionStyle" TargetType="{x:Type TextBlock}">
-        <Setter Property="FontSize" Value="{StaticResource ZeroFontSizeCaption}" />
+        <Setter Property="FontSize" Value="{DynamicResource ZeroFontSizeCaption}" />
+        <Setter Property="FontWeight" Value="{DynamicResource ZeroFontWeightBody}" />
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
         <Setter Property="TextWrapping" Value="Wrap" />
     </Style>
 
     <!--  Small uppercase label above a group. Write the text in caps.  -->
     <Style x:Key="ZeroEyebrowStyle" TargetType="{x:Type TextBlock}">
-        <Setter Property="FontSize" Value="{StaticResource ZeroFontSizeEyebrow}" />
+        <Setter Property="FontSize" Value="{DynamicResource ZeroFontSizeEyebrow}" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
         <Setter Property="Margin" Value="0,0,0,6" />
@@ -191,9 +251,9 @@
     <Style x:Key="ZeroCardStyle" TargetType="{x:Type Border}">
         <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="{StaticResource ZeroRadiusSurface}" />
-        <Setter Property="Padding" Value="16" />
+        <Setter Property="BorderThickness" Value="{DynamicResource ZeroSurfaceBorderThickness}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource ZeroRadiusSurface}" />
+        <Setter Property="Padding" Value="{DynamicResource ZeroCardPadding}" />
     </Style>
 
     <!--  Hero surface: the only place with a gradient, kept strictly monochrome.  -->
@@ -214,7 +274,7 @@
     <Style x:Key="ZeroMarkTileStyle" TargetType="{x:Type Border}">
         <Setter Property="Width" Value="72" />
         <Setter Property="Height" Value="72" />
-        <Setter Property="CornerRadius" Value="{StaticResource ZeroRadiusTile}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource ZeroRadiusTile}" />
         <Setter Property="Background" Value="{DynamicResource SolidBackgroundFillColorBaseBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
         <Setter Property="BorderThickness" Value="1" />
@@ -223,7 +283,7 @@
 
     <!--  Pill used for version / status metadata.  -->
     <Style x:Key="ZeroChipStyle" TargetType="{x:Type Border}">
-        <Setter Property="CornerRadius" Value="11" />
+        <Setter Property="CornerRadius" Value="{DynamicResource ZeroRadius11}" />
         <Setter Property="Padding" Value="9,2,9,3" />
         <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
@@ -235,7 +295,7 @@
 
     <!--  Status tag: "PLAYER" (on Roblox's allowlist) is solid; "EXPERIMENTAL" is outline-only and dimmer.  -->
     <Style x:Key="ZeroTagStyle" TargetType="{x:Type Border}">
-        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="CornerRadius" Value="{DynamicResource ZeroRadius4}" />
         <Setter Property="Padding" Value="6,1,6,2" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="VerticalAlignment" Value="Center" />
@@ -250,7 +310,7 @@
     </Style>
 
     <Style x:Key="ZeroTagTextStyle" TargetType="{x:Type TextBlock}">
-        <Setter Property="FontSize" Value="10" />
+        <Setter Property="FontSize" Value="{DynamicResource ZeroFontSize10}" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
     </Style>
@@ -273,7 +333,7 @@
     <!--  Underline tabs: a single row of text tabs, the selected one marked by a 2px rule.  -->
     <Style x:Key="ZeroTabItemStyle" TargetType="{x:Type TabItem}">
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontSize" Value="{DynamicResource ZeroFontSize13}" />
         <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
         <Setter Property="Template">
             <Setter.Value>
@@ -330,14 +390,14 @@
     -->
     <Style x:Key="ZeroSegmentedTabItemStyle" TargetType="{x:Type TabItem}">
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontSize" Value="{DynamicResource ZeroFontSize13}" />
         <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type TabItem}">
                     <Grid Background="Transparent" Cursor="Hand" Margin="2,0">
-                        <Border x:Name="Hover" CornerRadius="8" Background="{DynamicResource ControlFillColorSecondaryBrush}" Opacity="0" />
-                        <Border x:Name="Pill" CornerRadius="8" Background="{DynamicResource ControlFillColorTertiaryBrush}"
+                        <Border x:Name="Hover" CornerRadius="{DynamicResource ZeroRadius8}" Background="{DynamicResource ControlFillColorSecondaryBrush}" Opacity="0" />
+                        <Border x:Name="Pill" CornerRadius="{DynamicResource ZeroRadius8}" Background="{DynamicResource ControlFillColorTertiaryBrush}"
                                 BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" Opacity="0" />
                         <ContentPresenter ContentSource="Header" Margin="16,7,16,8" RecognizesAccessKey="True" TextElement.Foreground="{TemplateBinding Foreground}" />
                     </Grid>
@@ -394,7 +454,7 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
-                        <Border Grid.Row="0" HorizontalAlignment="Left" CornerRadius="10" Padding="3"
+                        <Border Grid.Row="0" HorizontalAlignment="Left" CornerRadius="{DynamicResource ZeroRadius10}" Padding="3"
                                 Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
                             <TabPanel IsItemsHost="True" KeyboardNavigation.TabIndex="1" />
@@ -436,7 +496,7 @@
 
     <!--  Centered message for empty lists.  -->
     <Style x:Key="ZeroEmptyStateStyle" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource ZeroCaptionStyle}">
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontSize" Value="{DynamicResource ZeroFontSize13}" />
         <Setter Property="TextAlignment" Value="Center" />
         <Setter Property="HorizontalAlignment" Value="Center" />
         <Setter Property="VerticalAlignment" Value="Center" />
@@ -454,7 +514,8 @@
 
     <!--  Root grid of every window: soft fade on first show.  -->
     <Style x:Key="ZeroWindowRootStyle" TargetType="{x:Type Grid}">
-        <Setter Property="TextElement.FontFamily" Value="{StaticResource ZeroUIFont}" />
+        <Setter Property="TextElement.FontFamily" Value="{DynamicResource ZeroUIFont}" />
+        <Setter Property="TextElement.FontWeight" Value="{DynamicResource ZeroFontWeightBody}" />
         <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
         <Style.Triggers>
             <DataTrigger Binding="{Binding Source={x:Static SystemParameters.ClientAreaAnimation}}" Value="True">

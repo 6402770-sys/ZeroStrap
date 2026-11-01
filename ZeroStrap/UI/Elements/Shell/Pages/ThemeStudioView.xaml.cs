@@ -10,6 +10,8 @@ using System.Windows.Threading;
 
 using Microsoft.Win32;
 
+using ZeroStrap.Enums;
+
 using ZeroStrap.Models.Theming;
 using ZeroStrap.UI.Elements.Controls;
 using ZeroStrap.UI.Elements.Dialogs;
@@ -114,7 +116,14 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
         private bool _dirty;
         private bool _suppressRail;
         private bool _suppressToggles;
+        private bool _loading;
         private bool _subscribed;
+        private string? _noteMessage;
+
+        /// <summary>One entry in the font family list: the stored family name and the text shown for it.</summary>
+        private sealed record FontChoice(string Value, string Display);
+
+        private static List<FontChoice>? _installedFonts;
 
         public ThemeStudioView()
         {
@@ -124,7 +133,8 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             _noteTimer.Tick += (_, _) =>
             {
                 _noteTimer.Stop();
-                NoteText.Visibility = Visibility.Collapsed;
+                _noteMessage = null;
+                UpdateStatusLine();
             };
 
             Loaded += (_, _) => OnShown();
@@ -146,7 +156,7 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
                 Dispatcher.ShutdownStarted += Dispatcher_ShutdownStarted;
             }
 
-            AnimationsToggle.IsChecked = !App.Settings.Prop.ReduceMotion;
+            LoadMotionControls();
             Reload(_rememberedId ?? DefaultSelectionId());
         }
 
@@ -175,7 +185,7 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
         /// <summary>Called by the shell after a theme was changed from outside this page (command palette).</summary>
         public void Refresh()
         {
-            AnimationsToggle.IsChecked = !App.Settings.Prop.ReduceMotion;
+            LoadMotionControls();
             UpdateActiveState();
         }
 
@@ -267,8 +277,9 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             MenuDelete.Visibility = customOnly;
             MenuSeparator.Visibility = customOnly;
 
-            Preview.Apply(_selected.Colors);
+            Preview.Apply(_selected);
             BuildRows();
+            LoadEditorControls();
             UpdateContrastNotes();
             UpdateUseButton();
 
@@ -299,9 +310,10 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
         private string SelectedManagerId => ThemeManager.IdFor(_selected);
 
-        private bool PrimaryTextBlocked =>
-            _selected.Kind == ThemeKind.Custom &&
-            ContrastNote.Ratio(_selected.Colors.TextPrimary, _selected.Colors.Background) < ContrastNote.MinimumRatio;
+        private bool PrimaryTextBlocked => ThemeGuard.IsUnreadable(_selected);
+
+        /// <summary>The active theme is this one, but its primary text is too faint, so the app shows Obsidian instead.</summary>
+        private bool NotApplied => PrimaryTextBlocked && ThemeManager.ActiveId == SelectedManagerId;
 
         private void UpdateUseButton()
         {
@@ -312,6 +324,33 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             UseButton.Icon = isActive ? Wpf.Ui.Common.SymbolRegular.Checkmark16 : Wpf.Ui.Common.SymbolRegular.Empty;
             UseButton.IsEnabled = !isActive && !blocked;
             UseButton.ToolTip = blocked ? "Primary text is too hard to read on this background. Edits are saved, but the app won't show them until it is readable." : null;
+
+            UpdateStatusLine();
+        }
+
+        /// <summary>Shows the transient note, else the "not applied" warning, else nothing. The row is always reserved.</summary>
+        private void UpdateStatusLine()
+        {
+            if (_noteMessage is not null)
+            {
+                NoteText.Text = _noteMessage;
+                NoteText.ToolTip = _noteMessage;
+                NoteText.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorSecondaryBrush");
+                NoteText.Visibility = Visibility.Visible;
+            }
+            else if (NotApplied)
+            {
+                NoteText.Text = ThemeGuard.WarningText;
+                NoteText.ToolTip = null;
+                NoteText.SetResourceReference(TextBlock.ForegroundProperty, "ZeroStatusWarningBrush");
+                NoteText.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                NoteText.Text = " ";
+                NoteText.ToolTip = null;
+                NoteText.Visibility = Visibility.Hidden;
+            }
         }
 
         // ---------------------------------------------------------------- editor
@@ -350,14 +389,227 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             var field = Fields.First(f => f.Key == row.Key);
             field.Set(_selected.Colors, row.Hex);
 
-            Preview.Apply(_selected.Colors);
+            Preview.Apply(_selected);
             ItemFor(_selected.Id)?.Update(_selected);
             UpdateContrastNotes();
             UpdateUseButton();
 
+            QueueSave();
+        }
+
+        private void QueueSave()
+        {
             _dirty = true;
             _saveTimer.Stop();
             _saveTimer.Start();
+        }
+
+        /// <summary>A non-colour edit: refresh the preview and queue the debounced save (and live apply when active).</summary>
+        private void Edited()
+        {
+            if (_loading || _selected.Kind != ThemeKind.Custom)
+                return;
+
+            Preview.Apply(_selected);
+            QueueSave();
+        }
+
+        // ---------------------------------------------------------------- editor sections
+
+        private void SectionTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (TypographySection is null || LayoutSection is null || ComponentsSection is null)
+                return; // raised while the XAML is still being built
+
+            int index = SectionTabs.SelectedIndex;
+            ColorsList.Visibility = index == 0 ? Visibility.Visible : Visibility.Collapsed;
+            TypographySection.Visibility = index == 1 ? Visibility.Visible : Visibility.Collapsed;
+            LayoutSection.Visibility = index == 2 ? Visibility.Visible : Visibility.Collapsed;
+            ComponentsSection.Visibility = index == 3 ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        /// <summary>Installed font families, sorted, with the default stack first. Built once.</summary>
+        private static List<FontChoice> InstalledFonts()
+        {
+            if (_installedFonts is not null)
+                return _installedFonts;
+
+            var list = new List<FontChoice> { new(ThemeTokens.DefaultFamily, "Inter (default)") };
+
+            try
+            {
+                foreach (var name in Fonts.SystemFontFamilies.Select(f => f.Source).Distinct(StringComparer.OrdinalIgnoreCase)
+                             .OrderBy(n => n, StringComparer.CurrentCultureIgnoreCase))
+                {
+                    if (!name.Equals("Inter", StringComparison.OrdinalIgnoreCase))
+                        list.Add(new FontChoice(name, name));
+                }
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteException("ThemeStudioView::InstalledFonts", ex);
+            }
+
+            return _installedFonts = list;
+        }
+
+        private static void SelectByTag(ListBox list, string tag)
+        {
+            foreach (var item in list.Items.OfType<ListBoxItem>())
+                if (string.Equals(item.Tag as string, tag, StringComparison.Ordinal))
+                {
+                    list.SelectedItem = item;
+                    return;
+                }
+
+            list.SelectedItem = null;
+        }
+
+        /// <summary>The option whose numeric tag is closest to <paramref name="weight"/>.</summary>
+        private static void SelectNearestWeight(ListBox list, int weight)
+        {
+            var best = list.Items.OfType<ListBoxItem>().OrderBy(i => Math.Abs(int.Parse((string)i.Tag) - weight)).FirstOrDefault();
+            list.SelectedItem = best;
+        }
+
+        private static string? TagOf(ListBox list) => (list.SelectedItem as ListBoxItem)?.Tag as string;
+
+        /// <summary>Fills the Typography, Layout and Components controls from the selected theme.</summary>
+        private void LoadEditorControls()
+        {
+            if (_selected.Kind != ThemeKind.Custom)
+                return;
+
+            _loading = true;
+            try
+            {
+                var t = _selected.Typography;
+
+                var fonts = new List<FontChoice>(InstalledFonts());
+                string stored = ThemeTokens.BuildFamily(t.Family);
+                FontChoice? current = stored == ThemeTokens.DefaultFamily ? fonts[0] : fonts.FirstOrDefault(f => f.Value.Equals(t.Family.Trim(), StringComparison.OrdinalIgnoreCase));
+                if (current is null)
+                {
+                    current = new FontChoice(t.Family.Trim(), t.Family.Trim() + " (not installed)");
+                    fonts.Insert(1, current);
+                }
+
+                FamilyBox.ItemsSource = fonts;
+                FamilyBox.SelectedItem = current;
+
+                int percent = (int)Math.Round(Math.Clamp(t.Scale, ThemeValidator.MinScale, ThemeValidator.MaxScale) * 100 / 5) * 5;
+                ScaleSlider.Value = percent;
+                ScaleLabel.Text = percent + " %";
+
+                SelectNearestWeight(BodyWeightList, t.BodyWeight);
+                SelectNearestWeight(HeadingWeightList, t.HeadingWeight);
+
+                SelectByTag(DensityList, _selected.Layout.Density.ToString());
+                DensityHint.Text = DensityDescription(_selected.Layout.Density);
+
+                int radius = Math.Clamp(_selected.Components.Radius, ThemeValidator.MinRadius, ThemeValidator.MaxRadius);
+                RadiusSlider.Value = radius;
+                RadiusLabel.Text = radius + " px";
+
+                SelectByTag(ButtonStyleList, _selected.Components.ButtonStyle.ToString());
+                SelectByTag(SurfaceStyleList, _selected.Components.SurfaceStyle.ToString());
+            }
+            finally
+            {
+                _loading = false;
+            }
+        }
+
+        private static string DensityDescription(ThemeDensity density) => density switch
+        {
+            ThemeDensity.Compact => "Tighter page margins and card padding, so more fits on screen.",
+            ThemeDensity.Spacious => "Roomier page margins and card padding.",
+            _ => "The default page margins and card padding."
+        };
+
+        private void FamilyBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_loading || FamilyBox.SelectedItem is not FontChoice choice)
+                return;
+
+            _selected.Typography.Family = choice.Value;
+            Edited();
+        }
+
+        private void ScaleSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (ScaleLabel is null)
+                return;
+
+            int percent = (int)Math.Round(ScaleSlider.Value);
+            ScaleLabel.Text = percent + " %";
+
+            if (_loading)
+                return;
+
+            _selected.Typography.Scale = percent / 100.0;
+            Edited();
+        }
+
+        private void BodyWeight_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_loading || TagOf(BodyWeightList) is not { } tag)
+                return;
+
+            _selected.Typography.BodyWeight = int.Parse(tag);
+            Edited();
+        }
+
+        private void HeadingWeight_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_loading || TagOf(HeadingWeightList) is not { } tag)
+                return;
+
+            _selected.Typography.HeadingWeight = int.Parse(tag);
+            Edited();
+        }
+
+        private void Density_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_loading || TagOf(DensityList) is not { } tag || !Enum.TryParse<ThemeDensity>(tag, out var density))
+                return;
+
+            _selected.Layout.Density = density;
+            DensityHint.Text = DensityDescription(density);
+            Edited();
+        }
+
+        private void RadiusSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (RadiusLabel is null)
+                return;
+
+            int radius = (int)Math.Round(RadiusSlider.Value);
+            RadiusLabel.Text = radius + " px";
+
+            if (_loading)
+                return;
+
+            _selected.Components.Radius = radius;
+            Edited();
+        }
+
+        private void ButtonStyle_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_loading || TagOf(ButtonStyleList) is not { } tag || !Enum.TryParse<ThemeButtonStyle>(tag, out var style))
+                return;
+
+            _selected.Components.ButtonStyle = style;
+            Edited();
+        }
+
+        private void SurfaceStyle_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_loading || TagOf(SurfaceStyleList) is not { } tag || !Enum.TryParse<ThemeSurfaceStyle>(tag, out var style))
+                return;
+
+            _selected.Components.SurfaceStyle = style;
+            Edited();
         }
 
         private void UpdateContrastNotes()
@@ -410,8 +662,8 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
         private void ShowNote(string text)
         {
-            NoteText.Text = text;
-            NoteText.Visibility = Visibility.Visible;
+            _noteMessage = text;
+            UpdateStatusLine();
             _noteTimer.Stop();
             _noteTimer.Start();
         }
@@ -466,10 +718,47 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             UpdateActiveState();
         }
 
+        /// <summary>Shows the app-level motion preferences. Intensity is disabled while animations are effectively off.</summary>
+        private void LoadMotionControls()
+        {
+            var settings = App.Settings.Prop;
+
+            _loading = true;
+            try
+            {
+                AnimationsToggle.IsChecked = !settings.ReduceMotion;
+                FollowWindowsToggle.IsChecked = settings.FollowWindowsAnimations;
+                SelectByTag(IntensityList, settings.MotionIntensity.ToString());
+            }
+            finally
+            {
+                _loading = false;
+            }
+
+            UpdateMotionEnabled();
+        }
+
+        private void UpdateMotionEnabled() => IntensityList.IsEnabled = Motion.Enabled;
+
         private void AnimationsToggle_Click(object sender, RoutedEventArgs e)
         {
             // Saved with the rest of the settings (Ctrl + S); takes effect immediately in this session.
             App.Settings.Prop.ReduceMotion = AnimationsToggle.IsChecked != true;
+            UpdateMotionEnabled();
+        }
+
+        private void FollowWindowsToggle_Click(object sender, RoutedEventArgs e)
+        {
+            App.Settings.Prop.FollowWindowsAnimations = FollowWindowsToggle.IsChecked == true;
+            UpdateMotionEnabled();
+        }
+
+        private void Intensity_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_loading || TagOf(IntensityList) is not { } tag || !Enum.TryParse<MotionIntensity>(tag, out var intensity))
+                return;
+
+            App.Settings.Prop.MotionIntensity = intensity;
         }
 
         // ---------------------------------------------------------------- menu and commands

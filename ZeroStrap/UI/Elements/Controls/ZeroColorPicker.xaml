@@ -9,7 +9,7 @@
     -->
     <StackPanel Width="236">
         <!-- Saturation (x) / value (y) -->
-        <Border CornerRadius="8" ClipToBounds="True" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+        <Border CornerRadius="{DynamicResource ZeroRadius8}" ClipToBounds="True" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
             <Grid x:Name="SvArea" Height="140" Background="Transparent" Cursor="Cross" Focusable="True"
                   AutomationProperties.Name="Saturation and brightness"
                   SizeChanged="SvArea_SizeChanged"
@@ -48,7 +48,7 @@
               SizeChanged="HueArea_SizeChanged"
               MouseLeftButtonDown="HueArea_MouseLeftButtonDown" MouseMove="HueArea_MouseMove" MouseLeftButtonUp="HueArea_MouseLeftButtonUp"
               KeyDown="HueArea_KeyDown">
-            <Border CornerRadius="5" Height="10" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+            <Border CornerRadius="{DynamicResource ZeroRadius5}" Height="10" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                         <GradientStop Color="#FFFF0000" Offset="0" />
@@ -76,7 +76,7 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <Border x:Name="CurrentSwatch" Width="34" Height="34" CornerRadius="6" BorderThickness="1"
+            <Border x:Name="CurrentSwatch" Width="34" Height="34" CornerRadius="{DynamicResource ControlCornerRadius}" BorderThickness="1"
                     BorderBrush="{DynamicResource ControlStrokeColorSecondaryBrush}" />
             <ui:TextBox x:Name="HexBox" ClearButtonEnabled="False" Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource ZeroTextField}"
                         FontFamily="{StaticResource ZeroMonoFont}" MaxLength="9" AutomationProperties.Name="Hex colour"

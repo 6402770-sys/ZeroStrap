@@ -1,21 +1,45 @@
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Media;
+using WpfFontFamily = System.Windows.Media.FontFamily;
 
 using ZeroStrap.Models.Theming;
 using ZeroStrap.UI.Theming;
 
 namespace ZeroStrap.UI.Elements.Controls
 {
-    /// <summary>Miniature app window rendered from a theme's colours with local brushes.</summary>
+    /// <summary>
+    /// Miniature app window rendered from a theme (colours, typography, radius, button and surface style) with local
+    /// brushes and values, so it is independent of the application theme and updates instantly while editing.
+    /// </summary>
     public partial class ThemePreview : UserControl
     {
+        // Design values from the XAML, captured once so every Apply starts from the same base.
+        private readonly Dictionary<TextBlock, double> _baseSizes = new();
+        private readonly Dictionary<Border, CornerRadius> _baseRadii = new();
+
         public ThemePreview()
         {
             InitializeComponent();
-            Apply(new ThemeColors());
+
+            foreach (var text in new[] { BrandText, NavSelectedText, Nav2Text, Nav3Text, CardTitle, CardCaption, CardMuted, PrimaryText, SecondaryText })
+                _baseSizes[text] = text.FontSize;
+
+            foreach (var border in new[] { Root, Sidebar, Mark, NavSelected, Card, PrimaryButton, SecondaryButton })
+                _baseRadii[border] = border.CornerRadius;
+
+            Apply(new ThemeDefinition());
         }
 
-        public void Apply(ThemeColors c)
+        public void Apply(ThemeDefinition theme)
+        {
+            ApplyColors(theme.Colors ?? new ThemeColors(), theme.Components?.ButtonStyle ?? ThemeButtonStyle.Solid);
+            ApplyTypography(theme.Typography ?? new ThemeTypography());
+            ApplyComponents(theme.Components ?? new ThemeComponents());
+        }
+
+        private void ApplyColors(ThemeColors c, ThemeButtonStyle buttonStyle)
         {
             // Unparsable values are ignored (the previous brush stays) so a half-typed colour never breaks the preview.
             Brush? Paint(string hex) =>
@@ -45,8 +69,18 @@ namespace ZeroStrap.UI.Elements.Controls
             Ink(CardCaption, c.TextSecondary);
             Ink(CardMuted, c.TextMuted);
 
-            Fill(PrimaryButton, c.Accent);
-            Ink(PrimaryText, c.OnAccent);
+            if (buttonStyle == ThemeButtonStyle.Subtle && ColorMath.TryParseHex(c.Accent, out var accent))
+            {
+                // Same recipe as the app's Subtle primary button: ~14% accent tint with accent-coloured text.
+                PrimaryButton.Background = new SolidColorBrush(Color.FromArgb(36, accent.R, accent.G, accent.B));
+                PrimaryText.Foreground = new SolidColorBrush(Color.FromRgb(accent.R, accent.G, accent.B));
+            }
+            else
+            {
+                Fill(PrimaryButton, c.Accent);
+                Ink(PrimaryText, c.OnAccent);
+            }
+
             Fill(SecondaryButton, c.SurfaceElevated);
             Stroke(SecondaryButton, c.Border);
             Ink(SecondaryText, c.TextPrimary);
@@ -55,6 +89,38 @@ namespace ZeroStrap.UI.Elements.Controls
             Dot(DotWarning, c.Warning);
             Dot(DotDanger, c.Danger);
             Dot(DotInfo, c.Info);
+        }
+
+        private void ApplyTypography(ThemeTypography t)
+        {
+            double scale = double.IsNaN(t.Scale) ? 1.0 : Math.Clamp(t.Scale, ThemeValidator.MinScale, ThemeValidator.MaxScale);
+
+            TextElement.SetFontFamily(Root, new WpfFontFamily(ThemeTokens.BuildFamily(t.Family)));
+
+            foreach (var (text, size) in _baseSizes)
+                text.FontSize = ThemeTokens.ScaleFont(size, scale);
+
+            var body = FontWeight.FromOpenTypeWeight(ThemeTokens.NormaliseWeight(t.BodyWeight));
+            var heading = FontWeight.FromOpenTypeWeight(ThemeTokens.NormaliseWeight(t.HeadingWeight));
+
+            foreach (var text in new[] { Nav2Text, Nav3Text, CardCaption, CardMuted, SecondaryText })
+                text.FontWeight = body;
+
+            CardTitle.FontWeight = heading;
+        }
+
+        private void ApplyComponents(ThemeComponents c)
+        {
+            int radius = Math.Clamp(c.Radius, ThemeValidator.MinRadius, ThemeValidator.MaxRadius);
+
+            foreach (var (border, design) in _baseRadii)
+            {
+                double Scale(double v) => ThemeTokens.ScaleRadius(v, radius);
+                border.CornerRadius = new CornerRadius(Scale(design.TopLeft), Scale(design.TopRight), Scale(design.BottomRight), Scale(design.BottomLeft));
+            }
+
+            // Flat surfaces drop the card outline; the fill alone carries the card.
+            Card.BorderThickness = new Thickness(ThemeTokens.SurfaceBorder(c.SurfaceStyle));
         }
     }
 }
