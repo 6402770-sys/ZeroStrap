@@ -283,5 +283,76 @@ namespace ZeroStrap.Tests
         [Fact]
         public void NoConflictsMeansNoRows() =>
             Assert.Empty(ModsStudioLogic.BuildConflictRows(Array.Empty<ModConflict>(), Array.Empty<OverlayBlock>(), Label));
+
+        // ---------------------------------------------------------------- import
+
+        [Theory]
+        [InlineData(0L, "0 B")]
+        [InlineData(1023L, "1023 B")]
+        [InlineData(1536L, "1.5 KB")]
+        [InlineData(5L * 1024 * 1024, "5 MB")]
+        [InlineData(3L * 1024 * 1024 * 1024, "3 GB")]
+        public void FormatsSizes(long bytes, string expected) => Assert.Equal(expected, ModsStudioLogic.FormatSize(bytes));
+
+        [Fact]
+        public void DescribesLayouts()
+        {
+            Assert.Equal("Folders found at the top level", ModsStudioLogic.LayoutText(ImportLayout.DirectRoots, null));
+            Assert.Equal("Inside the folder ‘MyPack’", ModsStudioLogic.LayoutText(ImportLayout.WrappedRoots, "MyPack"));
+            Assert.Equal("From a Modifications folder", ModsStudioLogic.LayoutText(ImportLayout.ModificationsFolder, null));
+            Assert.Equal("ZeroStrap package", ModsStudioLogic.LayoutText(ImportLayout.ZeroStrapPackage, null));
+            Assert.Equal("Not recognised as a mod", ModsStudioLogic.LayoutText(ImportLayout.Unrecognised, null));
+        }
+
+        [Fact]
+        public void SummarisesIgnoredEntries()
+        {
+            Assert.Null(ModsStudioLogic.IgnoredSummary(Array.Empty<string>()));
+            Assert.Equal("1 extra file was skipped: a.txt", ModsStudioLogic.IgnoredSummary(new[] { "a.txt" }));
+            Assert.Equal("5 extra files were skipped: a, b, c …", ModsStudioLogic.IgnoredSummary(new[] { "a", "b", "c", "d", "e" }));
+        }
+
+        [Fact]
+        public void CaptionsImportConflicts()
+        {
+            Assert.Null(ModsStudioLogic.ConflictCaption(Array.Empty<ImportConflict>()));
+
+            var one = new[] { new ImportConflict("content\a.png", new[] { "Alpha" }) };
+            Assert.StartsWith("1 file is also provided by Alpha.", ModsStudioLogic.ConflictCaption(one));
+
+            var many = new[]
+            {
+                new ImportConflict("a", new[] { "Alpha", "Beta" }),
+                new ImportConflict("b", new[] { "Alpha", "Gamma", "Delta" })
+            };
+            Assert.StartsWith("2 files are also provided by Alpha, Beta, Gamma and 1 more.", ModsStudioLogic.ConflictCaption(many));
+        }
+
+        [Fact]
+        public void CategoryLabelsAreFriendly()
+        {
+            Assert.Equal("Sounds", ModsStudioLogic.CategoryLabel(ModCategory.Sounds));
+            Assert.Equal("Textures", ModsStudioLogic.CategoryLabel(ModCategory.Textures));
+            Assert.All(Enum.GetValues<ModCategory>(), c => Assert.DoesNotContain(".", ModsStudioLogic.CategoryLabel(c)));
+        }
+
+        [Fact]
+        public void ValidatesNames()
+        {
+            Assert.NotNull(ModsStudioLogic.ValidateName(null));
+            Assert.NotNull(ModsStudioLogic.ValidateName("   "));
+            Assert.Null(ModsStudioLogic.ValidateName(" My mod "));
+            Assert.Null(ModsStudioLogic.ValidateName(new string('a', ModsStudioLogic.MaxNameLength)));
+            Assert.NotNull(ModsStudioLogic.ValidateName(new string('a', ModsStudioLogic.MaxNameLength + 1)));
+        }
+
+        [Fact]
+        public void ImportMessages()
+        {
+            Assert.Equal("1 file · 1 KB", ModsStudioLogic.ImportSummary(1, 1024));
+            Assert.Contains("2 files", ModsStudioLogic.ImportedMessage("X", 2));
+            Assert.Equal("", ModsStudioLogic.DropIgnoredNote(1));
+            Assert.Contains("first one", ModsStudioLogic.DropIgnoredNote(2));
+        }
     }
 }

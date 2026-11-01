@@ -7,6 +7,7 @@
       xmlns:motion="clr-namespace:ZeroStrap.UI.Utility"
       mc:Ignorable="d"
       d:DesignHeight="720" d:DesignWidth="1030"
+      AllowDrop="True" DragEnter="Page_DragOver" DragOver="Page_DragOver" DragLeave="Page_DragLeave" Drop="Page_Drop"
       Title="Mods Studio">
 
     <Page.Resources>
@@ -177,6 +178,25 @@
             <Setter Property="TextWrapping" Value="Wrap" />
         </Style>
 
+        <!-- Import preview: a file that will not be imported, with the reason. -->
+        <DataTemplate x:Key="RejectedRowTemplate">
+            <StackPanel Margin="0,4">
+                <TextBlock Text="{Binding Path}" ToolTip="{Binding Path}" Style="{StaticResource ZeroMonoTextStyle}" FontSize="{DynamicResource ZeroFontSize11_5}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding Reason}" Style="{StaticResource ZeroCaptionStyle}" Foreground="{DynamicResource ZeroStatusWarningBrush}" TextWrapping="Wrap" Margin="0,1,0,0" />
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="PathRowTemplate">
+            <TextBlock Text="{Binding}" Style="{StaticResource ZeroMonoTextStyle}" FontSize="{DynamicResource ZeroFontSize11_5}"
+                       TextTrimming="CharacterEllipsis" ToolTip="{Binding}" Margin="0,2" />
+        </DataTemplate>
+
+        <ControlTemplate x:Key="VirtualScrollTemplate" TargetType="ItemsControl">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" CanContentScroll="True" Focusable="False">
+                <ItemsPresenter />
+            </ScrollViewer>
+        </ControlTemplate>
+
         <DataTemplate x:Key="EnumNameTemplate">
             <TextBlock Text="{Binding Path=., Converter={StaticResource EnumNameConverter}}" />
         </DataTemplate>
@@ -195,6 +215,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel>
                 <TextBlock Text="M O D S   S T U D I O" Style="{StaticResource ZeroEyebrowStyle}" Margin="0,4,0,8" />
@@ -202,7 +223,9 @@
                 <TextBlock Text="Each mod keeps its own files. Turn mods on or off, or remove one, without touching the others." FontSize="{DynamicResource ZeroFontSize14}" Margin="0,6,0,0"
                            TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
             </StackPanel>
-            <Button x:Name="MoreButton" Grid.Column="1" Style="{StaticResource ZeroHeaderIconButton}" VerticalAlignment="Top" Margin="16,2,0,0"
+            <ui:Button x:Name="ImportButton" Grid.Column="1" Content="Import mod" Icon="ArrowDownload24" Style="{StaticResource ZeroButtonPrimary}" VerticalAlignment="Top" Margin="16,2,0,0"
+                       Click="ImportButton_Click" AutomationProperties.Name="Import mod" />
+            <Button x:Name="MoreButton" Grid.Column="2" Style="{StaticResource ZeroHeaderIconButton}" VerticalAlignment="Top" Margin="8,2,0,0"
                     Click="MoreButton_Click" ToolTip="More" AutomationProperties.Name="More actions">
                 <ui:SymbolIcon Symbol="MoreHorizontal24" FontSize="18" />
                 <Button.ContextMenu>
@@ -536,5 +559,155 @@
                 </Grid>
             </TabItem>
         </TabControl>
+
+        <!-- ============================== IMPORT VIEW (takes over the tabs area) ============================== -->
+        <ScrollViewer x:Name="ImportView" Grid.Row="3" Margin="0,8,0,0" Focusable="False" FocusVisualStyle="{x:Null}" BorderThickness="0" Background="Transparent" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
+            <StackPanel MaxWidth="860" HorizontalAlignment="Stretch" Margin="0,4,0,16">
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ui:Button x:Name="ImportBackButton" Content="Back" Icon="ArrowLeft24" Style="{StaticResource ZeroButtonGhost}" Click="ImportBack_Click" AutomationProperties.Name="Back" />
+                    <TextBlock Grid.Column="1" Text="Import a mod" Style="{StaticResource ZeroPageTitleStyle}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                </Grid>
+
+                <!-- Step 1: choose -->
+                <StackPanel x:Name="ImportChoosePanel" Margin="0,16,0,0">
+                    <Border Style="{StaticResource ZeroCardStyle}" Padding="24,44">
+                        <StackPanel HorizontalAlignment="Center" MaxWidth="520">
+                            <Border Style="{StaticResource ZeroIconTileStyle}" Width="48" Height="48" HorizontalAlignment="Center">
+                                <ui:SymbolIcon Symbol="FolderZip24" FontSize="22" Style="{StaticResource ZeroIconTileGlyphStyle}" />
+                            </Border>
+                            <TextBlock Text="Drop a .zip or a folder here" Style="{StaticResource ZeroCardTitleStyle}" HorizontalAlignment="Center" Margin="0,16,0,0" />
+                            <TextBlock Text="or pick one from your computer" Style="{StaticResource ZeroCaptionStyle}" FontSize="{DynamicResource ZeroFontSize13}" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
+                                <ui:Button x:Name="ChooseZipButton" Content="Choose zip…" Icon="FolderZip24" Style="{StaticResource ZeroButtonSecondary}" Click="ChooseZip_Click" AutomationProperties.Name="Choose zip" />
+                                <ui:Button x:Name="ChooseFolderButton" Content="Choose folder…" Icon="Folder24" Style="{StaticResource ZeroButtonSecondary}" Margin="8,0,0,0" Click="ChooseFolder_Click" AutomationProperties.Name="Choose folder" />
+                            </StackPanel>
+                            <TextBlock x:Name="ImportChooseError" Style="{StaticResource ZeroCaptionStyle}" Foreground="{DynamicResource ZeroStatusErrorBrush}" TextWrapping="Wrap"
+                                       TextAlignment="Center" Margin="0,16,0,0" Visibility="Collapsed" />
+                        </StackPanel>
+                    </Border>
+                    <TextBlock Text="A mod can have content, ExtraContent, PlatformContent or shaders folders, a whole Modifications folder, or be a ZeroStrap package. Only images, sounds, fonts and similar files are imported; nothing is ever run."
+                               Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="4,12,0,0" />
+                </StackPanel>
+
+                <!-- Step 1b: analysing -->
+                <Border x:Name="ImportAnalyzingPanel" Style="{StaticResource ZeroCardStyle}" Padding="24,44" Margin="0,16,0,0" Visibility="Collapsed">
+                    <StackPanel HorizontalAlignment="Center" MaxWidth="360">
+                        <TextBlock Text="Looking inside…" Style="{StaticResource ZeroCardTitleStyle}" HorizontalAlignment="Center" />
+                        <ProgressBar IsIndeterminate="True" Height="2" Margin="0,16,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Step 2: preview -->
+                <StackPanel x:Name="ImportPreviewPanel" Margin="0,16,0,0" Visibility="Collapsed">
+
+                    <Border Style="{StaticResource ZeroCardStyle}" Padding="20,16">
+                        <StackPanel>
+                            <TextBlock x:Name="PreviewSourceName" Style="{StaticResource ZeroCardTitleStyle}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock x:Name="PreviewLayoutText" Style="{StaticResource ZeroCaptionStyle}" FontSize="{DynamicResource ZeroFontSize12}" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border x:Name="PreviewFatalCard" Style="{StaticResource ZeroNoticeStyle}" Margin="0,12,0,0" Visibility="Collapsed">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="PreviewFatalText" TextWrapping="Wrap" VerticalAlignment="Center" FontSize="{DynamicResource ZeroFontSize13}"
+                                       Foreground="{DynamicResource ZeroStatusWarningBrush}" />
+                            <ui:Button Grid.Column="1" Content="Choose another" Style="{StaticResource ZeroButtonGhostSmall}" Margin="16,0,0,0" Click="ChooseAnother_Click" AutomationProperties.Name="Choose another" />
+                        </Grid>
+                    </Border>
+
+                    <Border x:Name="PreviewFormCard" Style="{StaticResource ZeroCardStyle}" Padding="20,16" Margin="0,12,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="200" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Text="Name" Style="{StaticResource ZeroCaptionStyle}" Margin="0,0,0,6" />
+                            <ui:TextBox x:Name="ImportNameBox" Grid.Row="1" HorizontalAlignment="Stretch" Style="{StaticResource ZeroTextField}" ClearButtonEnabled="False"
+                                        TextChanged="ImportNameBox_TextChanged" AutomationProperties.Name="Mod name" />
+                            <TextBlock x:Name="ImportNameError" Grid.Row="2" Style="{StaticResource ZeroCaptionStyle}" Foreground="{DynamicResource ZeroStatusErrorBrush}" Margin="0,4,0,0" Visibility="Collapsed" />
+
+                            <TextBlock Grid.Column="2" Text="Category" Style="{StaticResource ZeroCaptionStyle}" Margin="0,0,0,6" />
+                            <ComboBox x:Name="ImportCategoryBox" Grid.Row="1" Grid.Column="2" Style="{StaticResource ZeroDropdown}" DisplayMemberPath="Label" SelectedValuePath="Value"
+                                      AutomationProperties.Name="Mod category" />
+
+                            <TextBlock x:Name="PreviewAuthorText" Grid.Row="3" Grid.ColumnSpan="3" Style="{StaticResource ZeroCaptionStyle}" Margin="0,12,0,0" Visibility="Collapsed" />
+                        </Grid>
+                    </Border>
+
+                    <Border x:Name="PreviewFilesCard" Style="{StaticResource ZeroCardStyle}" Padding="20,8" Margin="0,12,0,0">
+                        <StackPanel>
+                            <Expander x:Name="PreviewFilesExpander" Expanded="PreviewFiles_Expanded" Collapsed="PreviewFiles_Collapsed">
+                                <Expander.Header>
+                                    <TextBlock x:Name="PreviewFilesHeader" FontSize="{DynamicResource ZeroFontSize13}" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                </Expander.Header>
+                                <ItemsControl x:Name="PreviewFilesList" MaxHeight="220" Margin="0,4,0,8" Template="{StaticResource VirtualScrollTemplate}" ItemTemplate="{StaticResource PathRowTemplate}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <VirtualizingStackPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </Expander>
+                            <TextBlock x:Name="PreviewIgnoredText" Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="0,0,0,8" Visibility="Collapsed" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border x:Name="PreviewRejectedCard" Style="{StaticResource ZeroCardStyle}" Padding="20,12" Margin="0,12,0,0" Visibility="Collapsed">
+                        <StackPanel>
+                            <TextBlock x:Name="PreviewRejectedHeader" FontSize="{DynamicResource ZeroFontSize13}" FontWeight="SemiBold" Foreground="{DynamicResource ZeroStatusWarningBrush}" />
+                            <ItemsControl x:Name="PreviewRejectedList" MaxHeight="220" Margin="0,6,0,0" Template="{StaticResource VirtualScrollTemplate}" ItemTemplate="{StaticResource RejectedRowTemplate}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <VirtualizingStackPanel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <Border x:Name="PreviewWarningsCard" Style="{StaticResource ZeroNoticeStyle}" Margin="0,12,0,0" Visibility="Collapsed">
+                        <ItemsControl x:Name="PreviewWarningsList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="{DynamicResource ZeroFontSize13}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,2" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Border>
+
+                    <TextBlock x:Name="PreviewConflictText" Style="{StaticResource ZeroCaptionStyle}" FontSize="{DynamicResource ZeroFontSize13}" Foreground="{DynamicResource ZeroStatusWarningBrush}"
+                               TextWrapping="Wrap" Margin="4,12,0,0" Visibility="Collapsed" />
+
+                    <TextBlock x:Name="ImportInstallError" Style="{StaticResource ZeroCaptionStyle}" FontSize="{DynamicResource ZeroFontSize13}" Foreground="{DynamicResource ZeroStatusErrorBrush}"
+                               TextWrapping="Wrap" Margin="4,12,0,0" Visibility="Collapsed" />
+
+                    <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
+                        <ui:Button x:Name="ImportInstallButton" Content="Install" Style="{StaticResource ZeroButtonPrimary}" Click="ImportInstall_Click" AutomationProperties.Name="Install" />
+                        <ui:Button x:Name="ImportCancelButton" Content="Cancel" Style="{StaticResource ZeroButtonSecondary}" Margin="8,0,0,0" Click="ImportBack_Click" AutomationProperties.Name="Cancel import" />
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Drop highlight while a file is dragged over the page. -->
+        <Border x:Name="DropHighlight" Grid.RowSpan="4" IsHitTestVisible="False" Visibility="Collapsed" CornerRadius="{DynamicResource ZeroRadius8}"
+                BorderThickness="2" BorderBrush="{DynamicResource ZeroStatusInfoBrush}" Background="{DynamicResource ControlFillColorSecondaryBrush}" Opacity="0.55" />
     </Grid>
 </Page>

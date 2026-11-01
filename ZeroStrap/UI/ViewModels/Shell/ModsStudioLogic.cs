@@ -56,6 +56,9 @@ namespace ZeroStrap.UI.ViewModels.Shell
         public static string ListMeta(ModCategory category, string? author) =>
             string.IsNullOrWhiteSpace(author) ? category.ToString() : $"{category} · {author.Trim()}";
 
+        /// <summary>The label shown for a category (the Installed list uses the same text).</summary>
+        public static string CategoryLabel(ModCategory category) => category.ToString();
+
         public static string SourceLabel(ModSource source) => source == ModSource.Legacy ? "Legacy" : "Imported";
 
         public static string DetailsMeta(ModManifest manifest, CultureInfo? culture = null)
@@ -271,5 +274,86 @@ namespace ZeroStrap.UI.ViewModels.Shell
 
         public static string PresetOffConfirmation(string preset, string package) =>
             $"{preset} will be turned off so {package} can use this file.";
+
+        // ---------------------------------------------------------------- import
+
+        /// <summary>Same limit the engine enforces on a mod name.</summary>
+        public const int MaxNameLength = 80;
+
+        public static string FormatSize(long bytes)
+        {
+            if (bytes < 1024)
+                return bytes + " B";
+
+            double value = bytes / 1024.0;
+            string[] units = { "KB", "MB", "GB" };
+            int unit = 0;
+
+            while (value >= 1024 && unit < units.Length - 1)
+            {
+                value /= 1024;
+                unit++;
+            }
+
+            return string.Create(CultureInfo.InvariantCulture, $"{value:0.#} {units[unit]}");
+        }
+
+        /// <summary>Plain-words description of where the mod's files were found.</summary>
+        public static string LayoutText(ImportLayout layout, string? wrapper) => layout switch
+        {
+            ImportLayout.DirectRoots => "Folders found at the top level",
+            ImportLayout.WrappedRoots => string.IsNullOrWhiteSpace(wrapper) ? "Inside a single folder" : $"Inside the folder ‘{wrapper}’",
+            ImportLayout.ModificationsFolder => "From a Modifications folder",
+            ImportLayout.ZeroStrapPackage => "ZeroStrap package",
+            _ => "Not recognised as a mod"
+        };
+
+        /// <summary>"3 extra files were skipped: __MACOSX, README.txt …" or null when nothing was skipped.</summary>
+        public static string? IgnoredSummary(IReadOnlyList<string> ignored, int show = 3)
+        {
+            if (ignored.Count == 0)
+                return null;
+
+            string head = $"{ignored.Count} extra file{(ignored.Count == 1 ? " was" : "s were")} skipped: ";
+            string list = string.Join(", ", ignored.Take(show));
+
+            return head + list + (ignored.Count > show ? " …" : "");
+        }
+
+        /// <summary>Caption under the preview when enabled mods already provide some of the files; null when none do.</summary>
+        public static string? ConflictCaption(IReadOnlyList<ImportConflict> conflicts, int showNames = 3)
+        {
+            if (conflicts.Count == 0)
+                return null;
+
+            var names = conflicts
+                .SelectMany(c => c.PackageNames)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            string who = string.Join(", ", names.Take(showNames)) + (names.Count > showNames ? $" and {names.Count - showNames} more" : "");
+
+            return $"{conflicts.Count} file{(conflicts.Count == 1 ? " is" : "s are")} also provided by {who}. "
+                + "The mod you have now keeps them until you choose in the Conflicts tab.";
+        }
+
+        public static string ImportSummary(int files, long bytes) => $"{files} file{(files == 1 ? "" : "s")} · {FormatSize(bytes)}";
+
+        /// <summary>Why a name cannot be used, or null when it is fine.</summary>
+        public static string? ValidateName(string? name)
+        {
+            string trimmed = (name ?? "").Trim();
+
+            if (trimmed.Length == 0)
+                return "Give the mod a name.";
+
+            return trimmed.Length > MaxNameLength ? $"Use {MaxNameLength} characters or fewer." : null;
+        }
+
+        public static string ImportedMessage(string name, int files) =>
+            $"Imported {name} ({files} file{(files == 1 ? "" : "s")}). " + NextLaunchNote;
+
+        public static string DropIgnoredNote(int count) =>
+            count > 1 ? $"You dropped {count} items. Only the first one is used." : "";
     }
 }

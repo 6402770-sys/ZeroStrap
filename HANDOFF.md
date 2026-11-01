@@ -20,14 +20,17 @@ Read this first in a new session. Keep it short and factual; update it at each m
 | 6a/6b Tokenisation; image/video backgrounds | `de0abaf`, `c9c9cf7` | done |
 | 7a Mods Studio engine | `bea7c26` | done |
 | 7b Mods Studio UI (Installed/Library/Conflicts, badge, counts) | `b2ad623` | done |
-| 8 Mods import (zip/folder/drag-drop + preview) | — | **next** |
+| 8a Mods import engine (`ModImporter`, extractor link/allowlist/limits, layouts) | `3791ff7` | done — 606/606 tests |
+| 8b Mods import UI (drop zone, preview, install) | see `git log` | done — 617/617 tests, preview smoke-tested |
 | 9 FPS Unlocker | — | deferred (do not build) |
-| 10a/10b Macro Studio | — | not started |
+| 10a/10b Macro Studio | — | **next** (10a engine first; full adversarial review) |
 
 ## Verification
 - 2026-11-01: `dotnet test ZeroStrap.Tests` → 531/531 pass, 0 build errors.
 - 2026-11-01: dev build UI smoke at 1280×800 — Mods Studio tabs, sidebar badge, Overview mod count render correctly.
-- Not yet done: Phase 7 acceptance "real Roblox launch with mods on then off restores originals".
+- 2026-11-01: import preview smoke at 1120×700 with a crafted zip (wrapper folder detected, `.lua` rejected, README ignored). Install not run against the real store (engine tests cover it).
+- Not yet done: Phase 7 acceptance "real Roblox launch with mods on then off restores originals"; a real-world mod pack install in the UI; real 2 GB / 20,000-entry archives (tests use injected limits).
+- UI smoke scripts: `smoke7b.ps1`, `smoke8b.ps1` pattern — dot-source `zsui.ps1`, `Start-Shell 1120 700`, click by AutomationProperties.Name (e.g. "Import mod", "Choose zip", "Cancel import").
 
 ## Hard rules (from the plan; do not re-ask)
 - `ZeroStrap/FastFlags/*` and `FastFlagManager.cs` are a black box. Use `IFlagStore` / `FastFlagWorkspace.Instance.Store` only.

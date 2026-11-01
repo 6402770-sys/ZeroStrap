@@ -649,6 +649,359 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
         private void Toast(string message, bool isError) => ToastRequested?.Invoke(this, new ModsToastEventArgs(message, isError));
 
+        // ---------------------------------------------------------------- import
+
+        private enum ImportStep
+        {
+            Choose,
+            Analyzing,
+            Preview
+        }
+
+        private bool _importOpen;
+        private bool _analysing;
+        private int _analyzeToken;
+        private ImportPreview? _preview;
+
+        private bool ImportBusy => _busy || _analysing;
+
+        private void ImportButton_Click(object sender, RoutedEventArgs e) => OpenImport(null);
+
+        /// <summary>Opens the import view (animated), optionally analysing <paramref name="path"/> straight away.</summary>
+        private void OpenImport(string? path)
+        {
+            if (Motion.IsSwapping || _busy)
+                return;
+
+            if (!_importOpen)
+            {
+                _importOpen = true;
+                ShowStep(ImportStep.Choose, animate: false);
+                ImportChooseError.Visibility = Visibility.Collapsed;
+                ImportView.ScrollToTop();
+
+                if (IsLoaded)
+                {
+                    Motion.WorkspaceSwap(StudioTabs, ImportView, forward: true, completed: () => ImportBackButton.Focus());
+                }
+                else
+                {
+                    StudioTabs.Visibility = Visibility.Collapsed;
+                    ImportView.Visibility = Visibility.Visible;
+                }
+            }
+
+            if (path is not null)
+                _ = AnalyzeAsync(path);
+        }
+
+        private void CloseImport()
+        {
+            if (!_importOpen || Motion.IsSwapping)
+                return;
+
+            _importOpen = false;
+            _analyzeToken++; // a result that is still coming is no longer wanted
+            _analysing = false;
+            _preview = null;
+
+            if (IsLoaded)
+            {
+                Motion.WorkspaceSwap(ImportView, StudioTabs, forward: false);
+            }
+            else
+            {
+                ImportView.Visibility = Visibility.Collapsed;
+                StudioTabs.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void ImportBack_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_busy)
+                CloseImport();
+        }
+
+        private void ChooseAnother_Click(object sender, RoutedEventArgs e)
+        {
+            _analyzeToken++;
+            _preview = null;
+            ShowStep(ImportStep.Choose, animate: true);
+        }
+
+        private void ShowStep(ImportStep step, bool animate)
+        {
+            ImportChoosePanel.Visibility = step == ImportStep.Choose ? Visibility.Visible : Visibility.Collapsed;
+            ImportAnalyzingPanel.Visibility = step == ImportStep.Analyzing ? Visibility.Visible : Visibility.Collapsed;
+            ImportPreviewPanel.Visibility = step == ImportStep.Preview ? Visibility.Visible : Visibility.Collapsed;
+
+            if (!animate)
+                return;
+
+            UIElement shown = step switch
+            {
+                ImportStep.Choose => ImportChoosePanel,
+                ImportStep.Analyzing => ImportAnalyzingPanel,
+                _ => ImportPreviewPanel
+            };
+
+            Motion.FadeRise(shown, 0, 8, 300);
+        }
+
+        private void ChooseZip_Click(object sender, RoutedEventArgs e)
+        {
+            if (ImportBusy)
+                return;
+
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "Choose a mod zip",
+                Filter = "Zip files (*.zip)|*.zip",
+                CheckFileExists = true
+            };
+
+            if (dialog.ShowDialog() == true)
+                _ = AnalyzeAsync(dialog.FileName);
+        }
+
+        private void ChooseFolder_Click(object sender, RoutedEventArgs e)
+        {
+            if (ImportBusy)
+                return;
+
+            using var dialog = new System.Windows.Forms.FolderBrowserDialog
+            {
+                Description = "Choose the mod's folder",
+                UseDescriptionForTitle = true
+            };
+
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                _ = AnalyzeAsync(dialog.SelectedPath);
+        }
+
+        private async Task AnalyzeAsync(string path)
+        {
+            if (ImportBusy)
+                return;
+
+            int token = ++_analyzeToken;
+            _analysing = true;
+            ImportChooseError.Visibility = Visibility.Collapsed;
+            ShowStep(ImportStep.Analyzing, animate: true);
+
+            try
+            {
+                var preview = await ModsStudioService.RunAsync(() => ModStudio.Default.AnalyzeImport(path));
+
+                if (token != _analyzeToken)
+                    return;
+
+                _analysing = false;
+                ShowPreview(preview);
+            }
+            catch (Exception ex)
+            {
+                App.Logger.WriteException(LOG_IDENT, ex);
+
+                if (token != _analyzeToken)
+                    return;
+
+                _analysing = false;
+                ImportChooseError.Text = Plain(ex);
+                ImportChooseError.Visibility = Visibility.Visible;
+                ShowStep(ImportStep.Choose, animate: true);
+            }
+            finally
+            {
+                if (token == _analyzeToken)
+                    _analysing = false;
+            }
+        }
+
+        private void ShowPreview(ImportPreview p)
+        {
+            _preview = p;
+
+            PreviewSourceName.Text = Path.GetFileName(p.SourcePath.TrimEnd('\\', '/')) is { Length: > 0 } fileName ? fileName : p.SourcePath;
+            PreviewSourceName.ToolTip = p.SourcePath;
+            PreviewLayoutText.Text = p.CanInstall
+                ? ModsStudioLogic.LayoutText(p.Layout, p.WrapperFolder) + " · " + ModsStudioLogic.ImportSummary(p.AcceptedFiles.Count, p.TotalBytes)
+                : ModsStudioLogic.LayoutText(p.Layout, p.WrapperFolder);
+
+            string? reason = p.CannotInstallReason;
+            PreviewFatalCard.Visibility = reason is null ? Visibility.Collapsed : Visibility.Visible;
+            PreviewFatalText.Text = reason ?? "";
+            PreviewFormCard.Visibility = reason is null ? Visibility.Visible : Visibility.Collapsed;
+
+            ImportNameBox.Text = p.SuggestedName;
+            ImportCategoryBox.ItemsSource = Enum.GetValues<ModCategory>().Select(c => new { Value = c, Label = ModsStudioLogic.CategoryLabel(c) }).ToList();
+            ImportCategoryBox.SelectedValue = p.SuggestedCategory;
+
+            string author = string.Join(" · ", new[]
+            {
+                string.IsNullOrWhiteSpace(p.Author) ? null : "By " + p.Author.Trim(),
+                string.IsNullOrWhiteSpace(p.Version) ? null : "Version " + p.Version.Trim()
+            }.Where(t => t is not null));
+            PreviewAuthorText.Text = author;
+            PreviewAuthorText.Visibility = author.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+
+            PreviewFilesCard.Visibility = p.AcceptedFiles.Count > 0 || p.IgnoredEntries.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            PreviewFilesHeader.Text = ModsStudioLogic.FilesHeader(p.AcceptedFiles.Count);
+            PreviewFilesExpander.Visibility = p.AcceptedFiles.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            PreviewFilesExpander.IsExpanded = false;
+            PreviewFilesList.ItemsSource = null;
+
+            string? ignored = ModsStudioLogic.IgnoredSummary(p.IgnoredEntries);
+            PreviewIgnoredText.Text = ignored ?? "";
+            PreviewIgnoredText.Visibility = ignored is null ? Visibility.Collapsed : Visibility.Visible;
+
+            PreviewRejectedCard.Visibility = p.RejectedEntries.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            PreviewRejectedHeader.Text = $"Not imported ({p.RejectedEntries.Count})";
+            PreviewRejectedList.ItemsSource = p.RejectedEntries;
+
+            PreviewWarningsList.ItemsSource = p.Warnings;
+            PreviewWarningsCard.Visibility = p.Warnings.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+            string? conflict = ModsStudioLogic.ConflictCaption(p.Conflicts);
+            PreviewConflictText.Text = conflict ?? "";
+            PreviewConflictText.Visibility = conflict is null ? Visibility.Collapsed : Visibility.Visible;
+
+            ImportInstallError.Visibility = Visibility.Collapsed;
+            ImportView.IsEnabled = true;
+            UpdateInstallState();
+            ShowStep(ImportStep.Preview, animate: true);
+            ImportView.ScrollToTop();
+        }
+
+        private void PreviewFiles_Expanded(object sender, RoutedEventArgs e)
+        {
+            if (_preview is null)
+                return;
+
+            PreviewFilesList.ItemsSource = _preview.AcceptedFiles
+                .Select(f => f.Path)
+                .OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private void PreviewFiles_Collapsed(object sender, RoutedEventArgs e) => PreviewFilesList.ItemsSource = null;
+
+        private void ImportNameBox_TextChanged(object sender, TextChangedEventArgs e) => UpdateInstallState();
+
+        private void UpdateInstallState()
+        {
+            string? error = ModsStudioLogic.ValidateName(ImportNameBox.Text);
+
+            ImportNameError.Text = error ?? "";
+            ImportNameError.Visibility = error is null ? Visibility.Collapsed : Visibility.Visible;
+            ImportInstallButton.IsEnabled = _preview is { CanInstall: true } && error is null;
+        }
+
+        private async void ImportInstall_Click(object sender, RoutedEventArgs e)
+        {
+            if (_busy || _preview is not { CanInstall: true } preview || ModsStudioLogic.ValidateName(ImportNameBox.Text) is not null)
+                return;
+
+            string name = ImportNameBox.Text.Trim();
+            var category = ImportCategoryBox.SelectedValue is ModCategory c ? c : preview.SuggestedCategory;
+
+            ImportInstallError.Visibility = Visibility.Collapsed;
+            ImportView.IsEnabled = false;
+            SetBusy(true);
+
+            ModImportResult? imported = null;
+
+            try
+            {
+                imported = await ModsStudioService.RunAsync(() => ModStudio.Default.Import(preview, name, category));
+            }
+            catch (Exception ex)
+            {
+                if (ex is not ModStudioException)
+                    App.Logger.WriteException(LOG_IDENT, ex);
+
+                ImportInstallError.Text = Plain(ex);
+                ImportInstallError.Visibility = Visibility.Visible;
+            }
+
+            if (imported is null)
+            {
+                ImportView.IsEnabled = true;
+                SetBusy(false);
+                return;
+            }
+
+            _selectedId = imported.Package.Id;
+            StudioTabs.SelectedItem = TabInstalled;
+
+            var rebuild = imported.Rebuild.Result;
+
+            if (rebuild.Skipped)
+                Toast($"Imported {name}, but the files couldn't be updated right now: {rebuild.SkipReason} They apply on the next launch.", isError: true);
+            else if (rebuild.Errors.Count > 0)
+                Toast($"Imported {name}, but {rebuild.Errors.Count} file{(rebuild.Errors.Count == 1 ? "" : "s")} could not be updated. {rebuild.Errors[0]}", isError: true);
+            else
+                Toast(ModsStudioLogic.ImportedMessage(name, imported.Package.Files.Count), isError: false);
+
+            // GetStateAsync also publishes the summary (sidebar badge, Overview counts)
+            await RefreshAsync();
+            ImportView.IsEnabled = true;
+            SetBusy(false);
+            CloseImport();
+        }
+
+        // drag and drop: a .zip or a folder anywhere on the page
+
+        private static string[]? DroppedPaths(IDataObject data) =>
+            data.GetDataPresent(DataFormats.FileDrop) ? data.GetData(DataFormats.FileDrop) as string[] : null;
+
+        private static bool IsImportable(string path) =>
+            Directory.Exists(path) || (File.Exists(path) && string.Equals(Path.GetExtension(path), ".zip", StringComparison.OrdinalIgnoreCase));
+
+        private void Page_DragOver(object sender, DragEventArgs e)
+        {
+            var paths = DroppedPaths(e.Data);
+            bool ok = paths is { Length: > 0 } && IsImportable(paths[0]) && !_busy && !_analysing && !Motion.IsSwapping;
+
+            e.Effects = ok ? DragDropEffects.Copy : DragDropEffects.None;
+            e.Handled = true;
+            DropHighlight.Visibility = ok ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void Page_DragLeave(object sender, DragEventArgs e) => DropHighlight.Visibility = Visibility.Collapsed;
+
+        private void Page_Drop(object sender, DragEventArgs e)
+        {
+            DropHighlight.Visibility = Visibility.Collapsed;
+            e.Handled = true;
+
+            var paths = DroppedPaths(e.Data);
+
+            if (paths is not { Length: > 0 } || ImportBusy || Motion.IsSwapping)
+                return;
+
+            if (!IsImportable(paths[0]))
+            {
+                Toast("Drop a .zip file or a folder to import a mod.", isError: true);
+                return;
+            }
+
+            string note = ModsStudioLogic.DropIgnoredNote(paths.Length);
+
+            if (note.Length > 0)
+                Toast(note, isError: false);
+
+            if (_importOpen)
+            {
+                _analyzeToken++;
+                _ = AnalyzeAsync(paths[0]);
+            }
+            else
+            {
+                OpenImport(paths[0]);
+            }
+        }
+
         // ---------------------------------------------------------------- header menu
 
         private void MoreButton_Click(object sender, RoutedEventArgs e)
