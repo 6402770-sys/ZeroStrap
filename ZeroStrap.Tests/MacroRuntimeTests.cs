@@ -132,8 +132,7 @@ namespace ZeroStrap.Tests
             _store = new MacroStore(Path.Combine(_root, "Macros"), _logs.Add);
             _settings = new MacroStudioSettingsStore(Path.Combine(_root, "Macros", "settings.json"), _logs.Add);
 
-            var player = new MacroPlayer(_sink, new RealtimeDelay(), new FakeGate(), _logs.Add);
-            _runtime = new MacroRuntime(_store, _settings, _registrar, _recorder, player, _logs.Add);
+            _runtime = new MacroRuntime(_store, _settings, _registrar, _recorder, _sink, () => new RealtimeDelay(), new FakeGate(), _logs.Add);
 
             // Shortcut callbacks normally hop to the thread pool; tests run them inline so they stay deterministic.
             _runtime.BackgroundDispatch = work => work();
@@ -227,16 +226,14 @@ namespace ZeroStrap.Tests
         }
 
         [Fact]
-        public void NeverTwoMacrosAtOnce()
+        public void TheSameMacroNeverRunsTwiceAtOnce()
         {
             SaveLongRunning("one");
-            Save("two");
 
             Assert.Equal(MacroStartResult.Started, _runtime.Start("one"));
-            Assert.Equal("one", _runtime.CurrentMacroId);
-            Assert.Equal(MacroStartResult.AlreadyRunning, _runtime.Start("two"));
+            Assert.Equal(new[] { "one" }, _runtime.RunningMacroIds);
             Assert.Equal(MacroStartResult.AlreadyRunning, _runtime.Start("one"));
-            Assert.Equal("one", _runtime.CurrentMacroId);
+            Assert.Equal(new[] { "one" }, _runtime.RunningMacroIds);
 
             Assert.True(_runtime.Stop());
         }
@@ -435,14 +432,14 @@ namespace ZeroStrap.Tests
         {
             Save("a", hotkey: "F6");
             Save("b", hotkey: "F7");
-            Save("c", hotkey: "F6"); // same combo as a
+            Save("c", hotkey: "F6"); // same combo as a: allowed, both share one registration
             _registrar.Refuse = hk => hk.ToString() == "F7" ? new HotkeyRegistration(HotkeyStatus.InUse, "This shortcut is used by another app") : HotkeyRegistration.Ok;
 
             var result = _runtime.ReloadHotkeys();
 
             Assert.Equal(HotkeyStatus.InUse, result.Macros.Single(m => m.MacroId == "b").Registration.Status);
-            Assert.Equal(1, result.Macros.Count(m => m.Registration.Status == HotkeyStatus.Duplicate));
-            Assert.Equal(1, result.Macros.Count(m => m.Registration.IsOk));
+            Assert.Equal(2, result.Macros.Count(m => m.Registration.IsOk));
+            Assert.Contains("macro:a,c", _registrar.Names);
         }
 
         [Fact]
@@ -472,14 +469,17 @@ namespace ZeroStrap.Tests
         }
 
         [Fact]
-        public void AMacroHotkeyUsedAsEmergencyStopIsADuplicate()
+        public void AMacroHotkeyUsedAsEmergencyStopIsRefused()
         {
             Save("a", hotkey: "Ctrl+Shift+End");
+            Save("b", hotkey: "Ctrl+Alt+Shift+End"); // one of the emergency stop's extra-modifier variants
 
             var result = _runtime.ReloadHotkeys();
 
-            Assert.Equal(HotkeyStatus.Duplicate, result.Macros.Single().Registration.Status);
+            Assert.All(result.Macros, m => Assert.Equal(HotkeyStatus.Invalid, m.Registration.Status));
+            Assert.All(result.Macros, m => Assert.Contains("emergency stop", m.Registration.Message));
             Assert.Contains("emergency-stop", _registrar.Names);
+            Assert.DoesNotContain(_registrar.Names, n => n.StartsWith("macro:"));
         }
 
         [Fact]
@@ -497,7 +497,7 @@ namespace ZeroStrap.Tests
             _runtime.ReloadHotkeys();
 
             _registrar.Press("macro:a");
-            Assert.Equal("a", _runtime.CurrentMacroId);
+            Assert.True(_runtime.IsRunning("a"));
             Assert.True(WaitUntil(() => SinkHas("kd:11")));
 
             _registrar.Press("macro:a");
@@ -506,17 +506,20 @@ namespace ZeroStrap.Tests
         }
 
         [Fact]
-        public void AnotherMacrosHotkeyIsIgnoredWhileOneIsRunning()
+        public void AnotherMacrosHotkeyStartsItNextToTheRunningOne()
         {
             SaveLongRunning("a", hotkey: "F6");
-            Save("b", hotkey: "F7");
+            SaveLongRunning("b", hotkey: "F7");
             _runtime.ReloadHotkeys();
 
             _registrar.Press("macro:a");
             _registrar.Press("macro:b");
 
-            Assert.Equal("a", _runtime.CurrentMacroId);
-            Assert.False(SinkHas("kd:1E"));
+            Assert.Equal(new[] { "a", "b" }, _runtime.RunningMacroIds.OrderBy(x => x).ToArray());
+
+            _registrar.Press("macro:a"); // toggles a off, b keeps going
+            Assert.True(WaitUntil(() => !_runtime.IsRunning("a")));
+            Assert.True(_runtime.IsRunning("b"));
 
             _runtime.Stop();
         }
@@ -749,17 +752,21 @@ namespace ZeroStrap.Tests
         }
 
         [Fact]
-        public void TypingKeysAreNotUsedForTheEmergencyStopOrMacros()
+        public void TypingKeysAreNotUsedForTheEmergencyStopButWorkAsGameShortcuts()
         {
             _settings.Save(new MacroStudioSettings { EmergencyStop = "W" });
             Assert.Equal("Ctrl+Shift+End", _runtime.ReloadHotkeys().EmergencyStop);
 
-            // A macro whose file still carries a plain-key shortcut (written by hand) gets an Invalid status, not a registration.
-            Save("typing", hotkey: "F6");
-            string path = Path.Combine(_store.Directory, "typing.json");
-            File.WriteAllText(path, File.ReadAllText(path).Replace("\"F6\"", "\"Space\""));
-            Assert.Contains("Space", File.ReadAllText(path));
+            Save("typing", hotkey: "Space");
             var result = _runtime.ReloadHotkeys();
+
+            Assert.Contains("macro:typing", _registrar.Names);
+            Assert.Contains(result.Macros, m => m.Registration.IsOk && m.MacroId == "typing");
+
+            // A file that still carries a reserved chat key (written by hand) gets an Invalid status, not a registration.
+            string path = Path.Combine(_store.Directory, "typing.json");
+            File.WriteAllText(path, File.ReadAllText(path).Replace("\"Space\"", "\"Escape\""));
+            result = _runtime.ReloadHotkeys();
 
             Assert.DoesNotContain("macro:typing", _registrar.Names);
             Assert.DoesNotContain(result.Macros, m => m.Registration.IsOk && m.MacroId == "typing");
@@ -961,14 +968,13 @@ namespace ZeroStrap.Tests
             // The first runtime's player gets stuck inside a send (as if SendInput hung).
             using var release = new ManualResetEventSlim(false);
             var stuckSink = new RecordingSink { OnCall = call => { if (call == "kd:11") release.Wait(10000); } };
-            var stuckPlayer = new MacroPlayer(stuckSink, new RealtimeDelay(), new FakeGate());
             var store = new MacroStore(Path.Combine(_root, "Macros2"), _logs.Add);
             var macro = Of(KeyDown(0x11), Wait(30000));
             macro.Id = "stuck";
             macro.Name = "Stuck";
             store.Save(macro);
 
-            var old = new MacroRuntime(store, _settings, new FakeRegistrar(), new FakeRecorder(), stuckPlayer, _logs.Add);
+            var old = new MacroRuntime(store, _settings, new FakeRegistrar(), new FakeRecorder(), stuckSink, () => new RealtimeDelay(), new FakeGate(), _logs.Add);
 
             try
             {
@@ -991,6 +997,279 @@ namespace ZeroStrap.Tests
             Assert.True(WaitUntil(() => MacroRuntime.LivePlayerThreads == 0));
             Assert.Equal(MacroStartResult.Started, _runtime.Start("quick"));
             Assert.True(WaitUntil(() => _runtime.State == MacroRuntimeState.Idle));
+        }
+
+        // ---- concurrent macros ----
+
+        private Macro SaveHolding(string id, ushort scan, string? hotkey = null) =>
+            Save(id, hotkey, true, KeyDown(scan), Wait(30000));
+
+        private bool SinkDown(string key)
+        {
+            lock (_sink.Calls)
+                return _sink.Down.Contains(key);
+        }
+
+        private bool SinkIdle()
+        {
+            lock (_sink.Calls)
+                return _sink.Down.Count == 0;
+        }
+
+        [Fact]
+        public void TwoMacrosRunAtTheSameTime()
+        {
+            SaveHolding("a", 0x11);
+            SaveHolding("b", 0x1E);
+
+            Assert.Equal(MacroStartResult.Started, _runtime.Start("a"));
+            Assert.Equal(MacroStartResult.Started, _runtime.Start("b"));
+
+            Assert.True(WaitUntil(() => SinkDown("k11") && SinkDown("k1E")));
+            Assert.Equal(2, _runtime.RunningCount);
+            Assert.Equal(MacroRuntimeState.Running, _runtime.State);
+
+            Assert.True(_runtime.Stop());
+            Assert.True(SinkIdle());
+            Assert.Equal(MacroRuntimeState.Idle, _runtime.State);
+        }
+
+        [Fact]
+        public void StoppingOneMacroKeepsTheOtherAndTheKeyItStillHolds()
+        {
+            SaveHolding("a", 0x11);
+            SaveHolding("b", 0x11);
+
+            _runtime.Start("a");
+            _runtime.Start("b");
+            Assert.True(WaitUntil(() => _runtime.Arbiter.OwnerCount(SharedInputArbiter.InputId.Key(0x11, false)) == 2));
+
+            Assert.True(_runtime.Stop("a"));
+
+            Assert.False(_runtime.IsRunning("a"));
+            Assert.True(_runtime.IsRunning("b"));
+            Assert.True(SinkDown("k11")); // B still holds W
+            Assert.DoesNotContain("ku:11", _sink.Calls.ToArray());
+
+            Assert.True(_runtime.Stop("b"));
+            Assert.True(SinkIdle());
+        }
+
+        [Fact]
+        public void AMacroThatCompletesOnlyReleasesWhatNobodyElseHolds()
+        {
+            Save("short", null, true, KeyDown(0x11), KeyDown(0x1E), Wait(50));
+            SaveHolding("long", 0x11);
+
+            _runtime.Start("long");
+            Assert.True(WaitUntil(() => SinkDown("k11")));
+            _runtime.Start("short");
+
+            Assert.True(WaitUntil(() => !_runtime.IsRunning("short")));
+            Assert.True(SinkDown("k11"));     // still held by "long"
+            Assert.False(SinkDown("k1E"));    // only "short" held it
+
+            _runtime.Stop();
+            Assert.True(SinkIdle());
+        }
+
+        [Fact]
+        public void AnErrorInOneMacroDoesNotDisturbTheOther()
+        {
+            SaveHolding("good", 0x11);
+            Save("bad", null, true, KeyDown(0x1E), KeyDown(0x22), Wait(30000));
+            _sink.ThrowOn = call => call == "kd:22";
+
+            _runtime.Start("good");
+            Assert.True(WaitUntil(() => SinkDown("k11")));
+            _runtime.Start("bad");
+
+            Assert.True(WaitUntil(() => !_runtime.IsRunning("bad")));
+            Assert.True(_runtime.IsRunning("good"));
+            Assert.True(SinkDown("k11"));
+            Assert.False(SinkDown("k1E")); // the faulted macro's keys were released
+            Assert.True(WaitUntil(() => _warnings.Any(w => w.Contains("\"bad\" stopped because of an error"))));
+
+            _runtime.Stop();
+            Assert.True(SinkIdle());
+        }
+
+        [Fact]
+        public void AtMostEightMacrosRunAndANinthIsRefusedWithoutStoppingAnything()
+        {
+            for (int i = 0; i < MacroRuntime.MaxConcurrentMacros; i++)
+            {
+                SaveHolding("m" + i, (ushort)(0x10 + i));
+                Assert.Equal(MacroStartResult.Started, _runtime.Start("m" + i));
+            }
+
+            SaveHolding("ninth", 0x30);
+
+            Assert.Equal(MacroStartResult.TooManyRunning, _runtime.Start("ninth"));
+            Assert.Equal(MacroRuntime.MaxConcurrentMacros, _runtime.RunningCount);
+            Assert.False(_runtime.IsRunning("ninth"));
+            Assert.Contains(MacroRuntime.MaxConcurrentMacros.ToString(), ZeroStrap.UI.ViewModels.Shell.MacroStudioLogic.StartResultText(MacroStartResult.TooManyRunning));
+
+            Assert.True(_runtime.Stop());
+            Assert.True(SinkIdle());
+            Assert.Equal(MacroStartResult.Started, _runtime.Start("ninth"));
+            _runtime.Stop();
+        }
+
+        [Fact]
+        public void ANinthMacroFromAShortcutWarnsAndStopsNothing()
+        {
+            for (int i = 0; i < MacroRuntime.MaxConcurrentMacros; i++)
+            {
+                SaveHolding("m" + i, (ushort)(0x10 + i));
+                _runtime.Start("m" + i);
+            }
+
+            SaveHolding("ninth", 0x30, hotkey: "F6");
+            _runtime.ReloadHotkeys();
+
+            _registrar.Press("macro:ninth");
+
+            Assert.False(_runtime.IsRunning("ninth"));
+            Assert.Equal(MacroRuntime.MaxConcurrentMacros, _runtime.RunningCount);
+            Assert.Contains(_warnings, w => w.Contains("\"ninth\" didn't start"));
+
+            _runtime.Stop();
+        }
+
+        [Fact]
+        public void ASharedShortcutTogglesAllOfItsMacrosTogether()
+        {
+            SaveHolding("a", 0x11, hotkey: "E");
+            SaveHolding("b", 0x1E, hotkey: "E");
+            SaveHolding("c", 0x20, hotkey: "F6");
+
+            var result = _runtime.ReloadHotkeys();
+            Assert.All(result.Macros, m => Assert.True(m.Registration.IsOk));
+            Assert.Contains("macro:a,b", _registrar.Names);
+
+            _runtime.Start("c");
+            _registrar.Press("macro:a,b");
+            Assert.True(_runtime.IsRunning("a") && _runtime.IsRunning("b"));
+
+            _registrar.Press("macro:a,b");
+            Assert.True(WaitUntil(() => !_runtime.IsRunning("a") && !_runtime.IsRunning("b")));
+            Assert.True(_runtime.IsRunning("c")); // a macro on another shortcut is never touched
+
+            _runtime.Stop();
+        }
+
+        [Fact]
+        public void ASharedShortcutStopsWhatIsPlayingBeforeStartingAnything()
+        {
+            SaveHolding("a", 0x11, hotkey: "E");
+            SaveHolding("b", 0x1E, hotkey: "E");
+            _runtime.ReloadHotkeys();
+
+            _runtime.Start("a");
+            _registrar.Press("macro:a,b");
+
+            Assert.True(WaitUntil(() => !_runtime.IsRunning("a")));
+            Assert.False(_runtime.IsRunning("b"));
+        }
+
+        [Fact]
+        public void EmergencyStopStopsEveryMacroAndReleasesEverything()
+        {
+            SaveHolding("a", 0x11);
+            SaveHolding("b", 0x11);
+            SaveHolding("c", 0x1E);
+
+            _runtime.Start("a");
+            _runtime.Start("b");
+            _runtime.Start("c");
+            Assert.True(WaitUntil(() => SinkDown("k11") && SinkDown("k1E")));
+
+            _registrar.Press("emergency-stop");
+
+            Assert.True(SinkIdle());
+            Assert.Equal(0, _runtime.Arbiter.HeldCount);
+            Assert.True(WaitUntil(() => _runtime.State == MacroRuntimeState.Idle));
+            Assert.True(SinkIdle());
+        }
+
+        [Fact]
+        public void RequestStopForAllCancelsEveryMacro()
+        {
+            SaveHolding("a", 0x11);
+            SaveHolding("b", 0x1E);
+            _runtime.Start("a");
+            _runtime.Start("b");
+
+            Assert.True(_runtime.RequestStop());
+            Assert.True(WaitUntil(() => _runtime.State == MacroRuntimeState.Idle));
+            Assert.True(SinkIdle());
+        }
+
+        [Fact]
+        public void ShutdownReleasesEveryMacrosKeys()
+        {
+            SaveHolding("a", 0x11);
+            SaveHolding("b", 0x1E);
+            _runtime.Start("a");
+            _runtime.Start("b");
+            Assert.True(WaitUntil(() => SinkDown("k11") && SinkDown("k1E")));
+
+            MacroRuntime.SetInstanceForTests(_runtime);
+
+            try
+            {
+                MacroRuntime.TryShutdown();
+            }
+            finally
+            {
+                MacroRuntime.SetInstanceForTests(null);
+            }
+
+            Assert.True(SinkIdle());
+            Assert.Equal(MacroStartResult.ShuttingDown, _runtime.Start("a"));
+        }
+
+        [Fact]
+        public void EveryStartAndStopRaisesStateChanged()
+        {
+            SaveHolding("a", 0x11);
+            SaveHolding("b", 0x1E);
+
+            _runtime.Start("a");
+            _runtime.Start("b");
+            _runtime.Stop("a");
+            _runtime.Stop("b");
+
+            Assert.True(WaitUntil(() => { lock (_eventLock) return _states.Count >= 4; }));
+
+            lock (_eventLock)
+                Assert.Equal(new[] { MacroRuntimeState.Running, MacroRuntimeState.Running, MacroRuntimeState.Running, MacroRuntimeState.Idle }, _states.Take(4).ToArray());
+        }
+
+        [Fact]
+        public void RecordingIsRefusedWhileAnyMacroPlays()
+        {
+            SaveHolding("a", 0x11);
+            _runtime.Start("a");
+
+            Assert.Equal(RecordingStartResult.MacroRunning, _runtime.StartRecording());
+
+            _runtime.Stop();
+        }
+
+        [Fact]
+        public void TheSameMacroCanRestartRightAfterItStopped()
+        {
+            SaveHolding("a", 0x11);
+
+            for (int i = 0; i < 5; i++)
+            {
+                Assert.Equal(MacroStartResult.Started, _runtime.Start("a"));
+                Assert.True(_runtime.Stop("a"));
+            }
+
+            Assert.True(SinkIdle());
         }
     }
 }

@@ -106,8 +106,8 @@ namespace ZeroStrap.Macros
             {
                 if (!Hotkey.TryParse(macro.Hotkey, out var hotkey))
                     errors.Add($"Invalid hotkey '{macro.Hotkey}'");
-                else if (!hotkey.IsAllowedShortcut)
-                    errors.Add($"Hotkey '{macro.Hotkey}' is a typing key; add Ctrl, Alt or Win");
+                else if (!hotkey.IsMacroShortcut)
+                    errors.Add($"Hotkey '{macro.Hotkey}' is reserved (Escape, Enter and / open and close the Roblox chat)");
             }
 
             if (!Enum.IsDefined(typeof(MacroFocusRule), macro.FocusRule))
@@ -263,10 +263,10 @@ namespace ZeroStrap.Macros
             if (!Hotkey.TryParse(text, out var parsed))
                 return text.Trim();
 
-            // A shortcut that is a plain typing key is dropped (not rejected) so a macro saved before this rule still loads.
-            if (!parsed.IsAllowedShortcut)
+            // A reserved key is dropped (not rejected) so a macro saved with it still loads.
+            if (!parsed.IsMacroShortcut)
             {
-                warnings.Add($"Hotkey '{parsed}' was removed: typing keys need Ctrl, Alt or Win");
+                warnings.Add($"Hotkey '{parsed}' was removed: Escape, Enter and / are reserved for the Roblox chat");
                 return null;
             }
 

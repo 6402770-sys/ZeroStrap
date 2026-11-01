@@ -294,7 +294,18 @@ namespace ZeroStrap.Macros
         public string EmergencyStop { get; set; } = DefaultEmergencyStop;
         public string RecordStopKey { get; set; } = DefaultRecordStopKey;
         public bool NoticeAcknowledged { get; set; }
+
+        /// <summary>Show the small in-game overlay over Roblox.</summary>
+        public bool OverlayEnabled { get; set; } = true;
+
+        public OverlayCorner OverlayCorner { get; set; } = OverlayCorner.BottomLeft;
+
+        /// <summary>Hide idle macros in the overlay.</summary>
+        public bool OverlayRunningOnly { get; set; }
     }
+
+    /// <summary>The corner of the Roblox window the in-game overlay sits in.</summary>
+    public enum OverlayCorner { BottomLeft, BottomRight, TopLeft, TopRight }
 
     /// <summary>Reads and atomically writes Macros\settings.json. An unreadable file is moved aside and defaults are used.</summary>
     public sealed class MacroStudioSettingsStore
@@ -342,7 +353,10 @@ namespace ZeroStrap.Macros
         {
             EmergencyStop = Canonical(settings.EmergencyStop, MacroStudioSettings.DefaultEmergencyStop, nameof(settings.EmergencyStop)),
             RecordStopKey = Canonical(settings.RecordStopKey, MacroStudioSettings.DefaultRecordStopKey, nameof(settings.RecordStopKey)),
-            NoticeAcknowledged = settings.NoticeAcknowledged
+            NoticeAcknowledged = settings.NoticeAcknowledged,
+            OverlayEnabled = settings.OverlayEnabled,
+            OverlayCorner = Enum.IsDefined(typeof(OverlayCorner), settings.OverlayCorner) ? settings.OverlayCorner : OverlayCorner.BottomLeft,
+            OverlayRunningOnly = settings.OverlayRunningOnly
         };
 
         private string Canonical(string? value, string fallback, string setting)

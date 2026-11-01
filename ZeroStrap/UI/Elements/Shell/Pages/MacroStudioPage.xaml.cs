@@ -352,15 +352,15 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
         private void UpdateState()
         {
             bool idle = _state == MacroRuntimeState.Idle;
-            string? runningName = null;
+            var runningNames = new List<string>();
 
-            if (_state == MacroRuntimeState.Running)
+            if (_state == MacroRuntimeState.Running && _runtime is not null)
             {
-                string? id = _runtime?.CurrentMacroId;
-                runningName = _rows.FirstOrDefault(r => r.Macro.Id == id)?.Macro.Name;
+                foreach (string id in _runtime.RunningMacroIds)
+                    runningNames.Add(_rows.FirstOrDefault(r => r.Macro.Id == id)?.Macro.Name ?? "");
             }
 
-            StateText.Text = MacroStudioLogic.StateLine(_state, runningName, _paused, _settings.RecordStopKey);
+            StateText.Text = MacroStudioLogic.StateLine(_state, runningNames, _paused, _settings.RecordStopKey);
 
             bool recording = _state == MacroRuntimeState.Recording;
             RecDot.Visibility = recording ? Visibility.Visible : Visibility.Collapsed;
@@ -608,7 +608,7 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
                 return;
 
             _registrations.TryGetValue(_current.Id, out var reg);
-            ShortcutStatusText.Text = MacroStudioLogic.HotkeyStatusText(_current, _registrations.ContainsKey(_current.Id) ? reg : null);
+            ShortcutStatusText.Text = MacroStudioLogic.HotkeyStatusText(_current, _registrations.ContainsKey(_current.Id) ? reg : null, _settings.EmergencyStop);
         }
 
         // ---------------------------------------------------------------- macro list
@@ -1046,9 +1046,11 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
             string? text = MacroStudioService.ShortcutFromKey(key);
 
-            if (text is null || MacroStudioLogic.ShortcutIssue(text) is not null)
+            string? issue = text is null ? MacroStudioLogic.NotAllowedShortcutText : MacroStudioLogic.ShortcutIssue(text, _settings.EmergencyStop);
+
+            if (issue is not null)
             {
-                ShortcutStatusText.Text = MacroStudioLogic.NotAllowedShortcutText;
+                ShortcutStatusText.Text = issue;
                 return;
             }
 
@@ -1110,7 +1112,7 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
 
             string? text = MacroStudioService.ShortcutFromKey(key);
 
-            if (text is null || MacroStudioLogic.ShortcutIssue(text) is not null)
+            if (text is null || MacroStudioLogic.EmergencyShortcutIssue(text) is not null)
             {
                 EmergencyIssue.Text = MacroStudioLogic.NotAllowedShortcutText;
                 EmergencyIssue.Visibility = Visibility.Visible;

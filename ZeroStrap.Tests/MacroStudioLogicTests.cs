@@ -111,9 +111,20 @@ namespace ZeroStrap.Tests
             Assert.Null(MacroStudioLogic.ShortcutIssue(null));
             Assert.Null(MacroStudioLogic.ShortcutIssue("F6"));
             Assert.Null(MacroStudioLogic.ShortcutIssue("Ctrl+W"));
-            Assert.Equal(MacroStudioLogic.NotAllowedShortcutText, MacroStudioLogic.ShortcutIssue("W"));
-            Assert.Equal(MacroStudioLogic.NotAllowedShortcutText, MacroStudioLogic.ShortcutIssue("Shift+W"));
+            Assert.Null(MacroStudioLogic.ShortcutIssue("W"));
+            Assert.Null(MacroStudioLogic.ShortcutIssue("Shift+W"));
+            Assert.Null(MacroStudioLogic.ShortcutIssue("Space"));
+            Assert.Null(MacroStudioLogic.ShortcutIssue("Tab"));
+            Assert.Equal(MacroStudioLogic.ReservedShortcutText, MacroStudioLogic.ShortcutIssue("Escape"));
+            Assert.Equal(MacroStudioLogic.ReservedShortcutText, MacroStudioLogic.ShortcutIssue("Enter"));
+            Assert.Equal(MacroStudioLogic.ReservedShortcutText, MacroStudioLogic.ShortcutIssue("Slash"));
             Assert.Equal(MacroStudioLogic.NotAllowedShortcutText, MacroStudioLogic.ShortcutIssue("nonsense"));
+            Assert.Equal(MacroStudioLogic.EmergencyShortcutText, MacroStudioLogic.ShortcutIssue("Ctrl+Shift+End"));
+            Assert.Equal(MacroStudioLogic.EmergencyShortcutText, MacroStudioLogic.ShortcutIssue("Ctrl+Alt+Shift+End"));
+            Assert.Equal(MacroStudioLogic.EmergencyShortcutText, MacroStudioLogic.ShortcutIssue("F8", "F8"));
+            Assert.Null(MacroStudioLogic.ShortcutIssue("Ctrl+Shift+End", "F8"));
+            Assert.Equal(MacroStudioLogic.NotAllowedShortcutText, MacroStudioLogic.EmergencyShortcutIssue("W"));
+            Assert.Null(MacroStudioLogic.EmergencyShortcutIssue("Ctrl+F12"));
         }
 
         [Fact]
@@ -132,7 +143,8 @@ namespace ZeroStrap.Tests
             Assert.Equal("", MacroStudioLogic.HotkeyStatusText(macro, HotkeyRegistration.Ok));
             Assert.Equal(MacroStudioLogic.InUseText, MacroStudioLogic.HotkeyStatusText(macro, new HotkeyRegistration(HotkeyStatus.InUse)));
             Assert.Equal(MacroStudioLogic.DuplicateText, MacroStudioLogic.HotkeyStatusText(macro, new HotkeyRegistration(HotkeyStatus.Duplicate)));
-            Assert.Equal(MacroStudioLogic.NotAllowedShortcutText, MacroStudioLogic.HotkeyStatusText(new Macro { Enabled = true, Hotkey = "W" }, null));
+            Assert.Equal("", MacroStudioLogic.HotkeyStatusText(new Macro { Enabled = true, Hotkey = "W" }, null));
+            Assert.Equal(MacroStudioLogic.ReservedShortcutText, MacroStudioLogic.HotkeyStatusText(new Macro { Enabled = true, Hotkey = "Escape" }, null));
             Assert.Equal("", MacroStudioLogic.HotkeyStatusText(new Macro { Enabled = true }, null));
             Assert.Contains("Turn this macro on", MacroStudioLogic.HotkeyStatusText(new Macro { Hotkey = "F6" }, null));
         }
@@ -141,8 +153,8 @@ namespace ZeroStrap.Tests
         public void StateLine_CoversStates()
         {
             Assert.Equal("Idle", MacroStudioLogic.StateLine(MacroRuntimeState.Idle, null, false, "F9"));
-            Assert.Equal("Running Farm", MacroStudioLogic.StateLine(MacroRuntimeState.Running, "Farm", false, "F9"));
-            Assert.Equal("Paused — Roblox isn't focused", MacroStudioLogic.StateLine(MacroRuntimeState.Running, "Farm", true, "F9"));
+            Assert.Equal("Running Farm", MacroStudioLogic.StateLine(MacroRuntimeState.Running, new[] { "Farm" }, false, "F9"));
+            Assert.Equal("Paused — Roblox isn't focused", MacroStudioLogic.StateLine(MacroRuntimeState.Running, new[] { "Farm" }, true, "F9"));
             Assert.Equal("Recording — press F10 to stop", MacroStudioLogic.StateLine(MacroRuntimeState.Recording, null, false, "F10"));
         }
 

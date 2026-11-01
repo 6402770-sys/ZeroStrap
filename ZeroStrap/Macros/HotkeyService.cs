@@ -108,6 +108,31 @@ namespace ZeroStrap.Macros
             return false;
         }
 
+        /// <summary>The callback of the entry with exactly this combination (each combination belongs to one name).</summary>
+        public bool TryGetCallback(Hotkey hotkey, out Action callback)
+        {
+            foreach (var entry in _byName.Values)
+            {
+                if (entry.Hotkey == hotkey)
+                {
+                    callback = entry.Callback;
+                    return true;
+                }
+            }
+
+            callback = () => { };
+            return false;
+        }
+
+        public bool Contains(Hotkey hotkey) => _byName.Values.Any(e => e.Hotkey == hotkey);
+
+        /// <summary>Whether any entry is a game shortcut (watched by the keyboard hook rather than registered with Windows).</summary>
+        public bool HasGameKeys => _byName.Values.Any(e => e.Hotkey.IsGameShortcut);
+
+        public bool IsGameKey(string name) => _byName.TryGetValue(name, out var entry) && entry.Hotkey.IsGameShortcut;
+
+        public bool IsGameKey(int id) => _byId.TryGetValue(id, out var entry) && entry.Hotkey.IsGameShortcut;
+
         public List<int> Ids() => _byId.Keys.ToList();
 
         public void Clear()
@@ -118,7 +143,11 @@ namespace ZeroStrap.Macros
     }
 
     /// <summary>
-    /// Global hotkeys via RegisterHotKey. The service owns a dedicated background thread with a hidden message-only window and
+    /// Global hotkeys via RegisterHotKey, plus game shortcuts (<see cref="Hotkey.IsGameShortcut"/>: plain typing keys such as E,
+    /// Shift+Q or Space) via a low-level keyboard hook that only watches: it always passes the key on, so Roblox still receives
+    /// it, and <see cref="GameKeyMatcher"/> decides whether to fire (Roblox focused, physical press, chat box closed). The hook
+    /// is installed only while at least one game shortcut is registered.
+    /// The service owns a dedicated background thread with a hidden message-only window and
     /// its own message loop, so shortcuts (above all the emergency stop) keep working when the UI thread is busy or hung.
     /// Register/Unregister can be called from any thread: they run on the service thread and wait (up to three seconds) for the
     /// answer. Callbacks run on the service thread, so they must return quickly and must never wait for the UI thread.
@@ -140,6 +169,10 @@ namespace ZeroStrap.Macros
 
         private readonly Action<string> _log;
         private readonly HotkeyTable _table = new(); // touched only on the service thread
+        private readonly GameKeyMatcher _matcher = new(); // service thread only
+        private readonly IFocusGate _gameFocus;
+        private readonly MacroHookNative.LowLevelHookProc _keyboardProc; // kept alive for as long as the hook may call it
+        private IntPtr _keyboardHook;
         private readonly ConcurrentQueue<Request> _requests = new();
         private readonly ManualResetEventSlim _ready = new(false);
         private readonly Thread _thread;
@@ -148,9 +181,11 @@ namespace ZeroStrap.Macros
         private string? _failure;
         private volatile bool _disposed;
 
-        public HotkeyService(Action<string>? log = null)
+        public HotkeyService(Action<string>? log = null, IFocusGate? gameFocus = null)
         {
             _log = log ?? (_ => { });
+            _gameFocus = gameFocus ?? new RobloxFocusGate();
+            _keyboardProc = KeyboardHook;
             _thread = new Thread(ThreadMain) { IsBackground = true, Name = "ZeroStrap hotkeys" };
             _thread.Start();
 
@@ -284,8 +319,9 @@ namespace ZeroStrap.Macros
             }
             finally
             {
-                // Everything is unregistered and the window destroyed on the thread that owns them.
+                // Everything is unregistered (and the hook removed) and the window destroyed on the thread that owns them.
                 try { UnregisterAllCore(); } catch { }
+                try { RemoveKeyboardHook(); } catch { }
                 try { MacroHookNative.DestroyWindow(_window); } catch { }
                 _window = IntPtr.Zero;
 
@@ -337,6 +373,15 @@ namespace ZeroStrap.Macros
             if (!_table.TryAdd(name, hotkey, onPressed, out int id))
                 return new HotkeyRegistration(HotkeyStatus.Duplicate, "This shortcut is already used by another ZeroStrap action");
 
+            if (hotkey.IsGameShortcut)
+            {
+                if (EnsureKeyboardHook())
+                    return HotkeyRegistration.Ok;
+
+                _table.Remove(name, out _);
+                return new HotkeyRegistration(HotkeyStatus.Invalid, "Windows refused to let ZeroStrap watch the keyboard");
+            }
+
             if (MacroHookNative.RegisterHotKey(_window, id, (uint)hotkey.Modifiers | MacroHookNative.MOD_NOREPEAT, (uint)hotkey.VirtualKey))
                 return HotkeyRegistration.Ok;
 
@@ -351,8 +396,13 @@ namespace ZeroStrap.Macros
 
         private void UnregisterCore(string name)
         {
-            if (_table.Remove(name, out int id) && _window != IntPtr.Zero)
+            bool game = _table.IsGameKey(name);
+
+            if (_table.Remove(name, out int id) && _window != IntPtr.Zero && !game)
                 MacroHookNative.UnregisterHotKey(_window, id);
+
+            if (!_table.HasGameKeys)
+                RemoveKeyboardHook();
         }
 
         private void UnregisterAllCore()
@@ -360,10 +410,77 @@ namespace ZeroStrap.Macros
             if (_window != IntPtr.Zero)
             {
                 foreach (int id in _table.Ids())
-                    MacroHookNative.UnregisterHotKey(_window, id);
+                {
+                    if (!_table.IsGameKey(id))
+                        MacroHookNative.UnregisterHotKey(_window, id);
+                }
             }
 
             _table.Clear();
+            RemoveKeyboardHook();
+        }
+
+        // ---- game shortcuts (keyboard hook) ----
+
+        private bool EnsureKeyboardHook()
+        {
+            if (_keyboardHook != IntPtr.Zero)
+                return true;
+
+            _matcher.Reset();
+            _keyboardHook = MacroHookNative.SetWindowsHookExW(MacroHookNative.WH_KEYBOARD_LL, _keyboardProc, MacroHookNative.GetModuleHandleW(null), 0);
+
+            if (_keyboardHook == IntPtr.Zero)
+            {
+                _log("Could not install the keyboard hook for game shortcuts (error " + System.Runtime.InteropServices.Marshal.GetLastWin32Error() + ")");
+                return false;
+            }
+
+            return true;
+        }
+
+        private void RemoveKeyboardHook()
+        {
+            if (_keyboardHook == IntPtr.Zero)
+                return;
+
+            MacroHookNative.UnhookWindowsHookEx(_keyboardHook);
+            _keyboardHook = IntPtr.Zero;
+            _matcher.Reset();
+        }
+
+        // Runs on the service thread for every key event in the system: never blocks, never swallows, always CallNextHookEx.
+        private IntPtr KeyboardHook(int nCode, IntPtr wParam, IntPtr lParam)
+        {
+            if (nCode >= 0)
+            {
+                try { OnKeyboard(wParam, lParam); } catch (Exception ex) { _log("Game shortcut check failed: " + ex.Message); }
+            }
+
+            return MacroHookNative.CallNextHookEx(_keyboardHook, nCode, wParam, lParam);
+        }
+
+        private void OnKeyboard(IntPtr wParam, IntPtr lParam)
+        {
+            int message = (int)wParam;
+            bool down = message == MacroHookNative.WM_KEYDOWN || message == MacroHookNative.WM_SYSKEYDOWN;
+            bool up = message == MacroHookNative.WM_KEYUP || message == MacroHookNative.WM_SYSKEYUP;
+
+            if (!down && !up)
+                return;
+
+            var info = System.Runtime.InteropServices.Marshal.PtrToStructure<MacroHookNative.KBDLLHOOKSTRUCT>(lParam);
+            bool injected = (info.flags & (MacroHookNative.LLKHF_INJECTED | MacroHookNative.LLKHF_LOWER_IL_INJECTED)) != 0
+                || unchecked((uint)(ulong)info.dwExtraInfo) == MacroNative.InjectionMarker;
+
+            var hit = _matcher.OnKey((int)info.vkCode, down, injected, info.time, _table.Contains, _gameFocus.IsAllowed,
+                vk => (MacroHookNative.GetAsyncKeyState(vk) & 0x8000) != 0);
+
+            // The callback only hands work off (see IHotkeyRegistrar.Register), so the hook returns quickly.
+            if (hit is Hotkey hotkey && _table.TryGetCallback(hotkey, out var callback))
+            {
+                try { callback(); } catch (Exception ex) { _log("Hotkey callback failed: " + ex.Message); }
+            }
         }
     }
 }

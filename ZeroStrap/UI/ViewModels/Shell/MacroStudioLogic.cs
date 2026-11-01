@@ -24,7 +24,14 @@ namespace ZeroStrap.UI.ViewModels.Shell
         public const string AutomationNotice =
             "Some Roblox experiences don't allow automation. You're responsible for following each experience's rules and Roblox's Terms of Use.";
 
+        /// <summary>The emergency stop needs a global shortcut (Windows captures it).</summary>
         public const string NotAllowedShortcutText = "Not allowed: use a function key or add Ctrl/Alt";
+
+        public const string ReservedShortcutText = "Not allowed: Escape, Enter and / open and close the Roblox chat";
+
+        public const string EmergencyShortcutText = "Not allowed: this is the emergency stop shortcut";
+
+        public const string GameShortcutHint = "Works only while Roblox is the active window, and pauses while the Roblox chat is open. Roblox still gets the key.";
 
         public const string InUseText = "This shortcut is used by another app";
 
@@ -296,22 +303,39 @@ namespace ZeroStrap.UI.ViewModels.Shell
             return hotkey.IsValid ? hotkey.ToString() : null;
         }
 
-        /// <summary>Why a shortcut cannot be used, or null when it is fine (or empty).</summary>
-        public static string? ShortcutIssue(string? shortcut)
+        /// <summary>
+        /// Why a macro shortcut cannot be used, or null when it is fine (or empty). Any key works except the ones the Roblox chat
+        /// uses; the emergency stop (with or without extra modifiers) can never be a macro shortcut.
+        /// </summary>
+        public static string? ShortcutIssue(string? shortcut, string? emergencyStop = null)
         {
             if (string.IsNullOrWhiteSpace(shortcut))
                 return null;
 
-            return Hotkey.TryParseShortcut(shortcut, out _) ? null : NotAllowedShortcutText;
+            if (!Hotkey.TryParse(shortcut, out var hotkey))
+                return NotAllowedShortcutText;
+
+            if (!hotkey.IsMacroShortcut)
+                return ReservedShortcutText;
+
+            if (Hotkey.TryParseShortcut(emergencyStop ?? MacroStudioSettings.DefaultEmergencyStop, out var emergency)
+                && MacroRuntime.CollidesWithEmergencyStop(hotkey, emergency))
+                return EmergencyShortcutText;
+
+            return null;
         }
 
+        /// <summary>Why a shortcut cannot be the emergency stop, or null when it is fine.</summary>
+        public static string? EmergencyShortcutIssue(string? shortcut) =>
+            Hotkey.TryParseShortcut(shortcut, out _) ? null : NotAllowedShortcutText;
+
         /// <summary>Registration status line under the shortcut box; empty when everything is fine or there is no shortcut.</summary>
-        public static string HotkeyStatusText(Macro macro, HotkeyRegistration? registration)
+        public static string HotkeyStatusText(Macro macro, HotkeyRegistration? registration, string? emergencyStop = null)
         {
             if (string.IsNullOrWhiteSpace(macro.Hotkey))
                 return "";
 
-            string? issue = ShortcutIssue(macro.Hotkey);
+            string? issue = ShortcutIssue(macro.Hotkey, emergencyStop);
 
             if (issue is not null)
                 return issue;
@@ -326,13 +350,40 @@ namespace ZeroStrap.UI.ViewModels.Shell
             {
                 HotkeyStatus.InUse => InUseText,
                 HotkeyStatus.Duplicate => DuplicateText,
-                HotkeyStatus.Invalid => NotAllowedShortcutText,
+                HotkeyStatus.Invalid => registration.Value.Message ?? ReservedShortcutText,
                 _ => ""
             };
         }
 
-        /// <summary>The state line under the header.</summary>
-        public static string StateLine(MacroRuntimeState state, string? macroName, bool paused, string recordStopKey)
+        /// <summary>The hint for a game shortcut (a typing key, watched only while Roblox is focused), or null for global shortcuts.</summary>
+        public static string? ShortcutHint(string? shortcut) =>
+            Hotkey.TryParse(shortcut, out var hotkey) && hotkey.IsGameShortcut ? GameShortcutHint : null;
+
+        /// <summary>
+        /// "Also used by X — both start together." when other enabled macros share <paramref name="macro"/>'s shortcut, else
+        /// null. Shared shortcuts are allowed: pressing one toggles all of its macros.
+        /// </summary>
+        public static string? SharedShortcutText(Macro macro, IEnumerable<Macro> all)
+        {
+            if (!Hotkey.TryParse(macro.Hotkey, out var hotkey))
+                return null;
+
+            var others = all
+                .Where(m => !ReferenceEquals(m, macro) && m.Id != macro.Id && m.Enabled)
+                .Where(m => Hotkey.TryParse(m.Hotkey, out var other) && other == hotkey)
+                .Select(m => string.IsNullOrWhiteSpace(m.Name) ? "Untitled" : m.Name)
+                .ToList();
+
+            return others.Count switch
+            {
+                0 => null,
+                1 => $"Also used by {others[0]} — both start together.",
+                _ => $"Also used by {string.Join(", ", others)} — they all start together."
+            };
+        }
+
+        /// <summary>The state line under the header. <paramref name="runningNames"/> are the playing macros' names.</summary>
+        public static string StateLine(MacroRuntimeState state, IReadOnlyList<string>? runningNames, bool paused, string recordStopKey)
         {
             switch (state)
             {
@@ -340,8 +391,15 @@ namespace ZeroStrap.UI.ViewModels.Shell
                     return $"Recording — press {recordStopKey} to stop";
 
                 case MacroRuntimeState.Running:
-                    string running = string.IsNullOrWhiteSpace(macroName) ? "Running" : "Running " + macroName;
-                    return paused ? "Paused — Roblox isn't focused" : running;
+                    if (paused)
+                        return "Paused — Roblox isn't focused";
+
+                    int count = runningNames?.Count ?? 0;
+
+                    if (count == 1 && !string.IsNullOrWhiteSpace(runningNames![0]))
+                        return "Running " + runningNames[0];
+
+                    return count > 1 ? $"Running {count} macros" : "Running";
 
                 default:
                     return "Idle";
@@ -351,7 +409,8 @@ namespace ZeroStrap.UI.ViewModels.Shell
         public static string StartResultText(MacroStartResult result) => result switch
         {
             MacroStartResult.Started => "",
-            MacroStartResult.AlreadyRunning => "A macro is already running. Stop it first.",
+            MacroStartResult.AlreadyRunning => "This macro is already running.",
+            MacroStartResult.TooManyRunning => $"{MacroRuntime.MaxConcurrentMacros} macros are already running. Stop one first.",
             MacroStartResult.RecordingInProgress => "Finish the recording before running a macro.",
             MacroStartResult.NotFound => "That macro could not be loaded. Check it for errors.",
             MacroStartResult.ShuttingDown => "ZeroStrap is closing.",
@@ -361,7 +420,7 @@ namespace ZeroStrap.UI.ViewModels.Shell
         public static string RecordResultText(RecordingStartResult result) => result switch
         {
             RecordingStartResult.Started => "",
-            RecordingStartResult.MacroRunning => "Stop the running macro before recording.",
+            RecordingStartResult.MacroRunning => "Stop the running macros before recording.",
             RecordingStartResult.AlreadyRecording => "A recording is already in progress.",
             RecordingStartResult.ShuttingDown => "ZeroStrap is closing.",
             _ => "Recording could not start."

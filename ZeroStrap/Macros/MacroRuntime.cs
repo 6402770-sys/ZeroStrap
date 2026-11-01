@@ -6,8 +6,11 @@ namespace ZeroStrap.Macros
     {
         Started,
 
-        /// <summary>A macro is already playing (only one runs at a time).</summary>
+        /// <summary>This macro is already playing.</summary>
         AlreadyRunning,
+
+        /// <summary><see cref="MacroRuntime.MaxConcurrentMacros"/> macros are already playing; nothing was stopped to make room.</summary>
+        TooManyRunning,
 
         /// <summary>A recording is in progress; playback and recording never overlap.</summary>
         RecordingInProgress,
@@ -52,14 +55,19 @@ namespace ZeroStrap.Macros
     }
 
     /// <summary>
-    /// Owns Macro Studio's moving parts (store, hotkeys, player, recorder) and enforces its rules: one macro at a time,
-    /// recording and playback never overlap, the emergency stop is always registered first and always wins, and nothing is
-    /// left held down when playback ends, the app closes or it crashes. Events are raised on whichever thread caused them, so
-    /// UI code must marshal to its dispatcher. Create the singleton on the UI thread (it owns the hotkey window).
+    /// Owns Macro Studio's moving parts (store, hotkeys, players, recorder) and enforces its rules: up to
+    /// <see cref="MaxConcurrentMacros"/> macros play at once, each on its own thread with its own player, recording and playback
+    /// never overlap, the emergency stop is always registered first and always wins, and nothing is left held down when a
+    /// macro ends, the app closes or it crashes. The players share the real input through a <see cref="SharedInputArbiter"/>,
+    /// so a key is only released once no playing macro still holds it. Macros with the same shortcut are toggled together.
+    /// Events are raised on whichever thread caused them, so UI code must marshal to its dispatcher.
     /// </summary>
     public sealed class MacroRuntime : IDisposable
     {
         public const int StopWaitMs = 500;
+
+        /// <summary>How many macros may play at the same time.</summary>
+        public const int MaxConcurrentMacros = 8;
 
         private const string EmergencyName = "emergency-stop";
         private const string MacroPrefix = "macro:";
@@ -69,23 +77,47 @@ namespace ZeroStrap.Macros
         private static readonly object InstanceLock = new();
         private static MacroRuntime? _instance;
 
+        /// <summary>One playing macro: its own player, delay, input client and thread.</summary>
+        private sealed class PlaybackRun
+        {
+            public PlaybackRun(Macro macro, MacroPlayer player, SharedInputArbiter.Client client, IDelay delay, CancellationTokenSource cts)
+            {
+                Macro = macro;
+                Player = player;
+                Client = client;
+                Delay = delay;
+                Cts = cts;
+            }
+
+            public Macro Macro { get; }
+            public MacroPlayer Player { get; }
+            public SharedInputArbiter.Client Client { get; }
+            public IDelay Delay { get; }
+            public CancellationTokenSource Cts { get; }
+            public Thread? Thread { get; set; }
+
+            /// <summary>Guarded by the runtime's _gate.</summary>
+            public bool Paused { get; set; }
+        }
+
         private readonly object _gate = new();
         private readonly MacroStore _store;
         private readonly MacroStudioSettingsStore _settingsStore;
         private readonly IHotkeyRegistrar _hotkeys;
         private readonly IInputRecorder _recorder;
-        private readonly MacroPlayer _player;
+        private readonly SharedInputArbiter _arbiter;
+        private readonly Func<IDelay> _delayFactory;
+        private readonly IFocusGate? _focusGate;
         private readonly IDisposable[] _owned;
         private readonly Action<string> _log;
 
         // All guarded by _gate.
-        private MacroRuntimeState _state = MacroRuntimeState.Idle;
-        private string? _currentId;
-        private CancellationTokenSource? _cts;
-        private Thread? _playThread;
-        private int _run;
+        private readonly Dictionary<string, PlaybackRun> _runs = new(StringComparer.Ordinal);
+        private int _ownLivePlayers;
+        private bool _recording;
         private bool _finishingRecording;
         private RecorderOptions? _recordOptions;
+        private bool _anyPaused;
 
         private Hotkey[] _macroHotkeys = Array.Empty<Hotkey>();
         private int _shutdown;
@@ -114,13 +146,19 @@ namespace ZeroStrap.Macros
 
         internal static int LivePlayerThreads => Volatile.Read(ref _livePlayers);
 
-        /// <summary>Raised after every state change (outside the internal lock).</summary>
+        /// <summary>The arbiter every player sends through (tests inspect ownership).</summary>
+        internal SharedInputArbiter Arbiter => _arbiter;
+
+        /// <summary>
+        /// Raised after every state change and whenever a macro starts or stops (the state may stay Running), outside the
+        /// internal lock. Read <see cref="RunningMacroIds"/> for the details.
+        /// </summary>
         public event Action<MacroRuntimeState>? StateChanged;
 
-        /// <summary>A user-facing notice: failed shortcut, blocked input, emergency stop, recorder restart, macro failure.</summary>
+        /// <summary>A user-facing notice: failed shortcut, blocked input, emergency stop, recorder restart, macro failure, too many macros.</summary>
         public event Action<string>? Warning;
 
-        /// <summary>True when playback paused because Roblox lost focus (RobloxOnly macros), false when it resumed or ended.</summary>
+        /// <summary>True when any playing macro paused because Roblox lost focus (RobloxOnly macros), false once none is paused.</summary>
         public event Action<bool>? PausedChanged;
 
         /// <summary>A playback ended (any outcome). The id is the macro's id.</summary>
@@ -129,13 +167,19 @@ namespace ZeroStrap.Macros
         /// <summary>A recording ended, via Stop key, StopRecording() or the emergency stop (then <see cref="RecordingResult.Cancelled"/>).</summary>
         public event Action<RecordingResult>? RecordingFinished;
 
-        /// <summary>Test/DI constructor. <paramref name="owned"/> are disposed with <see cref="Dispose"/> (not with <see cref="TryShutdown"/>).</summary>
+        /// <summary>
+        /// Test/DI constructor. Every macro run gets a new player over its own <see cref="SharedInputArbiter"/> client of
+        /// <paramref name="sink"/> and a delay from <paramref name="delayFactory"/> (disposed when the run ends, if disposable),
+        /// because a delay serialises concurrent waits. <paramref name="owned"/> are disposed with <see cref="Dispose"/>.
+        /// </summary>
         internal MacroRuntime(
             MacroStore store,
             MacroStudioSettingsStore settingsStore,
             IHotkeyRegistrar hotkeys,
             IInputRecorder recorder,
-            MacroPlayer player,
+            IInputSink sink,
+            Func<IDelay> delayFactory,
+            IFocusGate? focusGate,
             Action<string>? log = null,
             params IDisposable[] owned)
         {
@@ -143,11 +187,12 @@ namespace ZeroStrap.Macros
             _settingsStore = settingsStore;
             _hotkeys = hotkeys;
             _recorder = recorder;
-            _player = player;
             _log = log ?? (_ => { });
+            _arbiter = new SharedInputArbiter(sink, _log);
+            _delayFactory = delayFactory;
+            _focusGate = focusGate;
             _owned = owned;
 
-            _player.PausedChanged += OnPlayerPausedChanged;
             _recorder.StopRequested += OnRecorderStopRequested;
             _recorder.Warning += RaiseWarning;
 
@@ -178,7 +223,7 @@ namespace ZeroStrap.Macros
         }
 
         /// <summary>
-        /// Stops playback and releases every held key and button right now, without shutting the runtime down (so a cancelled
+        /// Stops every macro and releases every held key and button right now, without shutting the runtime down (so a cancelled
         /// Windows SessionEnding leaves it usable). Static, never throws, does nothing if the runtime was never created.
         /// </summary>
         public static void TryStopAll()
@@ -232,15 +277,13 @@ namespace ZeroStrap.Macros
 
             var store = new MacroStore(Paths.Macros, Log);
             var settings = new MacroStudioSettingsStore(Path.Combine(Paths.Macros, MacroStudioSettingsStore.FileName), Log);
-            var delay = new PrecisionDelay();
             var sink = new SendInputSink(Log);
-
-            // The Roblox gate is always passed: the player only consults it for macros whose focus rule is RobloxOnly.
-            var player = new MacroPlayer(sink, delay, new RobloxFocusGate(), Log);
+            var robloxGate = new RobloxFocusGate();
             var recorder = new InputRecorder(Log);
-            var hotkeys = new HotkeyService(Log);
+            var hotkeys = new HotkeyService(Log, robloxGate);
 
-            return new MacroRuntime(store, settings, hotkeys, recorder, player, Log, delay);
+            // The Roblox gate is always passed: a player only consults it for macros whose focus rule is RobloxOnly.
+            return new MacroRuntime(store, settings, hotkeys, recorder, sink, () => new PrecisionDelay(), robloxGate, Log);
         }
 
         // ---- state ----
@@ -254,17 +297,35 @@ namespace ZeroStrap.Macros
             get
             {
                 lock (_gate)
-                    return _state;
+                    return StateLocked();
             }
         }
 
-        /// <summary>The id of the macro that is playing, or null.</summary>
-        public string? CurrentMacroId
+        private MacroRuntimeState StateLocked() =>
+            _recording ? MacroRuntimeState.Recording : _runs.Count > 0 ? MacroRuntimeState.Running : MacroRuntimeState.Idle;
+
+        /// <summary>Ids of the macros that are playing, oldest first.</summary>
+        public IReadOnlyList<string> RunningMacroIds
         {
             get
             {
                 lock (_gate)
-                    return _state == MacroRuntimeState.Running ? _currentId : null;
+                    return _runs.Keys.ToList();
+            }
+        }
+
+        public bool IsRunning(string macroId)
+        {
+            lock (_gate)
+                return _runs.ContainsKey(macroId);
+        }
+
+        public int RunningCount
+        {
+            get
+            {
+                lock (_gate)
+                    return _runs.Count;
             }
         }
 
@@ -290,7 +351,10 @@ namespace ZeroStrap.Macros
             return macro is null ? MacroStartResult.NotFound : Start(macro);
         }
 
-        /// <summary>Plays <paramref name="macro"/> (e.g. an unsaved editor draft) on a background thread. Refused while a macro plays or a recording runs.</summary>
+        /// <summary>
+        /// Plays <paramref name="macro"/> (e.g. an unsaved editor draft) on its own background thread, next to any other playing
+        /// macro. Refused while the same macro plays, when <see cref="MaxConcurrentMacros"/> already play, or while recording.
+        /// </summary>
         public MacroStartResult Start(Macro macro)
         {
             if (Volatile.Read(ref _shutdown) != 0)
@@ -311,35 +375,54 @@ namespace ZeroStrap.Macros
                 if (Volatile.Read(ref _shutdown) != 0)
                     return MacroStartResult.ShuttingDown;
 
-                if (_state == MacroRuntimeState.Recording)
+                if (_recording)
                     return MacroStartResult.RecordingInProgress;
 
-                if (_state == MacroRuntimeState.Running || Volatile.Read(ref _livePlayers) > 0)
+                if (_runs.ContainsKey(macro.Id))
                     return MacroStartResult.AlreadyRunning;
 
-                var cts = new CancellationTokenSource();
-                int run = ++_run;
-                var thread = new Thread(() => RunPlayback(macro, cts, run, go)) { IsBackground = true, Name = "ZeroStrap macro player" };
+                // A player thread of an earlier runtime that never stopped could still be sending input.
+                if (Volatile.Read(ref _livePlayers) > _ownLivePlayers)
+                    return MacroStartResult.AlreadyRunning;
 
-                Interlocked.Increment(ref _livePlayers);
+                if (_runs.Count >= MaxConcurrentMacros)
+                    return MacroStartResult.TooManyRunning;
 
-                _state = MacroRuntimeState.Running;
-                _currentId = macro.Id;
-                _cts = cts;
-                _playThread = thread;
+                IDelay delay;
 
                 try
                 {
-                    thread.Start();
+                    delay = _delayFactory();
+                }
+                catch (Exception ex)
+                {
+                    _log("Could not create the playback timer: " + ex.Message);
+                    return MacroStartResult.Failed;
+                }
+
+                var client = _arbiter.CreateClient();
+                var player = new MacroPlayer(client, delay, _focusGate, _log);
+                var cts = new CancellationTokenSource();
+                var run = new PlaybackRun(macro, player, client, delay, cts);
+
+                player.PausedChanged += paused => OnRunPausedChanged(run, paused);
+                run.Thread = new Thread(() => RunPlayback(run, go)) { IsBackground = true, Name = "ZeroStrap macro player" };
+
+                Interlocked.Increment(ref _livePlayers);
+                _ownLivePlayers++;
+                _runs[macro.Id] = run;
+
+                try
+                {
+                    run.Thread.Start();
                 }
                 catch (Exception ex)
                 {
                     Interlocked.Decrement(ref _livePlayers);
-                    _state = MacroRuntimeState.Idle;
-                    _currentId = null;
-                    _cts = null;
-                    _playThread = null;
+                    _ownLivePlayers--;
+                    _runs.Remove(macro.Id);
                     cts.Dispose();
+                    DisposeDelay(delay);
                     _log("Could not start the player thread: " + ex.Message);
                     return MacroStartResult.Failed;
                 }
@@ -350,52 +433,70 @@ namespace ZeroStrap.Macros
             return MacroStartResult.Started;
         }
 
-        private void RunPlayback(Macro macro, CancellationTokenSource cts, int run, ManualResetEventSlim go)
+        private void RunPlayback(PlaybackRun run, ManualResetEventSlim go)
         {
             PlayResult result;
 
             try
             {
                 go.Wait();
-                result = _player.Play(macro, cts.Token);
+                result = run.Player.Play(run.Macro, run.Cts.Token);
             }
             catch (Exception ex)
             {
                 result = PlayResult.Faulted(ex.Message);
             }
 
-            // Belt and braces: the player releases its own held input, this covers anything it could not.
-            try { _player.ReleaseHeld(); } catch { }
+            // Belt and braces: the player releases its own held input, and the client then gives up anything it still owns
+            // (a release that failed inside the player), so this macro can never keep a key down once it has ended.
+            try { run.Player.ReleaseHeld(); } catch { }
+            try { run.Client.ReleaseAllOwned(); } catch { }
+
+            MacroRuntimeState state;
+            bool pausedChanged;
 
             lock (_gate)
             {
-                if (run == _run)
-                {
-                    _state = MacroRuntimeState.Idle;
-                    _currentId = null;
-                    _cts = null;
-                    _playThread = null;
-                }
+                if (_runs.TryGetValue(run.Macro.Id, out var current) && ReferenceEquals(current, run))
+                    _runs.Remove(run.Macro.Id);
+
+                _ownLivePlayers--;
+                Interlocked.Decrement(ref _livePlayers);
+                run.Paused = false;
+                pausedChanged = UpdatePausedLocked();
+                state = StateLocked();
             }
 
-            // Disposed outside the lock; a Cancel on it happens under the lock before the state flips, so it is never used after this.
-            try { cts.Dispose(); } catch { }
+            // Disposed outside the lock; a Cancel on it happens under the lock while the run is listed, so it is never used after this.
+            try { run.Cts.Dispose(); } catch { }
+            DisposeDelay(run.Delay);
 
-            Interlocked.Exchange(ref _paused, 0);
-            Interlocked.Decrement(ref _livePlayers);
-            RaiseStateChanged(MacroRuntimeState.Idle);
-            RaisePlaybackFinished(macro.Id, result);
+            if (pausedChanged)
+                RaisePausedChanged(false);
+
+            RaiseStateChanged(state);
+            RaisePlaybackFinished(run.Macro.Id, result);
 
             if (result.Outcome == PlayOutcome.Faulted)
-                RaiseWarning($"\"{macro.Name}\" stopped because of an error: {result.Error}");
+                RaiseWarning($"\"{run.Macro.Name}\" stopped because of an error: {result.Error}");
 
             ScheduleReleaseRetry();
         }
 
-        /// <summary>Cancels the running macro without waiting. Returns false if nothing was running.</summary>
+        /// <summary>Cancels every playing macro without waiting. Returns false if nothing was playing.</summary>
         public bool RequestStop()
         {
-            if (!CancelAndRelease())
+            if (!CancelAndRelease(null))
+                return false;
+
+            ScheduleReleaseRetry();
+            return true;
+        }
+
+        /// <summary>Cancels one playing macro without waiting; the others keep playing. Returns false if it was not playing.</summary>
+        public bool RequestStop(string macroId)
+        {
+            if (!CancelAndRelease(macroId))
                 return false;
 
             ScheduleReleaseRetry();
@@ -403,71 +504,132 @@ namespace ZeroStrap.Macros
         }
 
         /// <summary>
-        /// Cancels the running macro and waits up to <see cref="StopWaitMs"/> ms for it to unwind. Returns true when no macro is
-        /// running afterwards. State only becomes Idle once the player thread has really ended, so a stuck thread can never
-        /// overlap with a new macro.
+        /// Stop all: cancels every playing macro and waits up to <see cref="StopWaitMs"/> ms for them to unwind. Returns true
+        /// when no macro is playing afterwards. A run only ends once its player thread has really ended, so a stuck thread
+        /// can never overlap with the same macro started again.
         /// </summary>
-        public bool Stop()
+        public bool Stop() => StopAndWait(null);
+
+        /// <summary>Like <see cref="Stop()"/> for one macro; the others keep playing. True when that macro is not playing afterwards.</summary>
+        public bool Stop(string macroId) => StopAndWait(macroId);
+
+        private bool StopAndWait(string? macroId)
         {
-            Thread? thread;
+            Thread?[] threads;
 
             lock (_gate)
             {
-                if (_state != MacroRuntimeState.Running)
-                    return true;
+                threads = Select(macroId).Select(r => r.Thread).ToArray();
 
-                thread = _playThread;
+                if (threads.Length == 0)
+                    return true;
             }
 
-            CancelAndRelease();
+            CancelAndRelease(macroId);
 
-            if (thread is not null && thread != Thread.CurrentThread)
-                thread.Join(StopWaitMs);
+            var deadline = Stopwatch.StartNew();
+
+            foreach (var thread in threads)
+            {
+                if (thread is null || thread == Thread.CurrentThread)
+                    continue;
+
+                int left = StopWaitMs - (int)deadline.ElapsedMilliseconds;
+                thread.Join(Math.Max(0, left));
+            }
+
+            bool done;
+
+            lock (_gate)
+            {
+                done = !Select(macroId).Any();
+
+                // With nothing playing any more, nobody may own input: whatever is left is released now. Under the lock, so a
+                // macro started meanwhile cannot have its fresh presses swept away.
+                if (_runs.Count == 0)
+                    ReleaseArbiter();
+            }
 
             ScheduleReleaseRetry();
-
-            lock (_gate)
-                return _state != MacroRuntimeState.Running;
+            return done;
         }
 
-        // Cancels and releases while holding the lock: the state cannot change to a *new* run in between, so this can never
-        // release (and thereby cancel) a macro that started after the one the caller meant.
-        private bool CancelAndRelease()
+        // Caller holds _gate.
+        private IEnumerable<PlaybackRun> Select(string? macroId)
+        {
+            if (macroId is null)
+                return _runs.Values.ToList();
+
+            return _runs.TryGetValue(macroId, out var run) ? new[] { run } : Array.Empty<PlaybackRun>();
+        }
+
+        // Cancels and releases while holding the lock: the run list cannot change in between, so this can never cancel (or
+        // release the input of) a run that started after the caller decided. Null means every run.
+        private bool CancelAndRelease(string? macroId)
         {
             lock (_gate)
             {
-                if (_state != MacroRuntimeState.Running || _cts is null)
-                    return false;
+                var runs = Select(macroId).ToList();
 
-                try { _cts.Cancel(); } catch { }
-                try { _player.ReleaseHeld(); } catch { }
-                return true;
+                foreach (var run in runs)
+                {
+                    try { run.Cts.Cancel(); } catch { }
+                    try { run.Player.ReleaseHeld(); } catch { }
+                }
+
+                return runs.Count > 0;
             }
         }
 
-        /// <summary>Releases every key and button the player is holding. Thread-safe and idempotent. Returns how many releases failed.</summary>
+        /// <summary>
+        /// Releases every key and button any macro holds (which also stops every playing macro: a player never presses again
+        /// after its input was released). Thread-safe and idempotent. Returns how many releases failed.
+        /// </summary>
         public int ReleaseAll()
         {
-            int failures;
+            int failures = 0;
 
-            try
+            // Under the lock (the send locks inside are bounded), so the sweep cannot hit a macro that starts in between.
+            lock (_gate)
             {
-                failures = _player.ReleaseHeld();
-            }
-            catch
-            {
-                failures = 1;
+                foreach (var run in _runs.Values)
+                {
+                    try { failures += run.Player.ReleaseHeld(); } catch { failures++; }
+                }
+
+                failures = Math.Max(failures, ReleaseArbiter());
             }
 
             ScheduleReleaseRetry();
             return failures;
         }
 
+        private int ReleaseArbiter()
+        {
+            try
+            {
+                return _arbiter.ReleaseAll();
+            }
+            catch
+            {
+                return 1;
+            }
+        }
+
+        private static void DisposeDelay(IDelay delay)
+        {
+            if (delay is IDisposable disposable)
+            {
+                try { disposable.Dispose(); } catch { }
+            }
+        }
+
         // ---- recording ----
 
         /// <summary>
         /// Starts capturing input. Refused while a macro plays. The stop key and emergency stop (from the Macro Studio settings)
-        /// end it and are not recorded, nor are the activation shortcuts of enabled macros.
+        /// end it and are not recorded, nor are the global activation shortcuts of enabled macros (game shortcuts are ordinary
+        /// keys while recording, so they are recorded).
         /// </summary>
         public RecordingStartResult StartRecording(bool recordAbsoluteMoves = false)
         {
@@ -476,13 +638,13 @@ namespace ZeroStrap.Macros
                 if (Volatile.Read(ref _shutdown) != 0)
                     return RecordingStartResult.ShuttingDown;
 
-                if (_state == MacroRuntimeState.Running)
+                if (_runs.Count > 0)
                     return RecordingStartResult.MacroRunning;
 
-                if (_state == MacroRuntimeState.Recording)
+                if (_recording)
                     return RecordingStartResult.AlreadyRecording;
 
-                _state = MacroRuntimeState.Recording;
+                _recording = true;
                 _finishingRecording = false;
             }
 
@@ -518,7 +680,7 @@ namespace ZeroStrap.Macros
             {
                 lock (_gate)
                 {
-                    _state = MacroRuntimeState.Idle;
+                    _recording = false;
                     _recordOptions = null;
                 }
 
@@ -542,7 +704,7 @@ namespace ZeroStrap.Macros
 
             lock (_gate)
             {
-                if (_state != MacroRuntimeState.Recording || _finishingRecording)
+                if (!_recording || _finishingRecording)
                     return null;
 
                 _finishingRecording = true;
@@ -573,7 +735,7 @@ namespace ZeroStrap.Macros
 
             lock (_gate)
             {
-                _state = MacroRuntimeState.Idle;
+                _recording = false;
                 _finishingRecording = false;
                 _recordOptions = null;
             }
@@ -605,8 +767,9 @@ namespace ZeroStrap.Macros
         // ---- hotkeys ----
 
         /// <summary>
-        /// Unregisters everything, registers the emergency stop first (always), then each enabled macro's shortcut. Call after
-        /// macros or settings change. A failed emergency-stop registration also raises <see cref="Warning"/>.
+        /// Unregisters everything, registers the emergency stop first (always), then one registration per distinct shortcut of
+        /// the enabled macros: macros sharing a shortcut are toggled together. Call after macros or settings change. A failed
+        /// emergency-stop registration also raises <see cref="Warning"/>.
         /// </summary>
         public HotkeyReloadResult ReloadHotkeys()
         {
@@ -628,33 +791,55 @@ namespace ZeroStrap.Macros
                 RaiseWarning($"The emergency stop shortcut ({emergency}) is unavailable: {emergencyRegistration.Message}. Use the Stop button instead.");
 
             var statuses = new List<MacroHotkeyStatus>();
-            var registered = new List<Hotkey>();
+            var groups = new Dictionary<Hotkey, List<Macro>>();
+            var order = new List<Hotkey>();
 
             foreach (var macro in _store.LoadAll())
             {
                 if (!macro.Enabled || string.IsNullOrWhiteSpace(macro.Hotkey))
                     continue;
 
-                HotkeyRegistration registration;
+                HotkeyRegistration? refused = null;
 
                 if (!Hotkey.TryParse(macro.Hotkey, out var hotkey))
-                {
-                    registration = new HotkeyRegistration(HotkeyStatus.Invalid, "This isn't a valid shortcut");
-                }
-                else if (!hotkey.IsAllowedShortcut)
-                {
-                    registration = new HotkeyRegistration(HotkeyStatus.Invalid, "This is a typing key; add Ctrl, Alt or Win");
-                }
-                else
-                {
-                    string id = macro.Id;
-                    registration = _hotkeys.Register(MacroPrefix + id, hotkey, () => OnMacroHotkey(id));
+                    refused = new HotkeyRegistration(HotkeyStatus.Invalid, "This isn't a valid shortcut");
+                else if (!hotkey.IsMacroShortcut)
+                    refused = new HotkeyRegistration(HotkeyStatus.Invalid, "Escape, Enter and / are reserved for the Roblox chat");
+                else if (CollidesWithEmergencyStop(hotkey, emergency))
+                    refused = new HotkeyRegistration(HotkeyStatus.Invalid, "This is the emergency stop shortcut");
 
-                    if (registration.IsOk)
-                        registered.Add(hotkey);
+                if (refused is not null)
+                {
+                    statuses.Add(new MacroHotkeyStatus(macro.Id, macro.Hotkey!, refused.Value));
+                    continue;
                 }
 
-                statuses.Add(new MacroHotkeyStatus(macro.Id, macro.Hotkey!, registration));
+                if (!groups.TryGetValue(hotkey, out var members))
+                {
+                    members = new List<Macro>();
+                    groups[hotkey] = members;
+                    order.Add(hotkey);
+                }
+
+                members.Add(macro);
+            }
+
+            var registered = new List<Hotkey>();
+
+            foreach (var hotkey in order)
+            {
+                var members = groups[hotkey];
+                string[] ids = members.Select(m => m.Id).ToArray();
+
+                // A lone macro keeps the name it always had; a shared shortcut is named after all of its macros.
+                var registration = _hotkeys.Register(MacroPrefix + string.Join(",", ids), hotkey, () => OnMacroHotkey(ids));
+
+                // Only global shortcuts are captured by Windows; game shortcuts reach the recorder like any other key.
+                if (registration.IsOk && hotkey.IsAllowedShortcut)
+                    registered.Add(hotkey);
+
+                foreach (var macro in members)
+                    statuses.Add(new MacroHotkeyStatus(macro.Id, macro.Hotkey!, registration));
             }
 
             Volatile.Write(ref _macroHotkeys, registered.ToArray());
@@ -666,6 +851,13 @@ namespace ZeroStrap.Macros
                 Macros = statuses
             };
         }
+
+        /// <summary>
+        /// True when <paramref name="hotkey"/> would be taken by the emergency stop: the same key with at least its modifiers
+        /// (the emergency stop is also registered with every extra modifier added, see <see cref="RegisterEmergencyStop"/>).
+        /// </summary>
+        public static bool CollidesWithEmergencyStop(Hotkey hotkey, Hotkey emergency) =>
+            hotkey.VirtualKey == emergency.VirtualKey && (hotkey.Modifiers & emergency.Modifiers) == emergency.Modifiers;
 
         /// <summary>
         /// Registers the emergency stop if it is not registered. Returns false if it still cannot be (another app owns the
@@ -728,14 +920,14 @@ namespace ZeroStrap.Macros
             BackgroundDispatch(() => FinishEmergencyStop(wasRunning, wasRecording));
         }
 
-        private void OnMacroHotkey(string macroId)
+        private void OnMacroHotkey(string[] macroIds)
         {
-            // Loading and starting a macro is slow compared to what the registrar's thread may spend (it also serves the emergency stop).
+            // Loading and starting macros is slow compared to what the registrar's thread may spend (it also serves the emergency stop).
             BackgroundDispatch(() =>
             {
                 try
                 {
-                    HandleMacroHotkey(macroId);
+                    HandleMacroHotkey(macroIds);
                 }
                 catch (Exception ex)
                 {
@@ -744,51 +936,74 @@ namespace ZeroStrap.Macros
             });
         }
 
-        private void HandleMacroHotkey(string macroId)
+        /// <summary>
+        /// A shortcut toggles its macros as a group: if any of them is playing, the playing ones stop; otherwise every enabled
+        /// one starts. Other macros are never touched. When the concurrency limit is reached, the macros that fit start and
+        /// the user is told about the rest (nothing already playing is stopped to make room).
+        /// </summary>
+        private void HandleMacroHotkey(string[] macroIds)
         {
             if (Volatile.Read(ref _shutdown) != 0)
                 return;
 
-            bool toggleOff;
-            bool idle;
+            List<string> playing;
+            bool recording;
 
             lock (_gate)
             {
-                toggleOff = _state == MacroRuntimeState.Running && _currentId == macroId;
-                idle = _state == MacroRuntimeState.Idle;
+                recording = _recording;
+                playing = macroIds.Where(_runs.ContainsKey).ToList();
             }
 
-            if (toggleOff)
+            if (playing.Count > 0)
             {
-                RequestStop();
+                foreach (string id in playing)
+                    RequestStop(id);
+
                 return;
             }
 
-            if (!idle)
+            if (recording)
             {
-                _log("Ignored a macro shortcut because a macro is playing or a recording is running");
+                _log("Ignored a macro shortcut because a recording is running");
                 return;
             }
 
-            Macro? macro = null;
+            var skipped = new List<string>();
 
-            try { macro = _store.Load(macroId); } catch (Exception ex) { _log("Could not load macro: " + ex.Message); }
-
-            if (macro is null)
+            foreach (string id in macroIds)
             {
-                RaiseWarning("That macro could not be loaded. It may have been deleted or damaged.");
-                return;
+                Macro? macro = null;
+
+                try { macro = _store.Load(id); } catch (Exception ex) { _log("Could not load macro: " + ex.Message); }
+
+                if (macro is null)
+                {
+                    RaiseWarning("That macro could not be loaded. It may have been deleted or damaged.");
+                    continue;
+                }
+
+                if (!macro.Enabled)
+                    continue;
+
+                if (Start(macro) == MacroStartResult.TooManyRunning)
+                    skipped.Add(macro.Name);
             }
 
-            if (!macro.Enabled)
-                return;
+            if (skipped.Count > 0)
+                RaiseWarning(TooManyText(skipped));
+        }
 
-            Start(macro);
+        /// <summary>The notice for macros that could not start because <see cref="MaxConcurrentMacros"/> already play.</summary>
+        public static string TooManyText(IReadOnlyList<string> names)
+        {
+            string list = string.Join(", ", names.Select(n => "\"" + n + "\""));
+            return $"{MaxConcurrentMacros} macros are already running, so {list} didn't start. Stop one first.";
         }
 
         /// <summary>
-        /// Stops everything now: cancels playback, releases all held input, and discards any recording in progress. Runs from the
-        /// emergency shortcut and may also be wired to a Stop-all button.
+        /// Stops everything now: cancels every playing macro, releases all held input, and discards any recording in progress.
+        /// Runs from the emergency shortcut and may also be wired to a Stop-all button.
         /// </summary>
         public void EmergencyStop()
         {
@@ -796,21 +1011,24 @@ namespace ZeroStrap.Macros
             FinishEmergencyStop(wasRunning, wasRecording);
         }
 
-        // The instant part: nothing here waits for anything but the short send lock.
+        // The instant part: nothing here waits for anything but the short, bounded send locks.
         private void StopNow(out bool wasRunning, out bool wasRecording)
         {
             lock (_gate)
             {
-                wasRunning = _state == MacroRuntimeState.Running;
-                wasRecording = _state == MacroRuntimeState.Recording;
+                wasRunning = _runs.Count > 0;
+                wasRecording = _recording;
 
-                try { _cts?.Cancel(); } catch { }
-
-                if (wasRunning)
+                // Under the lock, so it is certain to hit the runs that were cancelled and not one that starts afterwards.
+                foreach (var run in _runs.Values)
                 {
-                    // Under the lock, so it is certain to hit the run that was cancelled and not one that starts afterwards.
-                    try { _player.ReleaseHeld(); } catch { }
+                    try { run.Cts.Cancel(); } catch { }
+                    try { run.Player.ReleaseHeld(); } catch { }
                 }
+
+                // Every player has been told to stop, so nothing may stay held: anything they could not release goes now.
+                if (wasRunning)
+                    ReleaseArbiter();
             }
         }
 
@@ -822,41 +1040,53 @@ namespace ZeroStrap.Macros
             ScheduleReleaseRetry();
 
             if (wasRunning || wasRecording)
-                RaiseWarning(wasRecording ? "Emergency stop: recording discarded." : "Emergency stop: macro stopped and all keys released.");
+                RaiseWarning(wasRecording ? "Emergency stop: recording discarded." : "Emergency stop: every macro stopped and all keys released.");
         }
 
         // Stops playback and releases input without shutting anything down (used for a SessionEnding that may be cancelled).
         private void StopPlaybackNow()
         {
-            Thread? thread;
+            Thread?[] threads;
 
             lock (_gate)
             {
-                thread = _playThread;
-                try { _cts?.Cancel(); } catch { }
+                threads = _runs.Values.Select(r => r.Thread).ToArray();
+
+                foreach (var run in _runs.Values)
+                {
+                    try { run.Cts.Cancel(); } catch { }
+                }
             }
 
             ReleaseAll();
+            JoinAll(threads, ShutdownPlaybackWaitMs);
+            ReleaseAll();
+        }
 
-            try
+        private static void JoinAll(Thread?[] threads, int budgetMs)
+        {
+            var clock = Stopwatch.StartNew();
+
+            foreach (var thread in threads)
             {
-                if (thread is not null && thread != Thread.CurrentThread)
-                    thread.Join(ShutdownPlaybackWaitMs);
+                try
+                {
+                    if (thread is not null && thread != Thread.CurrentThread)
+                        thread.Join(Math.Max(0, budgetMs - (int)clock.ElapsedMilliseconds));
+                }
+                catch { }
             }
-            catch { }
-
-            ReleaseAll();
         }
 
         // ---- blocked releases ----
 
-        // When Windows refuses a key-up (the foreground window runs elevated) the key would otherwise stay down. The player keeps
+        // When Windows refuses a key-up (the foreground window runs elevated) the key would otherwise stay down. The arbiter keeps
         // such releases pending; this retries them in the background for a while and tells the user once.
         private void ScheduleReleaseRetry()
         {
             try
             {
-                if (_player.PendingReleaseCount == 0)
+                if (_arbiter.PendingCount == 0)
                     return;
 
                 lock (_retryLock)
@@ -886,7 +1116,7 @@ namespace ZeroStrap.Macros
 
             try
             {
-                remaining = _player.RetryPendingReleases();
+                remaining = _arbiter.RetryPending();
             }
             catch
             {
@@ -914,7 +1144,7 @@ namespace ZeroStrap.Macros
             if (Interlocked.Exchange(ref _shutdown, 1) != 0)
                 return;
 
-            Thread? thread = null;
+            Thread?[] threads = Array.Empty<Thread?>();
             bool locked = false;
 
             try
@@ -922,8 +1152,15 @@ namespace ZeroStrap.Macros
                 // A bounded wait: this can run from a crash handler, and a stuck lock must not stop us releasing input.
                 locked = Monitor.TryEnter(_gate, ShutdownLockWaitMs);
 
-                try { _cts?.Cancel(); } catch { }
-                thread = _playThread;
+                if (locked)
+                {
+                    threads = _runs.Values.Select(r => r.Thread).ToArray();
+
+                    foreach (var run in _runs.Values)
+                    {
+                        try { run.Cts.Cancel(); } catch { }
+                    }
+                }
             }
             finally
             {
@@ -931,22 +1168,25 @@ namespace ZeroStrap.Macros
                     Monitor.Exit(_gate);
             }
 
-            // Release synchronously, give the player thread a moment to unwind, then release again for anything it pressed meanwhile.
-            ReleaseAll();
+            // Release synchronously, give the player threads a moment to unwind, then release again for anything pressed meanwhile.
+            ReleaseAllForShutdown(locked);
+            JoinAll(threads, ShutdownPlaybackWaitMs);
+            ReleaseAllForShutdown(locked);
 
-            try
-            {
-                if (thread is not null && thread != Thread.CurrentThread)
-                    thread.Join(ShutdownPlaybackWaitMs);
-            }
-            catch { }
-
-            ReleaseAll();
-
-            try { _player.RetryPendingReleases(); } catch { }
+            try { _arbiter.RetryPending(); } catch { }
             try { lock (_retryLock) { _retryTimer?.Dispose(); _retryTimer = null; } } catch { }
             try { _recorder.Dispose(); } catch { }
             try { _hotkeys.Dispose(); } catch { }
+        }
+
+        // When the gate could not be had (a crash mid-update) the run list is not safe to read, but the arbiter still knows
+        // everything that is held, so it is released directly.
+        private void ReleaseAllForShutdown(bool gateUsable)
+        {
+            if (gateUsable)
+                ReleaseAll();
+            else
+                ReleaseArbiter();
         }
 
         /// <summary>Full teardown: <see cref="TryShutdown"/>'s work plus disposing the owned resources. The next <see cref="Instance"/> access creates a fresh runtime.</summary>
@@ -954,7 +1194,7 @@ namespace ZeroStrap.Macros
         {
             Shutdown();
 
-            // The owned delay is only disposed once the player thread is really gone.
+            // Owned resources are only disposed once every player thread is really gone.
             if (Stop())
             {
                 foreach (var resource in _owned)
@@ -994,10 +1234,41 @@ namespace ZeroStrap.Macros
             return hotkey;
         }
 
-        private void OnPlayerPausedChanged(bool paused)
+        private void OnRunPausedChanged(PlaybackRun run, bool paused)
         {
-            Volatile.Write(ref _paused, paused ? 1 : 0);
+            bool changed;
+            bool now;
 
+            lock (_gate)
+            {
+                // A run that already ended was taken off the list; its late "resumed" must not count.
+                if (!_runs.TryGetValue(run.Macro.Id, out var current) || !ReferenceEquals(current, run))
+                    return;
+
+                run.Paused = paused;
+                changed = UpdatePausedLocked();
+                now = _anyPaused;
+            }
+
+            if (changed)
+                RaisePausedChanged(now);
+        }
+
+        // Caller holds _gate. Returns true when the "any run paused" answer changed.
+        private bool UpdatePausedLocked()
+        {
+            bool any = _runs.Values.Any(r => r.Paused);
+
+            if (any == _anyPaused)
+                return false;
+
+            _anyPaused = any;
+            Volatile.Write(ref _paused, any ? 1 : 0);
+            return true;
+        }
+
+        private void RaisePausedChanged(bool paused)
+        {
             try { PausedChanged?.Invoke(paused); } catch (Exception ex) { _log("PausedChanged handler failed: " + ex.Message); }
         }
 

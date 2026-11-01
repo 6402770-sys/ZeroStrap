@@ -234,7 +234,7 @@ namespace ZeroStrap.Tests
         }
 
         [Fact]
-        public void ATypingKeyHotkeyIsDroppedOnNormalizeAndRejectedByValidate()
+        public void TypingKeysAreKeptAndReservedChatKeysAreDroppedOrRejected()
         {
             var macro = Of(TapKey(0x1E));
             macro.Hotkey = "w";
@@ -242,10 +242,15 @@ namespace ZeroStrap.Tests
             var result = MacroValidator.Process(macro);
 
             Assert.True(result.IsValid);
-            Assert.Null(result.Macro.Hotkey);
-            Assert.Contains(result.Warnings, w => w.Contains("typing keys"));
+            Assert.Equal("W", result.Macro.Hotkey);
 
-            Assert.Contains(MacroValidator.Validate(macro), e => e.Contains("typing key"));
+            macro.Hotkey = "Enter";
+            result = MacroValidator.Process(macro);
+
+            Assert.True(result.IsValid);
+            Assert.Null(result.Macro.Hotkey);
+            Assert.Contains(result.Warnings, w => w.Contains("reserved"));
+            Assert.Contains(MacroValidator.Validate(macro), e => e.Contains("reserved"));
         }
 
         [Fact]
