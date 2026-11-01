@@ -146,7 +146,9 @@ namespace ZeroStrap.Tests
             Assert.Equal("", MacroStudioLogic.HotkeyStatusText(new Macro { Enabled = true, Hotkey = "W" }, null));
             Assert.Equal(MacroStudioLogic.ReservedShortcutText, MacroStudioLogic.HotkeyStatusText(new Macro { Enabled = true, Hotkey = "Escape" }, null));
             Assert.Equal("", MacroStudioLogic.HotkeyStatusText(new Macro { Enabled = true }, null));
-            Assert.Contains("Turn this macro on", MacroStudioLogic.HotkeyStatusText(new Macro { Hotkey = "F6" }, null));
+            Assert.StartsWith("Off: pressing F6 does nothing", MacroStudioLogic.HotkeyStatusText(new Macro { Hotkey = "F6" }, null));
+            Assert.StartsWith("Active: press F6", MacroStudioLogic.ActivationText(new Macro { Hotkey = "F6", Enabled = true }));
+            Assert.StartsWith("Add a shortcut", MacroStudioLogic.ActivationText(new Macro { Enabled = true }));
         }
 
         [Fact]
@@ -154,7 +156,7 @@ namespace ZeroStrap.Tests
         {
             Assert.Equal("Idle", MacroStudioLogic.StateLine(MacroRuntimeState.Idle, null, false, "F9"));
             Assert.Equal("Running Farm", MacroStudioLogic.StateLine(MacroRuntimeState.Running, new[] { "Farm" }, false, "F9"));
-            Assert.Equal("Paused — Roblox isn't focused", MacroStudioLogic.StateLine(MacroRuntimeState.Running, new[] { "Farm" }, true, "F9"));
+            Assert.StartsWith("Waiting for Roblox", MacroStudioLogic.StateLine(MacroRuntimeState.Running, new[] { "Farm" }, true, "F9"));
             Assert.Equal("Recording — press F10 to stop", MacroStudioLogic.StateLine(MacroRuntimeState.Recording, null, false, "F10"));
         }
 

@@ -155,15 +155,21 @@ namespace ZeroStrap.UI.Utility
 
         private static void ShowTrayIcon(MacroRuntime runtime)
         {
-            var menu = new System.Windows.Forms.ContextMenuStrip();
-            menu.Items.Add("Stop all macros", null, (_, _) => Task.Run(() => runtime.Stop()));
-            menu.Items.Add("Open ZeroStrap", null, (_, _) => OpenSettings());
-            menu.Items.Add("Turn off macros", null, (_, _) => Exit("turned off from the notification area"));
+            var menu = new System.Windows.Forms.ContextMenuStrip { ShowItemToolTips = true };
+
+            var stop = menu.Items.Add("Stop playing macros", null, (_, _) => Task.Run(() => runtime.Stop()));
+            stop.ToolTipText = "Stops the macros that are playing right now and releases their keys. Their shortcuts keep working.";
+
+            var open = menu.Items.Add("Open ZeroStrap", null, (_, _) => OpenSettings());
+            open.ToolTipText = "Opening Macro Studio moves the macros back into the ZeroStrap window.";
+
+            var off = menu.Items.Add("Turn off macros until next launch", null, (_, _) => Exit("turned off from the notification area"));
+            off.ToolTipText = "Stops everything and closes the background macros: no shortcut works until you open ZeroStrap or launch Roblox again.";
 
             _tray = new System.Windows.Forms.NotifyIcon
             {
                 Icon = Properties.Resources.IconZeroStrap,
-                Text = "ZeroStrap macros",
+                Text = "ZeroStrap macros: shortcuts active",
                 ContextMenuStrip = menu,
                 Visible = true
             };

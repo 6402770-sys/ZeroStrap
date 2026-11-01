@@ -82,6 +82,7 @@
                                     Visibility="{Binding StatusVisibility}" />
                 </StackPanel>
                 <ui:ToggleSwitch Grid.Column="1" Style="{StaticResource ZeroToggle}" IsChecked="{Binding Enabled, Mode=OneWay}" Margin="8,0,0,0"
+                                 ToolTip="Shortcut active: its key starts and stops it in the game, also while ZeroStrap is closed"
                                  VerticalAlignment="Center" Click="RowToggle_Click" AutomationProperties.Name="{Binding Name, StringFormat='Enable {0}'}" />
             </Grid>
         </DataTemplate>
@@ -139,8 +140,9 @@
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="16,2,0,0">
                 <ui:Button x:Name="RecordButton" Content="Record" Icon="Record24" Style="{StaticResource ZeroButtonPrimary}" Click="Record_Click"
                            AutomationProperties.Name="Record macro" />
-                <ui:Button x:Name="RunButton" Content="Run" Icon="Play24" Style="{StaticResource ZeroButtonSecondary}" Margin="8,0,0,0" Click="Run_Click"
-                           AutomationProperties.Name="Run macro" />
+                <ui:Button x:Name="RunButton" Content="Test" Icon="Play24" Style="{StaticResource ZeroButtonSecondary}" Margin="8,0,0,0" Click="Run_Click"
+                           ToolTip="Plays the selected macro once now, without its shortcut. If it only runs while Roblox is focused, it waits until you switch to Roblox."
+                           AutomationProperties.Name="Test macro" />
                 <ui:Button x:Name="StopButton" Content="Stop" Icon="Stop24" Style="{StaticResource ZeroButtonSecondary}" Margin="8,0,0,0" Click="Stop_Click"
                            IsEnabled="False" AutomationProperties.Name="Stop" />
                 <ui:Button x:Name="StopAllButton" Content="Stop all" Icon="RecordStop24" Style="{StaticResource ZeroButtonSecondary}" Margin="8,0,0,0" Click="StopAll_Click"
@@ -219,6 +221,8 @@
                                        Foreground="{DynamicResource ZeroStatusErrorBrush}" />
                             <ui:Button x:Name="ChangeEmergencyButton" Content="Change" Style="{StaticResource ZeroButtonGhostSmall}" HorizontalAlignment="Left" Margin="0,4,0,0"
                                        Click="ChangeEmergency_Click" AutomationProperties.Name="Change emergency stop shortcut" />
+                            <TextBlock Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="0,8,0,0" AutomationProperties.Name="Background macros note"
+                                       Text="Active shortcuts keep working after you close ZeroStrap. Turn them off from the ZeroStrap icon in the notification area." />
 
                             <Grid Margin="0,10,0,0">
                                 <Grid.ColumnDefinitions>
@@ -286,6 +290,8 @@
                                     <ui:Button x:Name="ClearShortcutButton" Content="Clear" Style="{StaticResource ZeroButtonGhostSmall}" Margin="8,0,0,0" Click="ClearShortcut_Click"
                                                AutomationProperties.Name="Clear shortcut" />
                                 </StackPanel>
+                                <ui:ToggleSwitch x:Name="ActiveToggle" Style="{StaticResource ZeroToggle}" Content="Shortcut active" Margin="0,8,0,0"
+                                                 Click="ActiveToggle_Click" AutomationProperties.Name="Shortcut active" />
                                 <TextBlock x:Name="ShortcutStatusText" Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="2,4,0,0"
                                            AutomationProperties.Name="Shortcut status" />
                                 <TextBlock x:Name="ShortcutSharedText" Style="{StaticResource ZeroCaptionStyle}" TextWrapping="Wrap" Margin="2,2,0,0" Visibility="Collapsed"

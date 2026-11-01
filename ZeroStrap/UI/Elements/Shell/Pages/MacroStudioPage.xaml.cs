@@ -657,9 +657,14 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             _registrations.TryGetValue(_current.Id, out var reg);
             string status = MacroStudioLogic.HotkeyStatusText(_current, _registrations.ContainsKey(_current.Id) ? reg : null, _settings.EmergencyStop);
 
-            // A game key explains itself only when there is nothing more important to say.
+            // With nothing more important to say, the line explains what the shortcut does now (and a game key's limits).
             if (string.IsNullOrEmpty(status))
-                status = MacroStudioLogic.ShortcutHint(_current.Hotkey) ?? "";
+            {
+                status = MacroStudioLogic.ActivationText(_current);
+
+                if (_current.Enabled && MacroStudioLogic.ShortcutHint(_current.Hotkey) is string hint)
+                    status += " " + hint;
+            }
 
             ShortcutStatusText.Text = status;
 
@@ -794,6 +799,7 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
                     SpeedText.Text = MacroStudioLogic.FormatSpeedMultiplier(_current.Speed);
                     UpdateSpeedNote();
                     FocusToggle.IsChecked = _current.FocusRule == MacroFocusRule.RobloxOnly;
+                    ActiveToggle.IsChecked = _current.Enabled;
                     EstimateText.Text = MacroStudioLogic.EstimateText(_current);
 
                     UpdateShortcutStatus();
@@ -836,7 +842,22 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
             MarkDirty(row.Macro, hotkeys: true);
 
             if (ReferenceEquals(row.Macro, _current))
+            {
+                ActiveToggle.IsChecked = row.Macro.Enabled;
                 UpdateShortcutStatus();
+            }
+        }
+
+        /// <summary>The editor's "Shortcut active" switch: the same setting as the switch on the macro's row in the list.</summary>
+        private void ActiveToggle_Click(object sender, RoutedEventArgs e)
+        {
+            if (_loading || _current is null)
+                return;
+
+            _current.Enabled = ActiveToggle.IsChecked == true;
+            _rows.FirstOrDefault(r => ReferenceEquals(r.Macro, _current))?.Refresh();
+            MarkDirty(_current, hotkeys: true);
+            UpdateShortcutStatus();
         }
 
         private async void Import_Click(object sender, RoutedEventArgs e)
@@ -1917,6 +1938,10 @@ namespace ZeroStrap.UI.Elements.Shell.Pages
                 string id = macro.Id;
                 var result = await Task.Run(() => runtime.Start(id));
                 string text = MacroStudioLogic.StartResultText(result);
+
+                // ZeroStrap has the focus right now, so a Roblox-only test run sits waiting: say so instead of surprising the user later.
+                if (result == MacroStartResult.Started && macro.FocusRule == MacroFocusRule.RobloxOnly)
+                    text = $"Testing “{macro.Name}”: it plays as soon as you switch to Roblox. Press Stop to cancel.";
 
                 if (_loaded && text.Length > 0)
                     SetMessage(text);

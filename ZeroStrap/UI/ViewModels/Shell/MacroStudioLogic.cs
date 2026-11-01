@@ -341,7 +341,7 @@ namespace ZeroStrap.UI.ViewModels.Shell
                 return issue;
 
             if (!macro.Enabled)
-                return "Turn this macro on to use its shortcut";
+                return ActivationText(macro);
 
             if (registration is null)
                 return "";
@@ -353,6 +353,20 @@ namespace ZeroStrap.UI.ViewModels.Shell
                 HotkeyStatus.Invalid => registration.Value.Message ?? ReservedShortcutText,
                 _ => ""
             };
+        }
+
+        /// <summary>
+        /// What the shortcut does right now, in plain words: an active macro's shortcut works in the game (also while ZeroStrap
+        /// is closed, through the background host); an inactive one does nothing.
+        /// </summary>
+        public static string ActivationText(Macro macro)
+        {
+            if (string.IsNullOrWhiteSpace(macro.Hotkey))
+                return "Add a shortcut to start and stop this macro from the game.";
+
+            return macro.Enabled
+                ? $"Active: press {macro.Hotkey} to start or stop it, also while ZeroStrap is closed."
+                : $"Off: pressing {macro.Hotkey} does nothing. Turn on “Shortcut active” to use it.";
         }
 
         /// <summary>The hint for a game shortcut (a typing key, watched only while Roblox is focused), or null for global shortcuts.</summary>
@@ -392,7 +406,7 @@ namespace ZeroStrap.UI.ViewModels.Shell
 
                 case MacroRuntimeState.Running:
                     if (paused)
-                        return "Paused — Roblox isn't focused";
+                        return "Waiting for Roblox — it plays when Roblox is the active window";
 
                     int count = runningNames?.Count ?? 0;
 
