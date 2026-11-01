@@ -106,6 +106,9 @@ namespace ZeroStrap
 
         void GlobalExceptionHandler(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
+            // Macro input must never stay held down because the UI crashed, so this comes before anything else.
+            Macros.MacroRuntime.TryShutdown();
+
             e.Handled = true;
 
             Logger.WriteLine("App::GlobalExceptionHandler", "An exception occurred");
@@ -241,6 +244,13 @@ namespace ZeroStrap
         protected override void OnStartup(StartupEventArgs e)
         {
             const string LOG_IDENT = "App::OnStartup";
+
+            // Macro Studio safety net: whichever way the process ends, held macro input is released first.
+            // (ProcessExit also covers Environment.Exit, which App::Terminate uses and which skips Application.Exit.)
+            Exit += (_, _) => Macros.MacroRuntime.TryShutdown();
+            SessionEnding += (_, _) => Macros.MacroRuntime.TryStopAll(); // may be cancelled by the user, so only stop and release
+            AppDomain.CurrentDomain.UnhandledException += (_, _) => Macros.MacroRuntime.TryShutdown();
+            AppDomain.CurrentDomain.ProcessExit += (_, _) => Macros.MacroRuntime.TryShutdown();
 
             Locale.Initialize();
 
