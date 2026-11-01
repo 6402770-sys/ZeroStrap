@@ -23,9 +23,13 @@ Read this first in a new session. Keep it short and factual; update it at each m
 | 8a Mods import engine (`ModImporter`, extractor link/allowlist/limits, layouts) | `3791ff7` | done — 606/606 tests |
 | 8b Mods import UI (drop zone, preview, install) | see `git log` | done — 617/617 tests, preview smoke-tested |
 | 9 FPS Unlocker | — | deferred (do not build) |
-| 10a/10b Macro Studio | — | **next** (10a engine first; full adversarial review) |
+| 10a Macro Studio engine (recorder, player, hotkeys, runtime, store) | `1c231d4` | done — adversarial review (17 findings) fixed |
+| 10a Macro Studio list editor | `9cd8acf` | done — 1034/1034 tests, UI smoke-tested |
+| 10b Macro Studio timeline, camera inspector, import/export polish | — | **next** |
 
 ## Verification
+- 2026-11-01 (10a): `dotnet test ZeroStrap.Tests` → 1034/1034. UI smoke at 1120×700: editor renders, add Wait/Camera, shortcut capture rejects `w` and accepts F7, Run pauses with "Roblox isn't focused", Stop → Idle. With the window minimised: F7 starts and toggles off, Ctrl+Shift+End stops. Smoke scripts `smoke10a*.ps1`. Smoke macro removed from the real store afterwards.
+- Macro items NOT yet verified with real input: recording via real hooks/Raw Input (SendKeys input is injected, so the recorder ignores it by design), hook-removal recovery, playback into a live Roblox window, UIPI warning against an elevated window.
 - 2026-11-01: `dotnet test ZeroStrap.Tests` → 531/531 pass, 0 build errors.
 - 2026-11-01: dev build UI smoke at 1280×800 — Mods Studio tabs, sidebar badge, Overview mod count render correctly.
 - 2026-11-01: import preview smoke at 1120×700 with a crafted zip (wrapper folder detected, `.lua` rejected, README ignored). Install not run against the real store (engine tests cover it).
@@ -47,6 +51,8 @@ Read this first in a new session. Keep it short and factual; update it at each m
 - UI automation: dot-source a copy of `zsui.ps1` (UIAutomation helpers; `Start-Shell`, `Find-Name`, `Click`, `Shot`). Dev exe opens the shell with `-settings`; close any installed ZeroStrap first (settings lock).
 
 ## Known issues / leftovers
+- Macro Studio: action toolbar wraps Delete onto a second row at 1120 px; invalid (unsaved) macro edits are dropped on navigating away; absolute MouseMoveTo may land off on mixed-DPI multi-monitor setups; Tab can't be captured as a key. Fold into 10b.
+- Macro engine notes: Macros live in `ZeroStrap/Macros/*`, UI in `MacroStudioPage.*`, `MacroStudioLogic.cs`, `MacroStudioService.cs`. Hotkeys run on their own message thread (not the UI thread). Typing keys (letters, digits, Space, arrows…) are rejected as shortcuts unless Ctrl/Alt/Win is added.
 - Overview shows "Configuration: Unsaved changes" right after a fresh launch (pre-existing, not from 7b). Not investigated.
 - Test packages `zs-test-alpha` / `zs-test-beta` from earlier UI testing exist in the real store `%LocalAppData%\ZeroStrap\Mods\Packages`; remove via Mods Studio once the owner agrees.
 
