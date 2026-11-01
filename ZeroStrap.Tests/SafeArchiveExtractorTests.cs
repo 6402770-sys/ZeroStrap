@@ -209,5 +209,69 @@ namespace ZeroStrap.Tests
             Assert.False(result.Succeeded);
             Assert.False(Directory.Exists(dest));
         }
+
+        [Theory]
+        [InlineData(unchecked((int)0xA1FF0000), true)]   // Unix symlink (0120777)
+        [InlineData(unchecked((int)0x81A40000), false)]  // Unix regular file (0100644)
+        [InlineData(0x400, true)]                        // Windows reparse point
+        [InlineData(0x20, false)]                        // Windows archive attribute
+        [InlineData(0, false)]
+        public void LinkAttributesAreRecognised(int attributes, bool isLink)
+        {
+            Assert.Equal(isLink, SafeArchiveExtractor.IsLinkAttributes(attributes));
+        }
+
+        [Fact]
+        public void LinksAreRejectedOnlyWhenRequested()
+        {
+            var link = new ArchiveEntryInfo("a/link", 10, 10, false, true);
+
+            Assert.Single(Plan(new ArchiveLimits { RejectLinks = true }, link).Rejected);
+            Assert.Single(Plan(new ArchiveLimits(), link).Accepted);
+        }
+
+        [Fact]
+        public void ExactlyTheRatioLimitIsAcceptedAndOneOverIsRejected()
+        {
+            var at = Plan(null, File_("a.bin", length: 2_000_000, compressed: 20_000));
+            var over = Plan(null, File_("b.bin", length: 2_020_000, compressed: 20_000));
+
+            Assert.Single(at.Accepted);
+            Assert.Single(over.Rejected);
+        }
+
+        [Fact]
+        public void PathMapperCanRemapRejectIgnoreAndSkip()
+        {
+            var limits = new ArchiveLimits
+            {
+                PathMapper = (path, isDirectory) =>
+                {
+                    if (isDirectory) return ArchivePathDecision.Skip();
+                    if (path.StartsWith("junk/")) return ArchivePathDecision.Ignore();
+                    if (path.StartsWith("bad/")) return ArchivePathDecision.Reject("nope");
+                    return ArchivePathDecision.Accept(path.Replace("wrap/", ""));
+                }
+            };
+
+            var plan = Plan(limits,
+                new ArchiveEntryInfo("wrap/", 0, 0, true),
+                File_("wrap/a.txt"), File_("junk/x.txt"), File_("bad/y.txt"));
+
+            Assert.Equal("a.txt", Assert.Single(plan.Accepted).RelativePath);
+            Assert.Equal("junk/x.txt", Assert.Single(plan.Ignored));
+            Assert.Equal("nope", Assert.Single(plan.Rejected).Reason);
+        }
+
+        [Fact]
+        public void PathMapperOutputIsStillConfinedToTheDestination()
+        {
+            var limits = new ArchiveLimits { PathMapper = (_, _) => ArchivePathDecision.Accept("../escape.txt") };
+
+            var plan = Plan(limits, File_("a.txt"));
+
+            Assert.Empty(plan.Accepted);
+            Assert.Single(plan.Rejected);
+        }
     }
 }

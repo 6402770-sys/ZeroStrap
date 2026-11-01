@@ -275,6 +275,93 @@ namespace ZeroStrap.Mods
             return rebuilt;
         }
 
+        // ---------------------------------------------------------------- import
+
+        /// <summary>
+        /// Analyses a .zip or folder without importing it, and fills in which enabled packages already provide the same
+        /// paths. Safe to call on a background thread; writes nothing.
+        /// </summary>
+        public ImportPreview AnalyzeImport(string path)
+        {
+            var preview = ModImporter.Analyze(path);
+
+            if (preview.AcceptedFiles.Count == 0)
+                return preview;
+
+            try
+            {
+                var state = _stateStore.Load();
+                var enabled = new HashSet<string>(state.Enabled, StringComparer.Ordinal);
+                var providers = _packages.List().Where(p => enabled.Contains(p.Id)).Select(p => (p.Name, Paths: p.PathSet())).ToList();
+
+                var conflicts = new List<ImportConflict>();
+
+                foreach (var file in preview.AcceptedFiles)
+                {
+                    var names = providers.Where(p => p.Paths.Contains(file.Path)).Select(p => p.Name).ToList();
+
+                    if (names.Count > 0)
+                        conflicts.Add(new ImportConflict(file.Path, names));
+                }
+
+                return preview with { Conflicts = conflicts };
+            }
+            catch (Exception ex)
+            {
+                _log($"Could not compare the import with installed mods: {ex.Message}");
+                return preview;
+            }
+        }
+
+        /// <summary>
+        /// Installs an analysed import as a new package, enabled at the lowest priority. Throws
+        /// <see cref="ModStudioException"/> with a readable message when it cannot.
+        /// </summary>
+        public ModImportResult Import(ImportPreview preview, string name, ModCategory category, string? author = null, string? description = null, string? version = null)
+            => new ModImporter(this).Install(preview, name, category, author, description, version);
+
+        /// <summary>
+        /// Enables a freshly imported package at the lowest priority and rebuilds. Existing packages are pinned to their
+        /// current resolver order first (without bumping the priority revision), so the newcomer really is last and
+        /// cannot take a file from its current owner.
+        /// </summary>
+        internal ModRebuildResult EnableImported(string packageId)
+        {
+            using var gate = AcquireGate();
+
+            var state = _stateStore.Load();
+            var known = _packages.List().Select(p => p.Id).Where(id => id != packageId).ToList();
+            var knownSet = new HashSet<string>(known, StringComparer.Ordinal);
+
+            var order = new List<string>();
+
+            foreach (string id in state.Priority)
+            {
+                if (knownSet.Contains(id) && !order.Contains(id))
+                    order.Add(id);
+            }
+
+            // the resolver sorts unlisted ids after listed ones, by id
+            foreach (string id in known.Where(id => !order.Contains(id)).OrderBy(id => id, StringComparer.Ordinal))
+                order.Add(id);
+
+            order.Add(packageId);
+            state.Priority = order;
+
+            if (!state.Enabled.Contains(packageId))
+                state.Enabled.Add(packageId);
+
+            _stateStore.Save(state);
+
+            return RebuildCore(allowPresetDisable: false);
+        }
+
+        internal string? CurrentVersionName()
+        {
+            string? dir = SafeVersionDirectory();
+            return string.IsNullOrEmpty(dir) ? null : Path.GetFileName(dir.TrimEnd('\\', '/'));
+        }
+
         // ---------------------------------------------------------------- rebuild
 
         public ModRebuildResult Rebuild(bool allowPresetDisable = false)

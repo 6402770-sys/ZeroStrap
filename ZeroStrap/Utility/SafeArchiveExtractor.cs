@@ -17,10 +17,42 @@ namespace ZeroStrap.Utility
 
         /// <summary>When set, only files with these extensions (with leading dot, case-insensitive) are accepted.</summary>
         public IReadOnlyCollection<string>? AllowedExtensions { get; init; }
+
+        /// <summary>When true, entries marked as symbolic links or Windows reparse points are rejected.</summary>
+        public bool RejectLinks { get; init; }
+
+        /// <summary>
+        /// Optional hook run on every normalised entry path (forward slashes) after the generic checks. It can remap the
+        /// destination path (e.g. strip a wrapper folder), reject the entry, or drop it silently. Must be pure.
+        /// </summary>
+        public Func<string, bool, ArchivePathDecision>? PathMapper { get; init; }
+    }
+
+    public enum ArchivePathAction
+    {
+        /// <summary>Extract to <see cref="ArchivePathDecision.MappedPath"/>.</summary>
+        Accept,
+
+        /// <summary>Report the entry as rejected with <see cref="ArchivePathDecision.RejectReason"/>.</summary>
+        Reject,
+
+        /// <summary>Not extracted, but listed as ignored (harmless junk).</summary>
+        Ignore,
+
+        /// <summary>Not extracted and not reported (directories, metadata that was consumed elsewhere).</summary>
+        Skip
+    }
+
+    public sealed record ArchivePathDecision(ArchivePathAction Action, string? MappedPath = null, string? RejectReason = null)
+    {
+        public static ArchivePathDecision Accept(string mappedPath) => new(ArchivePathAction.Accept, mappedPath);
+        public static ArchivePathDecision Reject(string reason) => new(ArchivePathAction.Reject, null, reason);
+        public static ArchivePathDecision Ignore() => new(ArchivePathAction.Ignore);
+        public static ArchivePathDecision Skip() => new(ArchivePathAction.Skip);
     }
 
     /// <summary>What the archive claims about one entry. Declared sizes are untrusted.</summary>
-    public readonly record struct ArchiveEntryInfo(string FullName, long Length, long CompressedLength, bool IsDirectory = false);
+    public readonly record struct ArchiveEntryInfo(string FullName, long Length, long CompressedLength, bool IsDirectory = false, bool IsLink = false);
 
     public sealed record PlannedEntry(ArchiveEntryInfo Source, string RelativePath, string DestinationPath)
     {
@@ -33,6 +65,9 @@ namespace ZeroStrap.Utility
     {
         public List<PlannedEntry> Accepted { get; } = new();
         public List<RejectedEntry> Rejected { get; } = new();
+
+        /// <summary>Files dropped by <see cref="ArchiveLimits.PathMapper"/> as harmless junk.</summary>
+        public List<string> Ignored { get; } = new();
 
         /// <summary>Set when the whole archive is refused (too many entries, total size too large).</summary>
         public string? FatalReason { get; internal set; }
@@ -86,6 +121,40 @@ namespace ZeroStrap.Utility
                 {
                     plan.Rejected.Add(new RejectedEntry(entry.FullName, error!));
                     continue;
+                }
+
+                if (limits.RejectLinks && entry.IsLink)
+                {
+                    plan.Rejected.Add(new RejectedEntry(entry.FullName, "Symbolic links and shortcuts are not allowed."));
+                    continue;
+                }
+
+                if (limits.PathMapper is not null)
+                {
+                    var decision = limits.PathMapper(relative, entry.IsDirectory);
+
+                    if (decision.Action == ArchivePathAction.Skip)
+                        continue;
+
+                    if (decision.Action == ArchivePathAction.Ignore)
+                    {
+                        if (!entry.IsDirectory)
+                            plan.Ignored.Add(entry.FullName);
+
+                        continue;
+                    }
+
+                    if (decision.Action == ArchivePathAction.Reject)
+                    {
+                        plan.Rejected.Add(new RejectedEntry(entry.FullName, decision.RejectReason ?? "Not allowed."));
+                        continue;
+                    }
+
+                    if (!TryNormalise(decision.MappedPath, out relative, out error))
+                    {
+                        plan.Rejected.Add(new RejectedEntry(entry.FullName, error!));
+                        continue;
+                    }
                 }
 
                 string destination = Path.GetFullPath(Path.Combine(root, relative.Replace('/', Path.DirectorySeparatorChar)));
@@ -203,6 +272,24 @@ namespace ZeroStrap.Utility
 
             relativePath = string.Join('/', parts);
             return true;
+        }
+
+        /// <summary>Reads what the zip central directory says about an entry (no decompression).</summary>
+        public static ArchiveEntryInfo InfoOf(ZipArchiveEntry e)
+        {
+            bool isDir = e.FullName.EndsWith('/') || e.FullName.EndsWith('\\');
+            return new ArchiveEntryInfo(e.FullName, e.Length, e.CompressedLength, isDir, IsLinkAttributes(e.ExternalAttributes));
+        }
+
+        /// <summary>True when the zip external attributes mark a Unix symlink or a Windows reparse point.</summary>
+        public static bool IsLinkAttributes(int externalAttributes)
+        {
+            uint attributes = unchecked((uint)externalAttributes);
+
+            if (((attributes >> 16) & 0xF000) == 0xA000)
+                return true;
+
+            return (attributes & 0x400) != 0; // FILE_ATTRIBUTE_REPARSE_POINT
         }
 
         public static ExtractionResult Extract(string zipPath, string destinationRoot, ArchiveLimits limits)
